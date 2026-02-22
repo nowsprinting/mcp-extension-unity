@@ -1,0 +1,15 @@
+<ivy-module version="2.0">
+  <info organisation="bundledPlugin" module="com.intellij.mcpServer" revision="RD-253.31033.136" />
+  <configurations>
+    <conf name="default" visibility="public" />
+  </configurations>
+  <publications>
+    <artifact name="mcpserver" ext="jar" conf="default" url="plugins/mcpserver/lib" />
+    <artifact name="io.github.smiley4.schema.kenerator.jsonschema" ext="jar" conf="default" url="plugins/mcpserver/lib" />
+    <artifact name="io.github.smiley4.schema.kenerator.serialization" ext="jar" conf="default" url="plugins/mcpserver/lib" />
+    <artifact name="ktor-server-cio-internal" ext="jar" conf="default" url="plugins/mcpserver/lib" />
+    <artifact name="mcpserver-frontend" ext="jar" conf="default" url="plugins/mcpserver/lib" />
+    <artifact name="io.github.smiley4.schema.kenerator.core" ext="jar" conf="default" url="plugins/mcpserver/lib" />
+  </publications>
+  <dependencies />
+</ivy-module>

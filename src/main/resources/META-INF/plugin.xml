@@ -1,0 +1,13 @@
+<idea-plugin>
+    <id>com.github.rider.unity.mcp</id>
+    <name>Unity Test MCP Tool</name>
+    <vendor>PoC</vendor>
+    <description>MCP tool for running Unity tests through Rider (PoC)</description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.mcpServer</depends>
+
+    <extensions defaultExtensionNs="com.intellij.mcpServer">
+        <mcpToolset implementation="com.github.rider.unity.mcp.RunUnityTestsToolset"/>
+    </extensions>
+</idea-plugin>
