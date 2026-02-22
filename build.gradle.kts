@@ -24,6 +24,7 @@ dependencies {
         testFramework(TestFrameworkType.Platform)
         // MCP Server is bundled in Rider 2025.3+
         bundledPlugin("com.intellij.mcpServer")
+        bundledPlugin("com.intellij.resharper.unity")
     }
     // compileOnly to avoid class collision with the bundled plugin's serialization
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")

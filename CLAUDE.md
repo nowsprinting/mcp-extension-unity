@@ -10,7 +10,7 @@ A Rider IDE plugin (PoC stage) that extends the built-in JetBrains MCP Server wi
 The goal is to allow Coding Agents (e.g., Claude Code) to run Unity tests through Rider's test infrastructure,
 rather than invoking Unity directly.
 
-**Current status**: Steps 1–4 complete (PoC echo-back). Real test execution is not yet implemented.
+**Current status**: Steps 1–5 complete. `FrontendBackendModel` access working; Unity Editor state and test preference retrievable. Real test execution (Step 6+) not yet implemented.
 
 ---
 
@@ -66,7 +66,8 @@ rider-unity-test-mcp-plugin/
 │   └── resources/META-INF/
 │       └── plugin.xml                                 # plugin descriptor
 └── docs/plans/
-    └── 2026-02-22-poc-rider-mcp-unity-test.md        # PoC investigation report
+    ├── 2026-02-22-poc-rider-mcp-unity-test.md        # PoC investigation report
+    └── 2026-02-22-step5-frontend-backend-model.md    # Step 5: FrontendBackendModel access
 ```
 
 ---
@@ -139,7 +140,7 @@ Register in `plugin.xml`:
 | 2 | Register MCP extension point in plugin.xml | Done |
 | 3 | Implement `RunUnityTestsToolset` with `@McpTool` | Done |
 | 4 | Verify echo-back response from Claude Code | Done |
-| 5 | Access `FrontendBackendModel` to get Unity Editor connection state | Planned |
+| 5 | Access `FrontendBackendModel` to get Unity Editor connection state | Done |
 | 6 | Define custom Rd model (Kotlin ↔ C#) | Planned |
 | 7 | Implement C# Backend handler, call `BackendUnityModel` | Planned |
 | 8 | Stream test results back to the MCP caller | Planned |

@@ -6,6 +6,7 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.mcpServer</depends>
+    <depends>com.intellij.resharper.unity</depends>
 
     <extensions defaultExtensionNs="com.intellij.mcpServer">
         <mcpToolset implementation="com.github.rider.unity.mcp.RunUnityTestsToolset"/>
