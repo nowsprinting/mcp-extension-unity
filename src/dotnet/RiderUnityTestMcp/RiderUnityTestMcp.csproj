@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>RiderUnityTestMcp</AssemblyName>
+    <RootNamespace>RiderUnityTestMcp</RootNamespace>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <!-- Suppress all warnings about missing docs, nullable, etc. -->
+    <NoWarn>$(NoWarn);1591;8618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core Rd framework types: IProtocol, RdCall, Lifetime, etc. -->
+    <Reference Include="JetBrains.RdFramework">
+      <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.RdFramework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Lifetime types -->
+    <Reference Include="JetBrains.Lifetimes">
+      <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.Lifetimes.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- SolutionComponent, ISolution, ZoneMarker, IRequire -->
+    <Reference Include="JetBrains.Platform.ProjectModel">
+      <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.Platform.ProjectModel.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- ComponentAttribute, Instantiation, PartAttribute -->
+    <Reference Include="JetBrains.Platform.ComponentModel">
+      <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.Platform.ComponentModel.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- JetBrains.Application.Components, BuildScript.Application.Zones, IRequire -->
+    <Reference Include="JetBrains.Platform.Shell">
+      <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.Platform.Shell.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- SolutionComponent, ISolution, IProtocol (DI registration), IReSharperHostCoreSharedFeatureZone -->
+    <Reference Include="JetBrains.RdBackend.Common">
+      <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.RdBackend.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- [NotNull] and other annotations -->
+    <Reference Include="JetBrains.Annotations">
+      <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.Annotations.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- resharper-unity: BackendUnityHost, IBackendUnityHost -->
+    <Reference Include="JetBrains.ReSharper.Plugins.Unity.Rider">
+      <HintPath>$(RiderUnityPluginPath)/JetBrains.ReSharper.Plugins.Unity.Rider.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- resharper-unity: BackendUnityModel, UnitTestLaunch, TestFilter, TestResult, RunResult, TestMode -->
+    <Reference Include="JetBrains.Unity.Model">
+      <HintPath>$(RiderUnityPluginPath)/JetBrains.Unity.Model.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

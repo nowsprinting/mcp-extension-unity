@@ -10,7 +10,7 @@ A Rider IDE plugin (PoC stage) that extends the built-in JetBrains MCP Server wi
 The goal is to allow Coding Agents (e.g., Claude Code) to run Unity tests through Rider's test infrastructure,
 rather than invoking Unity directly.
 
-**Current status**: Steps 1–5 complete. `FrontendBackendModel` access working; Unity Editor state and test preference retrievable. Real test execution (Step 6+) not yet implemented.
+**Current status**: Steps 1–6 complete. Custom Rd model implemented; C# backend handler calls `BackendUnityModel` to run Unity tests. End-to-end test execution pipeline is ready for verification.
 
 ---
 
@@ -21,13 +21,13 @@ Coding Agent (Claude Code)
     ↓ MCP (HTTP/SSE)
 JetBrains MCP Server (built into Rider 2025.3+)
     ↓ extension point (com.intellij.mcpServer)
-[This Plugin — Kotlin Frontend]   ← current layer (PoC complete)
-    ↓ custom Rd model (not yet implemented)
-[Plugin Backend — C# / ReSharper] (not yet implemented)
-    ↓ BackendUnityModel (existing Rd)
+[This Plugin — Kotlin Frontend]   ← RunUnityTestsToolset.kt
+    ↓ UnityTestMcpModel (custom Rd: IRdCall<McpRunTestsRequest, McpRunTestsResponse>)
+[Plugin Backend — C# / UnityTestMcpHandler]
+    ↓ BackendUnityModel.UnitTestLaunch + RunUnitTestLaunch (existing Rd)
 Unity Editor
     ↓ TestRunnerApi.Execute()
-Test execution
+Test execution (results via TestResult/RunResult signals)
 ```
 
 Rider itself uses two separate Rd (Reactive Distributed) protocol connections:
@@ -35,7 +35,7 @@ Rider itself uses two separate Rd (Reactive Distributed) protocol connections:
 - **Kotlin Frontend ↔ C# Backend**: `FrontendBackendModel`
 - **C# Backend ↔ Unity Editor**: `BackendUnityModel`
 
-The Kotlin Frontend **cannot** directly access `BackendUnityModel`; a custom Rd model bridging the two layers is needed for Step 6+.
+The Kotlin Frontend **cannot** directly access `BackendUnityModel`; a custom Rd model (`UnityTestMcpModel`) bridges the two layers, implemented in Step 6.
 
 ---
 
@@ -57,14 +57,25 @@ The Kotlin Frontend **cannot** directly access `BackendUnityModel`; a custom Rd 
 ```
 rider-unity-test-mcp-plugin/
 ├── CLAUDE.md                                          # this file
-├── build.gradle.kts                                   # build configuration
+├── build.gradle.kts                                   # build configuration (incl. compileDotNet, prepareSandbox)
 ├── gradle.properties
 ├── settings.gradle.kts
+├── protocol/                                          # Rd model definition (rdgen)
+│   └── src/main/kotlin/model/rider/
+│       └── UnityTestMcpModel.kt                       # Rd DSL: McpRunTestsRequest/Response
 ├── src/main/
 │   ├── kotlin/com/github/rider/unity/mcp/
-│   │   └── RunUnityTestsToolset.kt                   # MCP tool implementation
+│   │   └── RunUnityTestsToolset.kt                   # MCP tool → Rd call
+│   ├── generated/                                     # auto-generated Kotlin model (gitignored)
 │   └── resources/META-INF/
 │       └── plugin.xml                                 # plugin descriptor
+├── src/dotnet/
+│   ├── RiderUnityTestMcp.sln
+│   └── RiderUnityTestMcp/
+│       ├── RiderUnityTestMcp.csproj
+│       ├── UnityTestMcpHandler.cs                     # C# handler → BackendUnityModel
+│       ├── ZoneMarker.cs
+│       └── Model/                                     # auto-generated C# model (gitignored)
 └── docs/plans/
     ├── 2026-02-22-poc-rider-mcp-unity-test.md        # PoC investigation report
     └── 2026-02-22-step5-frontend-backend-model.md    # Step 5: FrontendBackendModel access
@@ -75,8 +86,11 @@ rider-unity-test-mcp-plugin/
 ## Build
 
 ```bash
-JAVA_HOME=/usr/local/opt/openjdk@21 ./gradlew buildPlugin
+JAVA_HOME=/usr/local/opt/openjdk@21 ./gradlew --no-configuration-cache buildPlugin
 ```
+
+> **Note**: `--no-configuration-cache` is required due to incompatibilities with the `rdgen` and
+> `generateDotNetSdkProperties` tasks under Gradle 9.3.1 configuration cache.
 
 Output ZIP is generated under `build/distributions/`.
 
@@ -141,9 +155,8 @@ Register in `plugin.xml`:
 | 3 | Implement `RunUnityTestsToolset` with `@McpTool` | Done |
 | 4 | Verify echo-back response from Claude Code | Done |
 | 5 | Access `FrontendBackendModel` to get Unity Editor connection state | Done |
-| 6 | Define custom Rd model (Kotlin ↔ C#) | Planned |
-| 7 | Implement C# Backend handler, call `BackendUnityModel` | Planned |
-| 8 | Stream test results back to the MCP caller | Planned |
+| 6 | Define custom Rd model + implement C# handler calling `BackendUnityModel` | Done |
+| 7 | Verify end-to-end test execution with a real Unity project | Pending |
 
 ---
 
