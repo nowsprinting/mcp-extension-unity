@@ -73,6 +73,16 @@ intellijPlatform {
             Step 6: Custom Rd model for Unity test execution
         """.trimIndent()
     }
+
+    pluginVerification {
+        // Suppress "rider" word-in-plugin-ID check: PoC stage, not for Marketplace yet.
+        // Before Marketplace submission, rename plugin ID to remove the word "rider".
+        freeArgs = listOf("-mute", "TemplateWordInPluginId")
+        ides {
+            // Verify against the same Rider build used for compilation (already downloaded locally)
+            local(intellijPlatform.platformPath.toFile())
+        }
+    }
 }
 
 val rdGen = ":protocol:rdgen"

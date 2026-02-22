@@ -47,12 +47,14 @@
       <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.Annotations.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <!-- resharper-unity: BackendUnityHost, IBackendUnityHost -->
+    <!-- resharper-unity (Apache 2.0): BackendUnityHost, IBackendUnityHost
+         Source: https://github.com/JetBrains/resharper-unity -->
     <Reference Include="JetBrains.ReSharper.Plugins.Unity.Rider">
       <HintPath>$(RiderUnityPluginPath)/JetBrains.ReSharper.Plugins.Unity.Rider.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <!-- resharper-unity: BackendUnityModel, UnitTestLaunch, TestFilter, TestResult, RunResult, TestMode -->
+    <!-- resharper-unity (Apache 2.0): BackendUnityModel, UnitTestLaunch, TestFilter, TestResult, RunResult, TestMode
+         Source: https://github.com/JetBrains/resharper-unity -->
     <Reference Include="JetBrains.Unity.Model">
       <HintPath>$(RiderUnityPluginPath)/JetBrains.Unity.Model.dll</HintPath>
       <Private>false</Private>

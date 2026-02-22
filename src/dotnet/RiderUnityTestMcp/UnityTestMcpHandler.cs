@@ -1,3 +1,12 @@
+// All resharper-unity APIs used in this file (BackendUnityHost, BackendUnityModel,
+// UnitTestLaunch, TestFilter, TestResult, RunResult, TestMode) are sourced from the
+// Apache 2.0 open-source resharper-unity plugin:
+//   https://github.com/JetBrains/resharper-unity
+// Key reference files:
+//   BackendUnityHost.cs      — BackendUnityHost, IsConnectionEstablished(), BackendUnityModel field
+//   RunViaUnityEditorStrategy.cs — UnitTestLaunch construction and RunUnitTestLaunch invocation pattern
+//   UnityNUnitServiceProvider.cs — TestFilter usage and test execution flow
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
