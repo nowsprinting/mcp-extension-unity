@@ -8,7 +8,7 @@ plugins {
     kotlin("plugin.serialization") version "2.3.0"
 }
 
-group = "com.github.rider.unity.mcp"
+group = "com.nowsprinting.mcp-extension-for-unity"
 version = "1.0-SNAPSHOT"
 
 val dotNetPluginId: String by project
@@ -75,9 +75,6 @@ intellijPlatform {
     }
 
     pluginVerification {
-        // Suppress "rider" word-in-plugin-ID check: PoC stage, not for Marketplace yet.
-        // Before Marketplace submission, rename plugin ID to remove the word "rider".
-        freeArgs = listOf("-mute", "TemplateWordInPluginId")
         ides {
             // Verify against the same Rider build used for compilation (already downloaded locally)
             local(intellijPlatform.platformPath.toFile())

@@ -1,6 +1,6 @@
 <idea-plugin>
-    <id>com.github.rider.unity.mcp</id>
-    <name>Unity Test MCP Tool</name>
+    <id>com.nowsprinting.mcp-extension-for-unity</id>
+    <name>MCP Server Extension for Unity</name>
     <vendor>PoC</vendor>
     <description>MCP tool for running Unity tests through Rider (PoC)</description>
 
@@ -9,6 +9,6 @@
     <depends>com.intellij.resharper.unity</depends>
 
     <extensions defaultExtensionNs="com.intellij.mcpServer">
-        <mcpToolset implementation="com.github.rider.unity.mcp.RunUnityTestsToolset"/>
+        <mcpToolset implementation="com.nowsprinting.mcp_extension_for_unity.RunUnityTestsToolset"/>
     </extensions>
 </idea-plugin>

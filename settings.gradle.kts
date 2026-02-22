@@ -1,4 +1,4 @@
-rootProject.name = "rider-unity-test-mcp-plugin"
+rootProject.name = "mcp-extension-for-unity"
 include(":protocol")
 
 pluginManagement {

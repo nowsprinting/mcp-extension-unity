@@ -45,8 +45,8 @@ object UnityTestMcpModel : Root() {
     }
 
     init {
-        setting(Kotlin11Generator.Namespace, "com.github.rider.unity.mcp.model")
-        setting(CSharp50Generator.Namespace, "RiderUnityTestMcp.Model")
+        setting(Kotlin11Generator.Namespace, "com.nowsprinting.mcp_extension_for_unity.model")
+        setting(CSharp50Generator.Namespace, "McpExtensionForUnity.Model")
 
         call("runTests", McpRunTestsRequest, McpRunTestsResponse)
     }

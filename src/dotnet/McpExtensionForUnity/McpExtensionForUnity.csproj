@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyName>RiderUnityTestMcp</AssemblyName>
-    <RootNamespace>RiderUnityTestMcp</RootNamespace>
+    <AssemblyName>McpExtensionForUnity</AssemblyName>
+    <RootNamespace>McpExtensionForUnity</RootNamespace>
     <LangVersion>7.3</LangVersion>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
