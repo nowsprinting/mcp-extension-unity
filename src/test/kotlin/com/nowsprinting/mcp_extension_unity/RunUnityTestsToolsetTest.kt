@@ -1,8 +1,8 @@
-package com.nowsprinting.mcp_extension_for_unity
+package com.nowsprinting.mcp_extension_unity
 
-import com.nowsprinting.mcp_extension_for_unity.model.McpTestMode
-import com.nowsprinting.mcp_extension_for_unity.model.McpTestResultItem
-import com.nowsprinting.mcp_extension_for_unity.model.McpTestResultStatus
+import com.nowsprinting.mcp_extension_unity.model.McpTestMode
+import com.nowsprinting.mcp_extension_unity.model.McpTestResultItem
+import com.nowsprinting.mcp_extension_unity.model.McpTestResultStatus
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals

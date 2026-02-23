@@ -1,6 +1,6 @@
-package com.nowsprinting.mcp_extension_for_unity
+package com.nowsprinting.mcp_extension_unity
 
-import com.nowsprinting.mcp_extension_for_unity.model.*
+import com.nowsprinting.mcp_extension_unity.model.*
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool

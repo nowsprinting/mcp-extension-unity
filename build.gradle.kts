@@ -8,7 +8,7 @@ plugins {
     kotlin("plugin.serialization") version "2.3.0"
 }
 
-group = "com.nowsprinting.mcp-extension-for-unity"
+group = "com.nowsprinting.mcp-extension-unity"
 version = "1.0-SNAPSHOT"
 
 val dotNetPluginId: String by project

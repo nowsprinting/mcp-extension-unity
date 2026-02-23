@@ -1,4 +1,4 @@
-rootProject.name = "mcp-extension-for-unity"
+rootProject.name = "mcp-extension-unity"
 include(":protocol")
 
 pluginManagement {

@@ -1,4 +1,4 @@
-# CLAUDE.md — rider-unity-test-mcp-plugin
+# CLAUDE.md — mcp-extension-unity
 
 ## Core Principles
 
@@ -55,7 +55,7 @@ The Kotlin Frontend **cannot** directly access `BackendUnityModel`; a custom Rd 
 ## Key Files
 
 ```
-rider-unity-test-mcp-plugin/
+mcp-extension-unity/
 ├── CLAUDE.md                                          # this file
 ├── build.gradle.kts                                   # build configuration (incl. compileDotNet, prepareSandbox)
 ├── gradle.properties
@@ -64,18 +64,18 @@ rider-unity-test-mcp-plugin/
 │   └── src/main/kotlin/model/rider/
 │       └── UnityTestMcpModel.kt                       # Rd DSL: McpRunTestsRequest/Response
 ├── src/main/
-│   ├── kotlin/com/nowsprinting/mcp_extension_for_unity/
+│   ├── kotlin/com/nowsprinting/mcp_extension_unity/
 │   │   └── RunUnityTestsToolset.kt                   # MCP tool → Rd call (assemblyNames validation)
 │   ├── generated/                                     # auto-generated Kotlin model (gitignored)
 │   └── resources/META-INF/
 │       └── plugin.xml                                 # plugin descriptor
 ├── src/test/
-│   └── kotlin/com/nowsprinting/mcp_extension_for_unity/
+│   └── kotlin/com/nowsprinting/mcp_extension_unity/
 │       └── RunUnityTestsToolsetTest.kt                # Kotlin unit tests (20 cases)
 ├── src/dotnet/
-│   ├── McpExtensionForUnity.sln
-│   ├── McpExtensionForUnity/
-│   │   ├── McpExtensionForUnity.csproj
+│   ├── McpExtensionUnity.sln
+│   ├── McpExtensionUnity/
+│   │   ├── McpExtensionUnity.csproj
 │   │   ├── UnityTestMcpHandler.cs                     # C# handler → BackendUnityModel
 │   │   ├── ZoneMarker.cs
 │   │   └── Model/                                     # auto-generated C# model (gitignored)
@@ -131,7 +131,7 @@ Register in `plugin.xml`:
 
 ```xml
 <extensions defaultExtensionNs="com.intellij.mcpServer">
-    <mcpToolset implementation="com.github.rider.unity.mcp.RunUnityTestsToolset"/>
+    <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.RunUnityTestsToolset"/>
 </extensions>
 ```
 

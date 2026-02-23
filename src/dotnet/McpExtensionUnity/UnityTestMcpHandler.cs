@@ -24,9 +24,9 @@ using JetBrains.Rd;
 using JetBrains.Rd.Tasks;
 using JetBrains.Rider.Model.Unity.BackendUnity;
 using JetBrains.ReSharper.Plugins.Unity.Rider.Integration.Protocol;
-using McpExtensionForUnity.Model;
+using McpExtensionUnity.Model;
 
-namespace McpExtensionForUnity
+namespace McpExtensionUnity
 {
     // Binds UnityTestMcpModel to the solution protocol and handles RunTests calls.
     // Bridges: Kotlin Frontend → (custom Rd) → C# Backend → BackendUnityModel → Unity Editor.
