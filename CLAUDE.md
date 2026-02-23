@@ -10,7 +10,7 @@ A Rider IDE plugin (PoC stage) that extends the built-in JetBrains MCP Server wi
 The goal is to allow Coding Agents (e.g., Claude Code) to run Unity tests through Rider's test infrastructure,
 rather than invoking Unity directly.
 
-**Current status**: Steps 1–6 complete. Step 7 (end-to-end verification) in progress. Custom Rd model implemented; C# backend handler calls `BackendUnityModel` to run Unity tests. Awaiting human verification with a real Unity project.
+**Current status**: Steps 1–7 complete. `assemblyNames` validation and unit test infrastructure added in Step 7. E2E human verification with a real Unity project confirmed.
 
 ---
 
@@ -64,21 +64,29 @@ rider-unity-test-mcp-plugin/
 │   └── src/main/kotlin/model/rider/
 │       └── UnityTestMcpModel.kt                       # Rd DSL: McpRunTestsRequest/Response
 ├── src/main/
-│   ├── kotlin/com/github/rider/unity/mcp/
-│   │   └── RunUnityTestsToolset.kt                   # MCP tool → Rd call
+│   ├── kotlin/com/nowsprinting/mcp_extension_for_unity/
+│   │   └── RunUnityTestsToolset.kt                   # MCP tool → Rd call (assemblyNames validation)
 │   ├── generated/                                     # auto-generated Kotlin model (gitignored)
 │   └── resources/META-INF/
 │       └── plugin.xml                                 # plugin descriptor
+├── src/test/
+│   └── kotlin/com/nowsprinting/mcp_extension_for_unity/
+│       └── RunUnityTestsToolsetTest.kt                # Kotlin unit tests (6 cases)
 ├── src/dotnet/
-│   ├── RiderUnityTestMcp.sln
-│   └── RiderUnityTestMcp/
-│       ├── RiderUnityTestMcp.csproj
-│       ├── UnityTestMcpHandler.cs                     # C# handler → BackendUnityModel
-│       ├── ZoneMarker.cs
-│       └── Model/                                     # auto-generated C# model (gitignored)
+│   ├── McpExtensionForUnity.sln
+│   ├── McpExtensionForUnity/
+│   │   ├── McpExtensionForUnity.csproj
+│   │   ├── UnityTestMcpHandler.cs                     # C# handler → BackendUnityModel
+│   │   ├── McpValidation.cs                           # pure validation logic (no Rider deps)
+│   │   ├── ZoneMarker.cs
+│   │   └── Model/                                     # auto-generated C# model (gitignored)
+│   └── McpExtensionForUnity.Tests/
+│       ├── McpExtensionForUnity.Tests.csproj
+│       └── UnityTestMcpHandlerTest.cs                 # C# unit tests (5 cases)
 └── docs/plans/
     ├── 2026-02-22-poc-rider-mcp-unity-test.md        # PoC investigation report
-    └── 2026-02-22-step5-frontend-backend-model.md    # Step 5: FrontendBackendModel access
+    ├── 2026-02-22-step5-frontend-backend-model.md    # Step 5: FrontendBackendModel access
+    └── 2026-02-23-step7-end-to-end-verification.md   # Step 7: E2E verification checklist (9 test cases)
 ```
 
 ---
@@ -164,6 +172,10 @@ Register in `plugin.xml`:
    java.lang.IllegalArgumentException: No tools found in class ...RunUnityTestsToolset
    ```
 
+5. **`assemblyNames` is required** — omitting it returns an immediate error on the Kotlin side.
+   Unity's test runner requires explicit assembly names; sending an empty `TestFilter` causes the
+   Unity Editor to disconnect. Find assembly names in `.asmdef` files or Rider's Unit Test Explorer.
+
 ---
 
 ## Development Roadmap
@@ -176,7 +188,7 @@ Register in `plugin.xml`:
 | 4 | Verify echo-back response from Claude Code | Done |
 | 5 | Access `FrontendBackendModel` to get Unity Editor connection state | Done |
 | 6 | Define custom Rd model + implement C# handler calling `BackendUnityModel` | Done |
-| 7 | Verify end-to-end test execution with a real Unity project | In Progress |
+| 7 | Verify end-to-end test execution with a real Unity project | Done |
 
 ---
 

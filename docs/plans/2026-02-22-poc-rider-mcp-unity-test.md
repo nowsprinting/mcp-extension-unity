@@ -1,5 +1,7 @@
 # PoC調査結果: Rider MCPカスタムツールによるUnityテスト実行
 
+> **実装状況 (2026-02-23更新)**: Steps 1–7 完了。`assemblyNames` バリデーション追加・ユニットテスト整備・E2E人手検証すべて完了。
+
 ## 1. 背景・目的
 
 Coding Agent（Claude Code等）からUnityテストを実行する際に、Riderの実行基盤を経路として使いたい。
@@ -143,14 +145,14 @@ rider-unity-test-mcp-plugin/
 - **依存**: `bundledPlugin("com.intellij.mcpServer")`（Rider内蔵）
 - **sinceBuild**: 253
 
-### 4.3 PoC実装コード
-
-現在の実装は引数のエコーバックのみ:
+### 4.3 実装コード (Steps 1–7完了時点)
 
 - `run_unity_tests` MCPツールを1つ登録
-- パラメータ: `testMode`, `assemblyNames`, `testNames`, `groupNames`, `testCategories`
-- 戻り値: `RunUnityTestsResult`（`@Serializable` data class）
-- 実際のテスト実行ロジックは未実装（`status = "poc_echo"`）
+- パラメータ: `testMode`, `assemblyNames`（必須）, `testNames`, `groupNames`, `categoryNames`
+- `assemblyNames` 未指定時は Kotlin 側で即座にエラー返却（Unity Editor 切断を防止）
+- Rd経由で C# バックエンドに `McpRunTestsRequest` を送信し、`McpRunTestsResponse` を受け取る
+- C# バックエンドが `BackendUnityModel.UnitTestLaunch` + `RunUnitTestLaunch` でUnity Editorにテスト実行を要求
+- 戻り値: `RunUnityTestsResult`（`passCount`, `failCount`, `failedTests[]` 等）
 
 ### 4.4 ビルド & インストール手順
 
@@ -168,31 +170,28 @@ JAVA_HOME=/usr/local/opt/openjdk@21 ./gradlew buildPlugin
 - ツールを呼び出すと `poc_echo` レスポンスが返る ✅
 - パラメータ（testMode, assemblyNames等）が正しくシリアライズ/デシリアライズされる ✅
 
-## 5. 今後のアーキテクチャ
-
-テスト実行の最終目標に向けた段階的な実装計画:
+## 5. 実装済みアーキテクチャ (Steps 1–7完了)
 
 ```
 Coding Agent (Claude Code)
     ↓ MCP (HTTP/SSE)
 JetBrains MCP Server (Rider内蔵)
     ↓ extension point (com.intellij.mcpServer)
-[Plugin Frontend - Kotlin] ← 現在ここ (PoC完了)
-    ↓ カスタムRdモデル (未実装)
-[Plugin Backend - C#/ReSharper] (未実装)
-    ↓ BackendUnityModel (既存Rd)
-Unity Editor
+[Plugin Frontend - Kotlin]  ✅ RunUnityTestsToolset.kt
+    ↓ UnityTestMcpModel (カスタムRd: IRdCall<McpRunTestsRequest, McpRunTestsResponse>)
+[Plugin Backend - C#]       ✅ UnityTestMcpHandler.cs
+    ↓ BackendUnityModel.UnitTestLaunch + RunUnitTestLaunch (既存Rd)
+Unity Editor                ✅ E2E人手検証完了
     ↓ TestRunnerApi.Execute()
 テスト実行
 ```
 
-### Step 5: FrontendBackendModelアクセス
+### 実装済みの主要機能
 
-Unity Supportプラグインへの依存を追加し、FrontendBackendModelからUnity Editor接続状態を取得する。
-
-### Step 6以降: テスト実行の実装
-
-Kotlin → C# のカスタムRdモデル定義、C# Backendハンドラ実装、BackendUnityModel経由のテスト実行。
+- `assemblyNames` 必須バリデーション（Kotlin側で空フィルタ防止）
+- カスタムRdモデル `UnityTestMcpModel` によるプロセス間通信
+- C# バックエンドの `IStartupActivity` 実装によるeager instantiation
+- ユニットテスト: Kotlin 6件 + C# 5件
 
 ## 参考リソース
 

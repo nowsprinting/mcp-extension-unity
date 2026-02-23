@@ -7,7 +7,7 @@ Steps 1–6 are complete. The plugin (`MCP Server Extension for Unity`) implemen
 - Rd model: `UnityTestMcpModel` — bridges Kotlin ↔ C# process boundary
 - C# backend: `UnityTestMcpHandler.cs` — calls `BackendUnityModel` to run Unity tests
 
-**This step is human-only verification.** The goal is to confirm the full pipeline works with a real Unity project.
+**This step is complete.** Human verification with a real Unity project has been confirmed.
 
 During Step 7, the following code fix was implemented:
 - **Empty filter validation**: `assemblyNames` is now **required**. Calling `run_unity_tests` without `assemblyNames` returns an immediate error on the Kotlin side, preventing a situation where the Unity Editor disconnects due to an empty `TestFilter`.
