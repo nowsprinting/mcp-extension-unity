@@ -62,9 +62,6 @@ namespace McpExtensionForUnity
                 if (backendUnityModel == null)
                     return ErrorResponse("Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
 
-                if (!McpValidation.HasValidAssemblyNames(request.Filter.AssemblyNames))
-                    return ErrorResponse("assemblyNames is required. Provide at least one test assembly name.");
-
                 // Build test filters from the MCP request
                 var testFilters = BuildTestFilters(request.Filter);
                 ourLogger.Info($"  TestFilters count={testFilters.Count}");
@@ -154,8 +151,8 @@ namespace McpExtensionForUnity
                 return filters;
             }
 
-            // assemblyNames should have been validated before calling this method
-            throw new InvalidOperationException("BuildTestFilters called with no valid assembly names. Validate with HasValidAssemblyNames first.");
+            // assemblyNames is validated by the Kotlin frontend before the Rd call reaches here
+            throw new InvalidOperationException("BuildTestFilters called with no assembly names. Kotlin frontend should have rejected the request.");
         }
 
         private static McpRunTestsResponse BuildResponse(List<TestResult> testResults)

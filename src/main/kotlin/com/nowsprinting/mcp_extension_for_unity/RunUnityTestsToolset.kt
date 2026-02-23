@@ -46,6 +46,14 @@ class RunUnityTestsToolset : McpToolset {
         internal fun sanitizeAssemblyNames(assemblyNames: List<String>?): List<String> {
             return assemblyNames?.filter { it.isNotBlank() } ?: emptyList()
         }
+
+        internal fun parseTestMode(testMode: String): McpTestMode? {
+            return when (testMode.trim().lowercase()) {
+                "editmode", "edit" -> McpTestMode.EditMode
+                "playmode", "play" -> McpTestMode.PlayMode
+                else -> null
+            }
+        }
     }
 
     @McpTool(name = "run_unity_tests")
@@ -87,10 +95,10 @@ class RunUnityTestsToolset : McpToolset {
                     message = "No protocol available. The solution may not be fully loaded."
                 )
 
-            val parsedMode = when (testMode.lowercase()) {
-                "playmode", "play" -> McpTestMode.PlayMode
-                else -> McpTestMode.EditMode
-            }
+            val parsedMode = parseTestMode(testMode)
+                ?: return TestErrorResult(
+                    message = "Invalid testMode: '$testMode'. Valid values: EditMode, edit, PlayMode, play (case insensitive)."
+                )
 
             val request = McpRunTestsRequest(
                 testMode = parsedMode,

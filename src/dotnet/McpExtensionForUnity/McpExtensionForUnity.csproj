@@ -12,12 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>McpExtensionForUnity.Tests</_Parameter1>
-    </AssemblyAttribute>
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- Core Rd framework types: IProtocol, RdCall, Lifetime, etc. -->
     <Reference Include="JetBrains.RdFramework">
       <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.RdFramework.dll</HintPath>

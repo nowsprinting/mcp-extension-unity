@@ -71,18 +71,14 @@ rider-unity-test-mcp-plugin/
 │       └── plugin.xml                                 # plugin descriptor
 ├── src/test/
 │   └── kotlin/com/nowsprinting/mcp_extension_for_unity/
-│       └── RunUnityTestsToolsetTest.kt                # Kotlin unit tests (6 cases)
+│       └── RunUnityTestsToolsetTest.kt                # Kotlin unit tests (20 cases)
 ├── src/dotnet/
 │   ├── McpExtensionForUnity.sln
 │   ├── McpExtensionForUnity/
 │   │   ├── McpExtensionForUnity.csproj
 │   │   ├── UnityTestMcpHandler.cs                     # C# handler → BackendUnityModel
-│   │   ├── McpValidation.cs                           # pure validation logic (no Rider deps)
 │   │   ├── ZoneMarker.cs
 │   │   └── Model/                                     # auto-generated C# model (gitignored)
-│   └── McpExtensionForUnity.Tests/
-│       ├── McpExtensionForUnity.Tests.csproj
-│       └── UnityTestMcpHandlerTest.cs                 # C# unit tests (5 cases)
 └── docs/plans/
     ├── 2026-02-22-poc-rider-mcp-unity-test.md        # PoC investigation report
     ├── 2026-02-22-step5-frontend-backend-model.md    # Step 5: FrontendBackendModel access
@@ -113,16 +109,6 @@ Output ZIP is generated under `build/distributions/`.
 ```bash
 JAVA_HOME=/usr/local/opt/openjdk@21 ./gradlew --no-configuration-cache test
 ```
-
-### C#
-
-```bash
-dotnet test src/dotnet/McpExtensionForUnity.Tests/McpExtensionForUnity.Tests.csproj
-```
-
-> **Note**: The C# test project compiles `McpValidation.cs` directly (via `<Compile Include>`) instead of
-> referencing the main DLL. This avoids a runtime failure caused by the main DLL's PE-level dependency on
-> Rider SDK assemblies, which are unavailable outside the IDE process.
 
 ---
 
@@ -172,9 +158,12 @@ Register in `plugin.xml`:
    java.lang.IllegalArgumentException: No tools found in class ...RunUnityTestsToolset
    ```
 
-5. **`assemblyNames` is required** — omitting it returns an immediate error on the Kotlin side.
-   Unity's test runner requires explicit assembly names; sending an empty `TestFilter` causes the
-   Unity Editor to disconnect. Find assembly names in `.asmdef` files or Rider's Unit Test Explorer.
+5. **All input validation is done on the Kotlin side (fail-fast)** — `assemblyNames` and `testMode`
+   are validated in `RunUnityTestsToolset.kt` before the Rd call is made. Invalid inputs return an
+   immediate error without reaching the C# backend or Unity Editor.
+   - `assemblyNames`: must contain at least one non-blank name (empty `TestFilter` disconnects Unity Editor)
+   - `testMode`: must be one of `EditMode`, `edit`, `PlayMode`, `play` (case insensitive)
+   - Find assembly names in `.asmdef` files or Rider's Unit Test Explorer.
 
 ---
 

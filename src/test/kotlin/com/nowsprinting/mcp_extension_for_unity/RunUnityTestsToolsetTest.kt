@@ -1,12 +1,59 @@
 package com.nowsprinting.mcp_extension_for_unity
 
+import com.nowsprinting.mcp_extension_for_unity.model.McpTestMode
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RunUnityTestsToolsetTest {
+
+    @Test
+    fun `parseTestMode - editmode returns EditMode`() {
+        assertEquals(McpTestMode.EditMode, RunUnityTestsToolset.parseTestMode("editmode"))
+    }
+
+    @Test
+    fun `parseTestMode - edit returns EditMode`() {
+        assertEquals(McpTestMode.EditMode, RunUnityTestsToolset.parseTestMode("edit"))
+    }
+
+    @Test
+    fun `parseTestMode - EditMode returns EditMode`() {
+        assertEquals(McpTestMode.EditMode, RunUnityTestsToolset.parseTestMode("EditMode"))
+    }
+
+    @Test
+    fun `parseTestMode - playmode returns PlayMode`() {
+        assertEquals(McpTestMode.PlayMode, RunUnityTestsToolset.parseTestMode("playmode"))
+    }
+
+    @Test
+    fun `parseTestMode - play returns PlayMode`() {
+        assertEquals(McpTestMode.PlayMode, RunUnityTestsToolset.parseTestMode("play"))
+    }
+
+    @Test
+    fun `parseTestMode - PlayMode returns PlayMode`() {
+        assertEquals(McpTestMode.PlayMode, RunUnityTestsToolset.parseTestMode("PlayMode"))
+    }
+
+    @Test
+    fun `parseTestMode - invalid value returns null`() {
+        assertNull(RunUnityTestsToolset.parseTestMode("invalid"))
+    }
+
+    @Test
+    fun `parseTestMode - empty string returns null`() {
+        assertNull(RunUnityTestsToolset.parseTestMode(""))
+    }
+
+    @Test
+    fun `parseTestMode - blank string returns null`() {
+        assertNull(RunUnityTestsToolset.parseTestMode("   "))
+    }
 
     @Test
     fun `sanitizeAssemblyNames - null returns empty list`() {
