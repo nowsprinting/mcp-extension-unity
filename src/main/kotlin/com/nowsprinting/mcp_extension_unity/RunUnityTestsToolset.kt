@@ -47,7 +47,8 @@ class RunUnityTestsToolset : McpToolset {
             return assemblyNames?.filter { it.isNotBlank() } ?: emptyList()
         }
 
-        internal fun parseTestMode(testMode: String): McpTestMode? {
+        internal fun parseTestMode(testMode: String?): McpTestMode? {
+            if (testMode == null) return null
             return when (testMode.trim().lowercase()) {
                 "editmode", "edit" -> McpTestMode.EditMode
                 "playmode", "play" -> McpTestMode.PlayMode
@@ -89,17 +90,13 @@ class RunUnityTestsToolset : McpToolset {
 
     @McpTool(name = "run_unity_tests")
     @McpDescription(description = """
-        Run Unity tests through Rider's test infrastructure.
-        IMPORTANT: assemblyNames is required. Unity's test runner matches tests by assembly name,
-        so omitting it results in no tests being found and may disconnect the Unity Editor.
-        Find assembly names in your project's .asmdef files or Rider's Unit Test Explorer
-        (e.g. 'MyTests.EditMode', 'MyTests.PlayMode').
-        Recommend filtering by assemblyNames, groupNames, or testNames to narrow down the tests to the scope of changes.
+        Run tests on Unity Test Runner through Rider's test infrastructure.
+        Recommend filtering by assemblyNames, categoryNames, groupNames, or testNames to narrow down the tests to the scope of changes.
     """)
     suspend fun run_unity_tests(
-        @McpDescription(description = "Test mode: EditMode or PlayMode (case insensitive, default: EditMode)")
-        testMode: String = "EditMode",
-        @McpDescription(description = "REQUIRED. The names of assemblies included in the run (without .dll extension, e.g. MyTestAssembly). Find them in .asmdef files or Rider's Unit Test Explorer.")
+        @McpDescription(description = "REQUIRED. `EditMode` or `PlayMode` (case insensitive). If the `includePlatforms` in the assembly definition file (.asmdef) contains `Editor`, it is an Edit Mode test; otherwise, it is a Play Mode test.")
+        testMode: String? = null,
+        @McpDescription(description = "REQUIRED. The names of assemblies included in the run (without .dll extension, e.g., 'MyFeature.Tests'). Specify the `name` property in the assembly definition file.")
         assemblyNames: List<String>? = null,
         @McpDescription(description = "The name of a Category to include in the run")
         categoryNames: List<String>? = null,
@@ -112,10 +109,7 @@ class RunUnityTestsToolset : McpToolset {
             val effectiveAssemblyNames = sanitizeAssemblyNames(assemblyNames)
             if (effectiveAssemblyNames.isEmpty()) {
                 return TestErrorResult(
-                    message = "assemblyNames is required and must contain at least one non-empty assembly name. " +
-                            "Unity's test runner requires explicit assembly names to match tests. " +
-                            "Find assembly names in your project's .asmdef files or Rider's Unit Test Explorer " +
-                            "(e.g. 'MyTests.EditMode', 'MyTests.PlayMode')."
+                    message = "assemblyNames is required and must contain at least one non-empty assembly name."
                 )
             }
 
@@ -128,7 +122,10 @@ class RunUnityTestsToolset : McpToolset {
 
             val parsedMode = parseTestMode(testMode)
                 ?: return TestErrorResult(
-                    message = "Invalid testMode: '$testMode'. Valid values: EditMode, edit, PlayMode, play (case insensitive)."
+                    message = if (testMode == null)
+                        "testMode is required. Valid values: EditMode, PlayMode (case insensitive)."
+                    else
+                        "Invalid testMode: '$testMode'. Valid values: EditMode, edit, PlayMode, play (case insensitive)."
                 )
 
             val request = McpRunTestsRequest(

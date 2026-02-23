@@ -58,6 +58,11 @@ class RunUnityTestsToolsetTest {
     }
 
     @Test
+    fun `parseTestMode - null returns null`() {
+        assertNull(RunUnityTestsToolset.parseTestMode(null))
+    }
+
+    @Test
     fun `sanitizeAssemblyNames - null returns empty list`() {
         val result = RunUnityTestsToolset.sanitizeAssemblyNames(null)
         assertTrue(result.isEmpty())
