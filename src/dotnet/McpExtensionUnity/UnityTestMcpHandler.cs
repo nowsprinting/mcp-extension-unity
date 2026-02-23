@@ -1,5 +1,5 @@
 // All resharper-unity APIs used in this file (BackendUnityHost, BackendUnityModel,
-// UnitTestLaunch, TestFilter, TestResult, RunResult, TestMode) are sourced from the
+// UnitTestLaunch, TestFilter, TestResult, RunResult, TestMode, RefreshType) are sourced from the
 // Apache 2.0 open-source resharper-unity plugin:
 //   https://github.com/JetBrains/resharper-unity
 // Key reference files:
@@ -28,7 +28,7 @@ using McpExtensionUnity.Model;
 
 namespace McpExtensionUnity
 {
-    // Binds UnityTestMcpModel to the solution protocol and handles RunTests calls.
+    // Binds UnityTestMcpModel to the solution protocol and handles RunTests / GetCompilationResult calls.
     // Bridges: Kotlin Frontend → (custom Rd) → C# Backend → BackendUnityModel → Unity Editor.
     [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
     public class UnityTestMcpHandler : IStartupActivity
@@ -63,6 +63,18 @@ namespace McpExtensionUnity
                 ourLogger.Info($"  BackendUnityModel={backendUnityModel?.GetType().Name ?? "null"}");
                 if (backendUnityModel == null)
                     return ErrorResponse("Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
+
+                // Refresh assets and check compilation before running tests
+                ourLogger.Info("UnityTestMcpHandler: RunTests - starting compilation check");
+                var compilationResult = await RefreshAndCheckCompilation(lt, backendUnityHost).ConfigureAwait(false);
+                if (!compilationResult.Success)
+                    return ErrorResponse(compilationResult.ErrorMessage);
+                ourLogger.Info("UnityTestMcpHandler: RunTests - compilation check passed");
+
+                // Re-acquire model after potential reconnection (Refresh may trigger domain reload)
+                backendUnityModel = backendUnityHost.BackendUnityModel.Value;
+                if (backendUnityModel == null)
+                    return ErrorResponse("Unity Editor disconnected after compilation check.");
 
                 // Build test filters from the MCP request
                 var testFilters = BuildTestFilters(request.Filter);
@@ -130,7 +142,118 @@ namespace McpExtensionUnity
                 ourLogger.Info($"  Building response, snapshot.Count={snapshot.Count}");
                 return BuildResponse(snapshot);
             });
-            ourLogger.Info("UnityTestMcpHandler: Rd handler registered");
+
+            RdTaskEx.SetAsync(model.GetCompilationResult, async (lt, _) =>
+            {
+                ourLogger.Info("UnityTestMcpHandler: GetCompilationResult handler invoked");
+                return await RefreshAndCheckCompilation(lt, backendUnityHost).ConfigureAwait(false);
+            });
+
+            ourLogger.Info("UnityTestMcpHandler: Rd handlers registered");
+        }
+
+        // Triggers AssetDatabase.Refresh(), waits for Unity reconnection (handles domain reload),
+        // then calls GetCompilationResult to verify compilation succeeded.
+        private static async Task<McpCompilationResponse> RefreshAndCheckCompilation(
+            Lifetime lt, BackendUnityHost host)
+        {
+            if (!host.IsConnectionEstablished())
+                return CompilationErrorResponse(
+                    "Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
+
+            var model = host.BackendUnityModel.Value;
+            if (model == null)
+                return CompilationErrorResponse(
+                    "Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
+
+            ourLogger.Info("RefreshAndCheckCompilation: starting Refresh");
+            try
+            {
+                var refreshTask = AwaitRdTask(lt, model.Refresh.Start(lt, RefreshType.Normal));
+                var timeoutTask = Task.Delay(TimeSpan.FromMinutes(2));
+                if (await Task.WhenAny(refreshTask, timeoutTask).ConfigureAwait(false) != refreshTask)
+                {
+                    ourLogger.Warn("RefreshAndCheckCompilation: Refresh timed out after 2 minutes");
+                    return CompilationErrorResponse("AssetDatabase.Refresh() timed out after 2 minutes.");
+                }
+                await refreshTask.ConfigureAwait(false);
+                ourLogger.Info("RefreshAndCheckCompilation: Refresh completed");
+            }
+            catch (Exception e)
+            {
+                // Refresh may trigger a domain reload which disconnects Unity temporarily — not fatal
+                ourLogger.Warn($"RefreshAndCheckCompilation: Refresh threw (likely domain reload): {e.Message}");
+            }
+
+            // Wait for the model to be available again (fires immediately if no reload occurred)
+            ourLogger.Info("RefreshAndCheckCompilation: waiting for Unity model reconnection");
+            var reconnectedModel = await WaitForUnityModel(lt, host, TimeSpan.FromMinutes(2))
+                .ConfigureAwait(false);
+            if (reconnectedModel == null)
+                return CompilationErrorResponse(
+                    "Unity Editor did not reconnect within 2 minutes after Refresh.");
+            ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
+
+            bool compilationSucceeded;
+            try
+            {
+                var compileTask = AwaitRdTask(lt, reconnectedModel.GetCompilationResult.Start(lt, Unit.Instance));
+                var timeoutTask = Task.Delay(TimeSpan.FromMinutes(1));
+                if (await Task.WhenAny(compileTask, timeoutTask).ConfigureAwait(false) != compileTask)
+                    return CompilationErrorResponse("GetCompilationResult timed out after 1 minute.");
+                compilationSucceeded = await compileTask.ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                return CompilationErrorResponse($"GetCompilationResult failed: {e.Message}");
+            }
+
+            ourLogger.Info($"RefreshAndCheckCompilation: compilationSucceeded={compilationSucceeded}");
+            if (!compilationSucceeded)
+                return new McpCompilationResponse(
+                    success: false,
+                    errorMessage: "Unity compilation failed. Fix compiler errors before running tests."
+                );
+            return new McpCompilationResponse(success: true, errorMessage: "");
+        }
+
+        // Waits for BackendUnityModel to become non-null. Fires immediately if already connected.
+        private static async Task<BackendUnityModel> WaitForUnityModel(
+            Lifetime lt, BackendUnityHost host, TimeSpan timeout)
+        {
+            var tcs = new TaskCompletionSource<BackendUnityModel>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            // Advise fires immediately with the current value if non-null
+            host.BackendUnityModel.Advise(lt, m =>
+            {
+                if (m != null) tcs.TrySetResult(m);
+            });
+            var reconnectTask = tcs.Task;
+            var timeoutTask = Task.Delay(timeout);
+            if (await Task.WhenAny(reconnectTask, timeoutTask).ConfigureAwait(false) != reconnectTask)
+                return null;
+            return await reconnectTask.ConfigureAwait(false);
+        }
+
+        // Converts IRdTask<T> to Task<T> using Advise on the result property.
+        // Advise fires once when the task result is set (not with the initial null state).
+        // RdTaskResult<T>.Unwrap() returns the value on success, throws on failure/cancellation.
+        private static Task<T> AwaitRdTask<T>(Lifetime lt, IRdTask<T> rdTask)
+        {
+            var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+            rdTask.Result.Advise(lt, result =>
+            {
+                if (result == null) return;
+                try
+                {
+                    tcs.TrySetResult(result.Unwrap());
+                }
+                catch (Exception e)
+                {
+                    tcs.TrySetException(e);
+                }
+            });
+            return tcs.Task;
         }
 
         private static McpRunTestsResponse ErrorResponse(string message) =>
@@ -139,6 +262,9 @@ namespace McpExtensionUnity
                 errorMessage: message,
                 testResults: new List<McpTestResultItem>()
             );
+
+        private static McpCompilationResponse CompilationErrorResponse(string message) =>
+            new McpCompilationResponse(success: false, errorMessage: message);
 
         private static List<TestFilter> BuildTestFilters(McpTestFilter filter)
         {

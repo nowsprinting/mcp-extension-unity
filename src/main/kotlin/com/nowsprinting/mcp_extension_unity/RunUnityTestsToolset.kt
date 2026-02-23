@@ -88,6 +88,38 @@ class RunUnityTestsToolset : McpToolset {
         }
     }
 
+    @McpTool(name = "get_unity_compilation_result")
+    @McpDescription(description = """
+        Trigger Unity's AssetDatabase.Refresh() and check if compilation succeeded.
+        Useful for verifying that code changes compile before running tests.
+    """)
+    suspend fun get_unity_compilation_result(): CompilationResult {
+        try {
+            val project = currentCoroutineContext().project
+            val solution = project.solution
+            val protocol = solution.protocol
+                ?: return CompilationErrorResult(
+                    errorMessage = "No protocol available. The solution may not be fully loaded."
+                )
+
+            LOG.info("get_unity_compilation_result: calling Rd model.getCompilationResult.startSuspending")
+            val response = withContext(protocol.scheduler.asCoroutineDispatcher) {
+                val model = getOrBindModel(protocol)
+                model.getCompilationResult.startSuspending(Unit)
+            }
+            LOG.info("get_unity_compilation_result: Rd call completed, success=${response.success}")
+
+            if (!response.success) {
+                return CompilationErrorResult(errorMessage = response.errorMessage)
+            }
+
+            return CompilationSuccessResult
+        } catch (e: Exception) {
+            LOG.error("get_unity_compilation_result failed", e)
+            return CompilationErrorResult(errorMessage = "${e.javaClass.simpleName}: ${e.message}")
+        }
+    }
+
     @McpTool(name = "run_unity_tests")
     @McpDescription(description = """
         Run tests on Unity Test Runner through Rider's test infrastructure.
@@ -154,6 +186,37 @@ class RunUnityTestsToolset : McpToolset {
             LOG.error("run_unity_tests failed", e)
             return TestErrorResult(message = "${e.javaClass.simpleName}: ${e.message}")
         }
+    }
+}
+
+@Serializable(with = CompilationResultSerializer::class)
+sealed interface CompilationResult
+
+data class CompilationErrorResult(
+    val errorMessage: String
+) : CompilationResult
+
+object CompilationSuccessResult : CompilationResult
+
+object CompilationResultSerializer : KSerializer<CompilationResult> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("CompilationResult")
+
+    override fun serialize(encoder: Encoder, value: CompilationResult) {
+        val jsonEncoder = encoder as JsonEncoder
+        val jsonObject = when (value) {
+            is CompilationErrorResult -> buildJsonObject {
+                put("success", false)
+                put("errorMessage", value.errorMessage)
+            }
+            is CompilationSuccessResult -> buildJsonObject {
+                put("success", true)
+            }
+        }
+        jsonEncoder.encodeJsonElement(jsonObject)
+    }
+
+    override fun deserialize(decoder: Decoder): CompilationResult {
+        throw UnsupportedOperationException("Deserialization not supported")
     }
 }
 
