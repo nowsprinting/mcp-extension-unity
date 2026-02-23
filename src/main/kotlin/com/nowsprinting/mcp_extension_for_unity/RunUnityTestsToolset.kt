@@ -54,6 +54,37 @@ class RunUnityTestsToolset : McpToolset {
                 else -> null
             }
         }
+
+        internal fun filterLeafResults(results: List<McpTestResultItem>): TestRunResult {
+            val parentIds = results.mapNotNullTo(mutableSetOf()) {
+                it.parentId.takeIf { id -> id.isNotBlank() }
+            }
+            val leaves = results.filter { it.testId !in parentIds }
+
+            var passCount = 0
+            var skipCount = 0
+            var failCount = 0
+            var inconclusiveCount = 0
+            val failedTests = mutableListOf<TestDetail>()
+            val inconclusiveTests = mutableListOf<TestDetail>()
+
+            for (leaf in leaves) {
+                when (leaf.status) {
+                    McpTestResultStatus.Success -> passCount++
+                    McpTestResultStatus.Failure -> {
+                        failCount++
+                        failedTests.add(TestDetail(testId = leaf.testId, output = leaf.output, duration = leaf.duration))
+                    }
+                    McpTestResultStatus.Ignored -> skipCount++
+                    McpTestResultStatus.Inconclusive -> {
+                        inconclusiveCount++
+                        inconclusiveTests.add(TestDetail(testId = leaf.testId, output = leaf.output, duration = leaf.duration))
+                    }
+                }
+            }
+
+            return TestRunResult(passCount, skipCount, failCount, inconclusiveCount, failedTests, inconclusiveTests)
+        }
     }
 
     @McpTool(name = "run_unity_tests")
@@ -121,18 +152,7 @@ class RunUnityTestsToolset : McpToolset {
                 return TestErrorResult(message = response.errorMessage)
             }
 
-            return TestRunResult(
-                passCount = response.passCount,
-                skipCount = response.skipCount,
-                failCount = response.failCount,
-                inconclusiveCount = response.inconclusiveCount,
-                failedTests = response.failedTests.map {
-                    TestDetail(testId = it.testId, output = it.output, duration = it.duration)
-                },
-                inconclusiveTests = response.inconclusiveTests.map {
-                    TestDetail(testId = it.testId, output = it.output, duration = it.duration)
-                }
-            )
+            return filterLeafResults(response.testResults)
         } catch (e: Exception) {
             LOG.error("run_unity_tests failed", e)
             return TestErrorResult(message = "${e.javaClass.simpleName}: ${e.message}")

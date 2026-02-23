@@ -128,12 +128,7 @@ namespace McpExtensionForUnity
             new McpRunTestsResponse(
                 success: false,
                 errorMessage: message,
-                passCount: 0,
-                failCount: 0,
-                skipCount: 0,
-                inconclusiveCount: 0,
-                failedTests: new List<McpTestDetail>(),
-                inconclusiveTests: new List<McpTestDetail>()
+                testResults: new List<McpTestResultItem>()
             );
 
         private static List<TestFilter> BuildTestFilters(McpTestFilter filter)
@@ -157,41 +152,34 @@ namespace McpExtensionForUnity
 
         private static McpRunTestsResponse BuildResponse(List<TestResult> testResults)
         {
-            var failedTests = new List<McpTestDetail>();
-            var inconclusiveTests = new List<McpTestDetail>();
-            int passCount = 0, failCount = 0, skipCount = 0, inconclusiveCount = 0;
-
+            var items = new List<McpTestResultItem>();
             foreach (var result in testResults)
             {
-                switch (result.Status)
-                {
-                    case Status.Success:
-                        passCount++;
-                        break;
-                    case Status.Failure:
-                        failCount++;
-                        failedTests.Add(new McpTestDetail(result.TestId, result.Output, result.Duration));
-                        break;
-                    case Status.Ignored:
-                        skipCount++;
-                        break;
-                    case Status.Inconclusive:
-                        inconclusiveCount++;
-                        inconclusiveTests.Add(new McpTestDetail(result.TestId, result.Output, result.Duration));
-                        break;
-                }
+                items.Add(new McpTestResultItem(
+                    testId: result.TestId,
+                    parentId: result.ParentId ?? "",
+                    output: result.Output,
+                    duration: result.Duration,
+                    status: ToMcpStatus(result.Status)
+                ));
             }
-
             return new McpRunTestsResponse(
                 success: true,
                 errorMessage: "",
-                passCount: passCount,
-                failCount: failCount,
-                skipCount: skipCount,
-                inconclusiveCount: inconclusiveCount,
-                failedTests: failedTests,
-                inconclusiveTests: inconclusiveTests
+                testResults: items
             );
+        }
+
+        private static McpTestResultStatus ToMcpStatus(Status status)
+        {
+            switch (status)
+            {
+                case Status.Success: return McpTestResultStatus.Success;
+                case Status.Failure: return McpTestResultStatus.Failure;
+                case Status.Ignored: return McpTestResultStatus.Ignored;
+                case Status.Inconclusive: return McpTestResultStatus.Inconclusive;
+                default: throw new ArgumentException($"Unexpected status: {status}");
+            }
         }
     }
 }

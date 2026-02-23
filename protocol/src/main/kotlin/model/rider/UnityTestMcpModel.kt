@@ -27,21 +27,25 @@ object UnityTestMcpModel : Root() {
         field("filter", McpTestFilter)
     }
 
-    private val McpTestDetail = structdef {
+    private val McpTestResultStatus = enum {
+        +"Success"
+        +"Failure"
+        +"Ignored"
+        +"Inconclusive"
+    }
+
+    private val McpTestResultItem = structdef {
         field("testId", string)
+        field("parentId", string)
         field("output", string)
         field("duration", int)
+        field("status", McpTestResultStatus)
     }
 
     private val McpRunTestsResponse = structdef {
         field("success", bool)
         field("errorMessage", string)
-        field("passCount", int)
-        field("failCount", int)
-        field("skipCount", int)
-        field("inconclusiveCount", int)
-        field("failedTests", immutableList(McpTestDetail))
-        field("inconclusiveTests", immutableList(McpTestDetail))
+        field("testResults", immutableList(McpTestResultItem))
     }
 
     init {
