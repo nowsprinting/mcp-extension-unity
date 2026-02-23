@@ -141,7 +141,7 @@ class RunUnityTestsToolset : McpToolset {
             val effectiveAssemblyNames = sanitizeAssemblyNames(assemblyNames)
             if (effectiveAssemblyNames.isEmpty()) {
                 return TestErrorResult(
-                    message = "assemblyNames is required and must contain at least one non-empty assembly name."
+                    errorMessage ="assemblyNames is required and must contain at least one non-empty assembly name."
                 )
             }
 
@@ -149,12 +149,12 @@ class RunUnityTestsToolset : McpToolset {
             val solution = project.solution
             val protocol = solution.protocol
                 ?: return TestErrorResult(
-                    message = "No protocol available. The solution may not be fully loaded."
+                    errorMessage ="No protocol available. The solution may not be fully loaded."
                 )
 
             val parsedMode = parseTestMode(testMode)
                 ?: return TestErrorResult(
-                    message = if (testMode == null)
+                    errorMessage =if (testMode == null)
                         "testMode is required. Valid values: EditMode, PlayMode (case insensitive)."
                     else
                         "Invalid testMode: '$testMode'. Valid values: EditMode, edit, PlayMode, play (case insensitive)."
@@ -178,13 +178,13 @@ class RunUnityTestsToolset : McpToolset {
             LOG.info("run_unity_tests: Rd call completed, success=${response.success}")
 
             if (!response.success) {
-                return TestErrorResult(message = response.errorMessage)
+                return TestErrorResult(errorMessage =response.errorMessage)
             }
 
             return filterLeafResults(response.testResults)
         } catch (e: Exception) {
             LOG.error("run_unity_tests failed", e)
-            return TestErrorResult(message = "${e.javaClass.simpleName}: ${e.message}")
+            return TestErrorResult(errorMessage ="${e.javaClass.simpleName}: ${e.message}")
         }
     }
 }
@@ -231,7 +231,7 @@ data class TestDetail(
 sealed interface RunUnityTestsResult
 
 data class TestErrorResult(
-    val message: String
+    val errorMessage: String
 ) : RunUnityTestsResult
 
 data class TestRunResult(
@@ -254,7 +254,7 @@ object RunUnityTestsResultSerializer : KSerializer<RunUnityTestsResult> {
         val jsonObject = when (value) {
             is TestErrorResult -> buildJsonObject {
                 put("success", false)
-                put("message", value.message)
+                put("errorMessage", value.errorMessage)
             }
             is TestRunResult -> buildJsonObject {
                 put("success", value.success)

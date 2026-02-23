@@ -100,9 +100,9 @@ class RunUnityTestsToolsetTest {
 
     @Test
     fun `TestErrorResult serializes to error pattern`() {
-        val result: RunUnityTestsResult = TestErrorResult(message = "Some infrastructure error")
+        val result: RunUnityTestsResult = TestErrorResult(errorMessage = "Some infrastructure error")
         val json = Json.encodeToString(result)
-        assertEquals("""{"success":false,"message":"Some infrastructure error"}""", json)
+        assertEquals("""{"success":false,"errorMessage":"Some infrastructure error"}""", json)
     }
 
     @Test
