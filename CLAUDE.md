@@ -10,7 +10,7 @@ A Rider IDE plugin (PoC stage) that extends the built-in JetBrains MCP Server wi
 The goal is to allow Coding Agents (e.g., Claude Code) to run Unity tests through Rider's test infrastructure,
 rather than invoking Unity directly.
 
-**Current status**: Steps 1–6 complete. Custom Rd model implemented; C# backend handler calls `BackendUnityModel` to run Unity tests. End-to-end test execution pipeline is ready for verification.
+**Current status**: Steps 1–6 complete. Step 7 (end-to-end verification) in progress. Custom Rd model implemented; C# backend handler calls `BackendUnityModel` to run Unity tests. Awaiting human verification with a real Unity project.
 
 ---
 
@@ -98,6 +98,26 @@ Output ZIP is generated under `build/distributions/`.
 
 ---
 
+## Unit Tests
+
+### Kotlin
+
+```bash
+JAVA_HOME=/usr/local/opt/openjdk@21 ./gradlew --no-configuration-cache test
+```
+
+### C#
+
+```bash
+dotnet test src/dotnet/McpExtensionForUnity.Tests/McpExtensionForUnity.Tests.csproj
+```
+
+> **Note**: The C# test project compiles `McpValidation.cs` directly (via `<Compile Include>`) instead of
+> referencing the main DLL. This avoids a runtime failure caused by the main DLL's PE-level dependency on
+> Rider SDK assemblies, which are unavailable outside the IDE process.
+
+---
+
 ## MCP Extension Pattern
 
 Use `McpToolset` + `@McpTool` + `@McpDescription` (confirmed working in Rider 2025.3.3):
@@ -156,7 +176,7 @@ Register in `plugin.xml`:
 | 4 | Verify echo-back response from Claude Code | Done |
 | 5 | Access `FrontendBackendModel` to get Unity Editor connection state | Done |
 | 6 | Define custom Rd model + implement C# handler calling `BackendUnityModel` | Done |
-| 7 | Verify end-to-end test execution with a real Unity project | Pending |
+| 7 | Verify end-to-end test execution with a real Unity project | In Progress |
 
 ---
 
@@ -164,6 +184,8 @@ Register in `plugin.xml`:
 
 - `docs/plans/2026-02-22-poc-rider-mcp-unity-test.md` — Full PoC investigation: Rider architecture,
   Rd model details, MCP extension mechanism, encountered issues, and verification results.
+- `docs/plans/2026-02-23-step7-end-to-end-verification.md` — Step 7: End-to-end verification checklist
+  with phases for build, install, Unity project setup, MCP configuration, and test case execution.
 
 ## External References
 

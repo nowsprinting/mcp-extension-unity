@@ -12,6 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>McpExtensionForUnity.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Core Rd framework types: IProtocol, RdCall, Lifetime, etc. -->
     <Reference Include="JetBrains.RdFramework">
       <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.RdFramework.dll</HintPath>
@@ -40,6 +46,11 @@
     <!-- SolutionComponent, ISolution, IProtocol (DI registration), IReSharperHostCoreSharedFeatureZone -->
     <Reference Include="JetBrains.RdBackend.Common">
       <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.RdBackend.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- ILogger (JetBrains.Util.ILogger), Logger.GetLogger<T>() (JetBrains.Util.Logging.Logger) -->
+    <Reference Include="JetBrains.Platform.Core">
+      <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.Platform.Core.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <!-- [NotNull] and other annotations -->

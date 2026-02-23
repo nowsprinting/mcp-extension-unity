@@ -11,8 +11,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Application.Components;
 using JetBrains.Application.Parts;
 using JetBrains.Core;
+using JetBrains.Util;
+using JetBrains.Util.Logging;
 using JetBrains.Lifetimes;
 using JetBrains.ProjectModel;
 using JetBrains.Rd;
@@ -26,36 +29,55 @@ namespace McpExtensionForUnity
     // Binds UnityTestMcpModel to the solution protocol and handles RunTests calls.
     // Bridges: Kotlin Frontend → (custom Rd) → C# Backend → BackendUnityModel → Unity Editor.
     [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
-    public class UnityTestMcpHandler
+    public class UnityTestMcpHandler : IStartupActivity
     {
+        private static readonly ILogger ourLogger = Logger.GetLogger<UnityTestMcpHandler>();
+
         public UnityTestMcpHandler(
             Lifetime lifetime,
             ISolution solution,
             IProtocol protocol,
             BackendUnityHost backendUnityHost)
         {
+            ourLogger.Info("UnityTestMcpHandler: constructor called, binding Rd model");
             var model = new UnityTestMcpModel(lifetime, protocol);
 
             RdTaskEx.SetAsync(model.RunTests, async (lt, request) =>
             {
+                ourLogger.Info("UnityTestMcpHandler: RunTests handler invoked");
+                ourLogger.Info($"  TestMode={request.TestMode}, " +
+                               $"Assemblies=[{string.Join(",", request.Filter.AssemblyNames)}], " +
+                               $"Tests=[{string.Join(",", request.Filter.TestNames)}], " +
+                               $"Groups=[{string.Join(",", request.Filter.GroupNames)}], " +
+                               $"Categories=[{string.Join(",", request.Filter.CategoryNames)}]");
+
                 // Check Unity Editor connectivity
-                if (!backendUnityHost.IsConnectionEstablished())
+                var isConnected = backendUnityHost.IsConnectionEstablished();
+                ourLogger.Info($"  IsConnectionEstablished={isConnected}");
+                if (!isConnected)
                     return ErrorResponse("Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
 
                 var backendUnityModel = backendUnityHost.BackendUnityModel.Value;
+                ourLogger.Info($"  BackendUnityModel={backendUnityModel?.GetType().Name ?? "null"}");
                 if (backendUnityModel == null)
                     return ErrorResponse("Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
 
+                if (!McpValidation.HasValidAssemblyNames(request.Filter.AssemblyNames))
+                    return ErrorResponse("assemblyNames is required. Provide at least one test assembly name.");
+
                 // Build test filters from the MCP request
                 var testFilters = BuildTestFilters(request.Filter);
+                ourLogger.Info($"  TestFilters count={testFilters.Count}");
                 var testMode = request.TestMode == McpTestMode.PlayMode ? TestMode.Play : TestMode.Edit;
 
+                var sessionId = Guid.NewGuid();
                 var launch = new UnitTestLaunch(
-                    sessionId: Guid.NewGuid(),
+                    sessionId: sessionId,
                     testFilters: testFilters,
                     testMode: testMode,
                     clientControllerInfo: null
                 );
+                ourLogger.Info($"  UnitTestLaunch created, sessionId={sessionId}");
 
                 // Collect results asynchronously
                 var testResults = new List<TestResult>();
@@ -66,14 +88,23 @@ namespace McpExtensionForUnity
                 {
                     // Only collect terminal statuses (not Pending/Running)
                     if (result.Status != Status.Pending && result.Status != Status.Running)
+                    {
+                        ourLogger.Info($"  TestResult received: testId={result.TestId}, status={result.Status}");
                         testResults.Add(result);
+                    }
                 });
-                launch.RunResult.Advise(lt, runResult => tcs.TrySetResult(runResult));
+                launch.RunResult.Advise(lt, runResult =>
+                {
+                    ourLogger.Info($"  RunResult received: passed={runResult.Passed}, testResults.Count={testResults.Count}");
+                    tcs.TrySetResult(runResult);
+                });
 
                 // Trigger test execution in Unity Editor
                 backendUnityModel.UnitTestLaunch.Value = launch;
+                ourLogger.Info("  UnitTestLaunch.Value set");
                 // Fire-and-forget: results come via TestResult/RunResult signals
                 var _ = backendUnityModel.RunUnitTestLaunch.Start(lt, Unit.Instance);
+                ourLogger.Info("  RunUnitTestLaunch.Start called");
 
                 // Wait for completion with 5-minute timeout
                 RunResult finalResult;
@@ -90,8 +121,10 @@ namespace McpExtensionForUnity
                     }
                 }
 
+                ourLogger.Info($"  Building response, testResults.Count={testResults.Count}");
                 return BuildResponse(testResults);
             });
+            ourLogger.Info("UnityTestMcpHandler: Rd handler registered");
         }
 
         private static McpRunTestsResponse ErrorResponse(string message) =>
@@ -121,11 +154,8 @@ namespace McpExtensionForUnity
                 return filters;
             }
 
-            // No assembly filter: run all matching tests
-            return new List<TestFilter>
-            {
-                new TestFilter("", testNames, groupNames, categoryNames)
-            };
+            // assemblyNames should have been validated before calling this method
+            throw new InvalidOperationException("BuildTestFilters called with no valid assembly names. Validate with HasValidAssemblyNames first.");
         }
 
         private static McpRunTestsResponse BuildResponse(List<TestResult> testResults)
