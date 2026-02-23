@@ -12,7 +12,13 @@ import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
 import com.jetbrains.rider.projectView.solution
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.*
 import java.util.concurrent.ConcurrentHashMap
 
 class RunUnityTestsToolset : McpToolset {
@@ -66,27 +72,19 @@ class RunUnityTestsToolset : McpToolset {
         try {
             val effectiveAssemblyNames = sanitizeAssemblyNames(assemblyNames)
             if (effectiveAssemblyNames.isEmpty()) {
-                return RunUnityTestsResult(
-                    error = "assemblyNames is required and must contain at least one non-empty assembly name. " +
+                return TestErrorResult(
+                    message = "assemblyNames is required and must contain at least one non-empty assembly name. " +
                             "Unity's test runner requires explicit assembly names to match tests. " +
                             "Find assembly names in your project's .asmdef files or Rider's Unit Test Explorer " +
-                            "(e.g. 'MyTests.EditMode', 'MyTests.PlayMode').",
-                    passCount = 0, failCount = 0, skipCount = 0, inconclusiveCount = 0,
-                    failedTests = emptyList(), inconclusiveTests = emptyList()
+                            "(e.g. 'MyTests.EditMode', 'MyTests.PlayMode')."
                 )
             }
 
             val project = currentCoroutineContext().project
             val solution = project.solution
             val protocol = solution.protocol
-                ?: return RunUnityTestsResult(
-                    error = "No protocol available. The solution may not be fully loaded.",
-                    passCount = 0,
-                    failCount = 0,
-                    skipCount = 0,
-                    inconclusiveCount = 0,
-                    failedTests = emptyList(),
-                    inconclusiveTests = emptyList()
+                ?: return TestErrorResult(
+                    message = "No protocol available. The solution may not be fully loaded."
                 )
 
             val parsedMode = when (testMode.lowercase()) {
@@ -112,22 +110,13 @@ class RunUnityTestsToolset : McpToolset {
             LOG.info("run_unity_tests: Rd call completed, success=${response.success}")
 
             if (!response.success) {
-                return RunUnityTestsResult(
-                    error = response.errorMessage,
-                    passCount = 0,
-                    failCount = 0,
-                    skipCount = 0,
-                    inconclusiveCount = 0,
-                    failedTests = emptyList(),
-                    inconclusiveTests = emptyList()
-                )
+                return TestErrorResult(message = response.errorMessage)
             }
 
-            return RunUnityTestsResult(
-                error = null,
-                failCount = response.failCount,
+            return TestRunResult(
                 passCount = response.passCount,
                 skipCount = response.skipCount,
+                failCount = response.failCount,
                 inconclusiveCount = response.inconclusiveCount,
                 failedTests = response.failedTests.map {
                     TestDetail(testId = it.testId, output = it.output, duration = it.duration)
@@ -138,15 +127,7 @@ class RunUnityTestsToolset : McpToolset {
             )
         } catch (e: Exception) {
             LOG.error("run_unity_tests failed", e)
-            return RunUnityTestsResult(
-                error = "${e.javaClass.simpleName}: ${e.message}",
-                passCount = 0,
-                failCount = 0,
-                skipCount = 0,
-                inconclusiveCount = 0,
-                failedTests = emptyList(),
-                inconclusiveTests = emptyList()
-            )
+            return TestErrorResult(message = "${e.javaClass.simpleName}: ${e.message}")
         }
     }
 }
@@ -158,13 +139,65 @@ data class TestDetail(
     val duration: Int
 )
 
-@Serializable
-data class RunUnityTestsResult(
-    val error: String?,
+@Serializable(with = RunUnityTestsResultSerializer::class)
+sealed interface RunUnityTestsResult
+
+data class TestErrorResult(
+    val message: String
+) : RunUnityTestsResult
+
+data class TestRunResult(
     val passCount: Int,
-    val failCount: Int,
     val skipCount: Int,
+    val failCount: Int,
     val inconclusiveCount: Int,
     val failedTests: List<TestDetail>,
     val inconclusiveTests: List<TestDetail>
-)
+) : RunUnityTestsResult {
+    val success: Boolean
+        get() = failCount == 0 && inconclusiveCount == 0 && passCount > 0
+}
+
+object RunUnityTestsResultSerializer : KSerializer<RunUnityTestsResult> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("RunUnityTestsResult")
+
+    override fun serialize(encoder: Encoder, value: RunUnityTestsResult) {
+        val jsonEncoder = encoder as JsonEncoder
+        val jsonObject = when (value) {
+            is TestErrorResult -> buildJsonObject {
+                put("success", false)
+                put("message", value.message)
+            }
+            is TestRunResult -> buildJsonObject {
+                put("success", value.success)
+                put("passCount", value.passCount)
+                put("skipCount", value.skipCount)
+                put("failCount", value.failCount)
+                put("inconclusiveCount", value.inconclusiveCount)
+                putJsonArray("failedTests") {
+                    value.failedTests.forEach { detail ->
+                        addJsonObject {
+                            put("testId", detail.testId)
+                            put("output", detail.output)
+                            put("duration", detail.duration)
+                        }
+                    }
+                }
+                putJsonArray("inconclusiveTests") {
+                    value.inconclusiveTests.forEach { detail ->
+                        addJsonObject {
+                            put("testId", detail.testId)
+                            put("output", detail.output)
+                            put("duration", detail.duration)
+                        }
+                    }
+                }
+            }
+        }
+        jsonEncoder.encodeJsonElement(jsonObject)
+    }
+
+    override fun deserialize(decoder: Decoder): RunUnityTestsResult {
+        throw UnsupportedOperationException("Deserialization not supported")
+    }
+}
