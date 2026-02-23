@@ -8,7 +8,9 @@
 //   UnityNUnitServiceProvider.cs — TestFilter usage and test execution flow
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Application.Components;
@@ -76,8 +78,12 @@ namespace McpExtensionForUnity
                 );
                 ourLogger.Info($"  UnitTestLaunch created, sessionId={sessionId}");
 
-                // Collect results asynchronously
-                var testResults = new List<TestResult>();
+                // Collect results asynchronously.
+                // ConcurrentDictionary provides thread-safe access across the Rd scheduler thread
+                // (TestResult.Advise callbacks) and the thread pool thread (after await tcs.Task).
+                // Keying by testId also deduplicates: if the same test reports multiple terminal
+                // statuses, only the last one is retained (last-write-wins).
+                var testResults = new ConcurrentDictionary<string, TestResult>();
                 var tcs = new TaskCompletionSource<RunResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
                 // Subscribe BEFORE setting the launch to avoid missing early events
@@ -86,8 +92,8 @@ namespace McpExtensionForUnity
                     // Only collect terminal statuses (not Pending/Running)
                     if (result.Status != Status.Pending && result.Status != Status.Running)
                     {
-                        ourLogger.Info($"  TestResult received: testId={result.TestId}, status={result.Status}");
-                        testResults.Add(result);
+                        ourLogger.Info($"  TestResult received: testId={result.TestId}, parentId={result.ParentId ?? "null"}, status={result.Status}");
+                        testResults[result.TestId] = result;
                     }
                 });
                 launch.RunResult.Advise(lt, runResult =>
@@ -118,8 +124,11 @@ namespace McpExtensionForUnity
                     }
                 }
 
-                ourLogger.Info($"  Building response, testResults.Count={testResults.Count}");
-                return BuildResponse(testResults);
+                // Take a snapshot to prevent concurrent modification during BuildResponse iteration.
+                // Any late-arriving TestResult callbacks after this point are safely ignored.
+                var snapshot = testResults.Values.ToList();
+                ourLogger.Info($"  Building response, snapshot.Count={snapshot.Count}");
+                return BuildResponse(snapshot);
             });
             ourLogger.Info("UnityTestMcpHandler: Rd handler registered");
         }
@@ -178,7 +187,11 @@ namespace McpExtensionForUnity
                 case Status.Failure: return McpTestResultStatus.Failure;
                 case Status.Ignored: return McpTestResultStatus.Ignored;
                 case Status.Inconclusive: return McpTestResultStatus.Inconclusive;
-                default: throw new ArgumentException($"Unexpected status: {status}");
+                // Throwing on unknown status would crash the handler and drop the entire response.
+                // Mapping to Inconclusive lets the run complete and surfaces the issue via logs.
+                default:
+                    ourLogger.Warn($"Unexpected test status: {status}, mapping to Inconclusive");
+                    return McpTestResultStatus.Inconclusive;
             }
         }
     }
