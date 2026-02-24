@@ -12,8 +12,6 @@ rather than invoking Unity directly.
 
 **Current status**: Steps 1–8 complete. Cancellation/disconnection handling and `MCP_TOOL_TIMEOUT` env var added in Step 8.
 
----
-
 ## Architecture
 
 ```
@@ -37,20 +35,16 @@ Rider itself uses two separate Rd (Reactive Distributed) protocol connections:
 
 The Kotlin Frontend **cannot** directly access `BackendUnityModel`; a custom Rd model (`UnityTestMcpModel`) bridges the two layers, implemented in Step 6.
 
----
-
 ## Tech Stack
 
-| Item | Value |
-|---|---|
-| Language | Kotlin 2.3.0 |
+| Item          | Value                                       |
+|---------------|---------------------------------------------|
+| Language      | Kotlin 2.3.0                                |
 | Serialization | kotlinx-serialization 1.6.3 (`compileOnly`) |
-| Build plugin | IntelliJ Platform Gradle Plugin 2.11.0 |
-| Target IDE | Rider 2025.3.3 (build `RD-253.31033.136`) |
-| JDK | 21 |
-| Gradle | 9.3.1 |
-
----
+| Build plugin  | IntelliJ Platform Gradle Plugin 2.11.0      |
+| Target IDE    | Rider 2025.3.3 (build `RD-253.31033.136`)   |
+| JDK           | 21                                          |
+| Gradle        | 9.3.1                                       |
 
 ## Key Files
 
@@ -85,8 +79,6 @@ mcp-extension-unity/
     └── 2026-02-23-step7-end-to-end-verification.md   # Step 7: E2E verification checklist (9 test cases)
 ```
 
----
-
 ## Build
 
 ```bash
@@ -100,17 +92,11 @@ Output ZIP is generated under `build/distributions/`.
 
 **Install**: Rider → Settings → Plugins → Install Plugin from Disk → select ZIP → restart Rider.
 
----
-
 ## Unit Tests
-
-### Kotlin
 
 ```bash
 JAVA_HOME=/usr/local/opt/openjdk@21 ./gradlew --no-configuration-cache test
 ```
-
----
 
 ## MCP Extension Pattern
 
@@ -137,8 +123,6 @@ Register in `plugin.xml`:
 
 > **Note**: The legacy `AbstractMcpTool<T>` pattern (used in the mcpExtensionPlugin demo) is **deprecated**
 > in the Rider 2025.3.3 bundled MCP Server. Always use `McpToolset` + annotations.
-
----
 
 ## Important Constraints
 
@@ -173,22 +157,18 @@ Register in `plugin.xml`:
    - **Known limitation**: Unity Test Runner manual Cancel may not fire `RunResult`, causing a wait until timeout.
      Set `MCP_TOOL_TIMEOUT` to a smaller value to reduce feedback delay in this case.
 
----
-
 ## Development Roadmap
 
-| Step | Description | Status |
-|---|---|---|
-| 1 | Set up Gradle project with IntelliJ Platform Plugin | Done |
-| 2 | Register MCP extension point in plugin.xml | Done |
-| 3 | Implement `RunUnityTestsToolset` with `@McpTool` | Done |
-| 4 | Verify echo-back response from Claude Code | Done |
-| 5 | Access `FrontendBackendModel` to get Unity Editor connection state | Done |
-| 6 | Define custom Rd model + implement C# handler calling `BackendUnityModel` | Done |
-| 7 | Verify end-to-end test execution with a real Unity project | Done |
-| 8 | Add cancellation/disconnection handling and `MCP_TOOL_TIMEOUT` env var | Done |
-
----
+| Step | Description                                                               | Status |
+|------|---------------------------------------------------------------------------|--------|
+| 1    | Set up Gradle project with IntelliJ Platform Plugin                       | Done   |
+| 2    | Register MCP extension point in plugin.xml                                | Done   |
+| 3    | Implement `RunUnityTestsToolset` with `@McpTool`                          | Done   |
+| 4    | Verify echo-back response from Claude Code                                | Done   |
+| 5    | Access `FrontendBackendModel` to get Unity Editor connection state        | Done   |
+| 6    | Define custom Rd model + implement C# handler calling `BackendUnityModel` | Done   |
+| 7    | Verify end-to-end test execution with a real Unity project                | Done   |
+| 8    | Add cancellation/disconnection handling and `MCP_TOOL_TIMEOUT` env var    | Done   |
 
 ## Reference Documents
 
@@ -206,13 +186,15 @@ Register in `plugin.xml`:
 - [JetBrains MCP Server Plugin](https://github.com/JetBrains/mcp-server-plugin) — extension point spec
 - [MCP Server | JetBrains Rider Documentation](https://www.jetbrains.com/help/rider/mcp-server.html)
 
----
-
 ## Language
 
 - All files, commit messages, GitHub Issues, and Pull Requests must be written in **English**.
 - Exception: `docs/` — write in **Japanese**.
 
-## Implementation Plan
+## Plan Mode Guidelines
 
-After a plan file is approved, copy it to `./docs/plans/` directory with the current datetime prefix in `yyyy-MM-dd` format. For example: `2026-01-18-plan-name.md`
+If the plan involves **implementation** (writing or modifying code):
+- Read the `/plan-guide` skill for test design guidelines and development workflow
+- Include test cases and the development workflow in the plan
+
+After a plan is approved, copy the plan file to `./Docs/Plans/` directory with the current datetime prefix in `yyyy-MM-dd` format. For example: `2026-01-18-plan-name.md`
