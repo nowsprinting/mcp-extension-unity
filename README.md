@@ -100,8 +100,14 @@ If it is not yet enabled:
 2. Click **Enable MCP Server**.
 3. Click **Auto-Configure** for the agent you want to use.
 
-> [!NOTE]  
+> [!NOTE]
 > See the [MCP Server](https://www.jetbrains.com/help/rider/mcp-server.html) for more details on configuration and usage.
+
+### Environment Variables
+
+| Variable           | Default | Description                                                                                                                                                 |
+|--------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `MCP_TOOL_TIMEOUT` | `300`   | Timeout in seconds for `run_unity_tests`. Set a smaller value to get faster feedback when Unity Test Runner cancellation does not fire a completion signal. |
 
 ## Agent Skill Example
 

@@ -90,6 +90,13 @@ namespace McpExtensionUnity
                 );
                 ourLogger.Info($"  UnitTestLaunch created, sessionId={sessionId}");
 
+                // Read timeout from MCP_TOOL_TIMEOUT env var (seconds). Default: 300 (5 minutes).
+                var timeoutSeconds = 300;
+                var envTimeout = Environment.GetEnvironmentVariable("MCP_TOOL_TIMEOUT");
+                if (envTimeout != null && int.TryParse(envTimeout, out var parsed) && parsed > 0)
+                    timeoutSeconds = parsed;
+                ourLogger.Info($"  Timeout={timeoutSeconds}s");
+
                 // Collect results asynchronously.
                 // ConcurrentDictionary provides thread-safe access across the Rd scheduler thread
                 // (TestResult.Advise callbacks) and the thread pool thread (after await tcs.Task).
@@ -97,6 +104,22 @@ namespace McpExtensionUnity
                 // statuses, only the last one is retained (last-write-wins).
                 var testResults = new ConcurrentDictionary<string, TestResult>();
                 var tcs = new TaskCompletionSource<RunResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                // Cancel TCS when the Rd lifetime ends (protocol disconnect or Kotlin coroutine cancel).
+                // Runs on the Rd scheduler thread; TrySetCanceled is thread-safe.
+                lt.OnTermination(() => tcs.TrySetCanceled());
+
+                // Monitor for Unity Editor disconnection during test execution.
+                // BackendUnityModel.Advise fires immediately with the current value, then again on change.
+                // When Unity disconnects, the model becomes null — signal failure immediately.
+                // Runs on the Rd scheduler thread; TrySetException is thread-safe.
+                backendUnityHost.BackendUnityModel.Advise(lt, unityModel =>
+                {
+                    if (unityModel == null)
+                        tcs.TrySetException(new Exception(
+                            "Unity Editor disconnected during test execution. " +
+                            "This may be caused by a domain reload, crash, or the editor being closed."));
+                });
 
                 // Subscribe BEFORE setting the launch to avoid missing early events
                 launch.TestResult.Advise(lt, result =>
@@ -121,18 +144,31 @@ namespace McpExtensionUnity
                 var _ = backendUnityModel.RunUnitTestLaunch.Start(lt, Unit.Instance);
                 ourLogger.Info("  RunUnitTestLaunch.Start called");
 
-                // Wait for completion with 5-minute timeout
+                // Wait for completion with configurable timeout.
+                // Timeout fires TrySetException (not TrySetCanceled) to distinguish from
+                // lt.OnTermination, which fires TrySetCanceled.
                 RunResult finalResult;
-                using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds)))
                 {
-                    cts.Token.Register(() => tcs.TrySetCanceled(), useSynchronizationContext: false);
+                    cts.Token.Register(
+                        () => tcs.TrySetException(
+                            new Exception($"Test execution timed out after {timeoutSeconds} seconds.")),
+                        useSynchronizationContext: false);
                     try
                     {
                         finalResult = await tcs.Task.ConfigureAwait(false);
                     }
                     catch (OperationCanceledException)
                     {
-                        return ErrorResponse("Test execution timed out after 5 minutes.");
+                        // Rd lifetime ended: protocol disconnection or Kotlin coroutine cancellation
+                        TryAbortLaunch(lt, backendUnityHost, launch);
+                        return ErrorResponse("Test execution was cancelled due to protocol disconnection or Kotlin coroutine cancellation.");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Timeout or Unity Editor disconnection
+                        TryAbortLaunch(lt, backendUnityHost, launch);
+                        return ErrorResponse(ex.Message);
                     }
                 }
 
@@ -254,6 +290,27 @@ namespace McpExtensionUnity
                 }
             });
             return tcs.Task;
+        }
+
+        // Attempts to abort the Unity test launch. Best-effort: Unity may already be disconnected.
+        // Verifies lifetime, model availability, and session ID before calling Abort.
+        // Exceptions are caught and logged only — never propagated to the caller.
+        private static void TryAbortLaunch(Lifetime lt, BackendUnityHost host, UnitTestLaunch launch)
+        {
+            try
+            {
+                if (!lt.IsAlive) return;
+                var model = host.BackendUnityModel.Value;
+                if (model == null) return;
+                var currentLaunch = model.UnitTestLaunch.Value;
+                if (currentLaunch == null || currentLaunch.SessionId != launch.SessionId) return;
+                ourLogger.Info($"TryAbortLaunch: aborting session {launch.SessionId}");
+                launch.Abort.Start(lt, Unit.Instance);
+            }
+            catch (Exception e)
+            {
+                ourLogger.Warn($"TryAbortLaunch: failed (Unity may be disconnected): {e.Message}");
+            }
         }
 
         private static McpRunTestsResponse ErrorResponse(string message) =>
