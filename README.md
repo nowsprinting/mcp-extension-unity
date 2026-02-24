@@ -7,7 +7,7 @@ Adds tools for operating Unity Editor from any Coding Agents.
 
 - **No per-project MCP server package required** — no need to install an MCP server package into each Unity project.
 - **Zero agent configuration** — if the MCP Server is already enabled in Rider, Coding Agents can use the tools immediately with no additional setup.
-- **Multiple tools for Unity Editor** — currently provides `run_unity_tests`, `get_unity_compilation_result`, and `unity_play_control`, with more tools planned in the future.
+- **Multiple tools for Unity Editor** — currently provides `run_unity_tests`, `get_unity_compilation_result`, `unity_play_control`, and `run_method_in_unity`, with more tools planned in the future.
 
 ## Requirements
 
@@ -89,6 +89,31 @@ Controls Unity Editor's play mode. Requires Unity Editor to be connected to Ride
 | `isPaused`     | boolean | Whether Unity Editor is currently paused (only when `success` is `true`)       |
 | `errorMessage` | string  | Error details (only present when `success` is `false`)                         |
 
+### `run_method_in_unity`
+
+Invoke a static method in Unity Editor via reflection.
+Requires Unity Editor to be connected to Rider.
+
+> [!IMPORTANT]
+> The method's return value is **NOT** returned. `success` only indicates whether the method was found and invoked (reflection succeeded). Even if the method throws internally, `success` may be `true` — the exception is logged to the Unity Console.
+
+**Parameters**
+
+| Name           | Required     | Description                                                        |
+|----------------|--------------|--------------------------------------------------------------------|
+| `assemblyName` | **Required** | Assembly name containing the type (e.g., `Assembly-CSharp-Editor`) |
+| `typeName`     | **Required** | Fully qualified type name (e.g., `MyNamespace.MyEditorTool`)       |
+| `methodName`   | **Required** | Static method name to invoke (e.g., `DoSomething`)                 |
+
+The method must be **static and parameterless**.
+
+**Response**
+
+| Field          | Type    | Description                                                       |
+|----------------|---------|-------------------------------------------------------------------|
+| `success`      | boolean | `true` if the method was found and invoked (reflection succeeded) |
+| `errorMessage` | string  | Error details (only present when `success` is `false`)            |
+
 ## Architecture
 
 ```
@@ -97,9 +122,9 @@ Coding Agent (e.g., Claude Code)
 JetBrains MCP Server (built into Rider 2025.3+)
     ↓ extension point (com.intellij.mcpServer)
 [This Plugin — Kotlin Frontend]
-    ├── RunUnityTestsToolset.kt / PlayControlToolset.kt
-    │       ↓ (unity_play_control, get_unity_compilation_result)
-    │   FrontendBackendModel.playControls / UnityTestMcpModel.getCompilationResult
+    ├── RunUnityTestsToolset.kt / PlayControlToolset.kt / RunMethodInUnityToolset.kt
+    │       ↓ (unity_play_control, get_unity_compilation_result, run_method_in_unity)
+    │   FrontendBackendModel.playControls / FrontendBackendModel.runMethodInUnity / UnityTestMcpModel.getCompilationResult
     │       ↓ (run_unity_tests)
     │   UnityTestMcpModel (custom Rd: IRdCall<McpRunTestsRequest, McpRunTestsResponse>)
     │       ↓
@@ -116,6 +141,7 @@ Rider uses two separate [Reactive Distributed (Rd)](https://github.com/JetBrains
 - **C# Backend ↔ Unity Editor**: `BackendUnityModel`
 
 `unity_play_control` accesses `FrontendBackendModel.playControls` directly from Kotlin, requiring no C# backend changes.
+`run_method_in_unity` accesses `FrontendBackendModel.runMethodInUnity` directly from Kotlin, requiring no C# backend changes.
 `run_unity_tests` uses a custom Rd model (`UnityTestMcpModel`) to bridge the two layers, since the Kotlin Frontend cannot directly access `BackendUnityModel`.
 
 ## Installation
@@ -140,9 +166,9 @@ If it is not yet enabled:
 
 ### Environment Variables
 
-| Variable           | Default | Description                                                                                                                                                 |
-|--------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `MCP_TOOL_TIMEOUT` | `300`   | Timeout in seconds for `run_unity_tests`. Set a smaller value to get faster feedback when Unity Test Runner cancellation does not fire a completion signal. |
+| Variable           | Default | Description                                                                                                                                                                           |
+|--------------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `MCP_TOOL_TIMEOUT` | `300`   | Timeout in seconds for `run_unity_tests` and `run_method_in_unity`. Set a smaller value to get faster feedback when Unity Test Runner cancellation does not fire a completion signal. |
 
 ## Agent Skill Example
 
