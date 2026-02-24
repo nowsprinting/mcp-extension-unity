@@ -7,7 +7,7 @@ Adds tools for operating Unity Editor from any Coding Agents.
 
 - **No per-project MCP server package required** — no need to install an MCP server package into each Unity project.
 - **Zero agent configuration** — if the MCP Server is already enabled in Rider, Coding Agents can use the tools immediately with no additional setup.
-- **Multiple tools for Unity Editor** — currently provides `run_unity_tests` and `get_unity_compilation_result`, with more tools planned in the future.
+- **Multiple tools for Unity Editor** — currently provides `run_unity_tests`, `get_unity_compilation_result`, and `unity_play_control`, with more tools planned in the future.
 
 ## Requirements
 
@@ -60,6 +60,35 @@ Useful for verifying that code changes compile before running tests.
 | `success`      | boolean | `true` if compilation succeeded                        |
 | `errorMessage` | string  | Error details (only present when `success` is `false`) |
 
+### `unity_play_control`
+
+Controls Unity Editor's play mode. Requires Unity Editor to be connected to Rider.
+
+**Parameters**
+
+| Name     | Required     | Description                                                                                  |
+|----------|--------------|----------------------------------------------------------------------------------------------|
+| `action` | **Required** | Action to perform: `play`, `stop`, `pause`, `resume`, `step`, or `status` (case insensitive) |
+
+| Action   | Operation                                         |
+|----------|---------------------------------------------------|
+| `play`   | Enter play mode                                   |
+| `stop`   | Exit play mode                                    |
+| `pause`  | Pause while in play mode                          |
+| `resume` | Resume from paused state                          |
+| `step`   | Advance one frame (enters paused play mode)       |
+| `status` | Read current play/pause state without any changes |
+
+**Response**
+
+| Field          | Type    | Description                                                                    |
+|----------------|---------|--------------------------------------------------------------------------------|
+| `success`      | boolean | `true` if the action was performed successfully                                |
+| `action`       | string  | The action that was performed (only when `success` is `true`)                  |
+| `isPlaying`    | boolean | Whether Unity Editor is currently in play mode (only when `success` is `true`) |
+| `isPaused`     | boolean | Whether Unity Editor is currently paused (only when `success` is `true`)       |
+| `errorMessage` | string  | Error details (only present when `success` is `false`)                         |
+
 ## Architecture
 
 ```
@@ -67,8 +96,13 @@ Coding Agent (e.g., Claude Code)
     ↓ MCP (HTTP/SSE)
 JetBrains MCP Server (built into Rider 2025.3+)
     ↓ extension point (com.intellij.mcpServer)
-[This Plugin — Kotlin Frontend]   ← RunUnityTestsToolset.kt
-    ↓ UnityTestMcpModel (custom Rd: IRdCall<McpRunTestsRequest, McpRunTestsResponse>)
+[This Plugin — Kotlin Frontend]
+    ├── RunUnityTestsToolset.kt / PlayControlToolset.kt
+    │       ↓ (unity_play_control, get_unity_compilation_result)
+    │   FrontendBackendModel.playControls / UnityTestMcpModel.getCompilationResult
+    │       ↓ (run_unity_tests)
+    │   UnityTestMcpModel (custom Rd: IRdCall<McpRunTestsRequest, McpRunTestsResponse>)
+    │       ↓
 [Plugin Backend — C# / UnityTestMcpHandler]
     ↓ BackendUnityModel.UnitTestLaunch + RunUnitTestLaunch (existing Rd)
 Unity Editor
@@ -81,7 +115,8 @@ Rider uses two separate [Reactive Distributed (Rd)](https://github.com/JetBrains
 - **Kotlin Frontend ↔ C# Backend**: `FrontendBackendModel`
 - **C# Backend ↔ Unity Editor**: `BackendUnityModel`
 
-A custom Rd model (`UnityTestMcpModel`) bridges the two layers, since the Kotlin Frontend cannot directly access `BackendUnityModel`.
+`unity_play_control` accesses `FrontendBackendModel.playControls` directly from Kotlin, requiring no C# backend changes.
+`run_unity_tests` uses a custom Rd model (`UnityTestMcpModel`) to bridge the two layers, since the Kotlin Frontend cannot directly access `BackendUnityModel`.
 
 ## Installation
 

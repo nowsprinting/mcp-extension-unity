@@ -10,5 +10,6 @@
 
     <extensions defaultExtensionNs="com.intellij.mcpServer">
         <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.RunUnityTestsToolset"/>
+        <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.PlayControlToolset"/>
     </extensions>
 </idea-plugin>
