@@ -1,18 +1,50 @@
-# IntelliJ MCP Server Extension for Unity Editor
+# IntelliJ MCP Server Extension for Unity
 
-A plugin that extends the [MCP Server](https://plugins.jetbrains.com/plugin/26071-mcp-server) built into JetBrains Rider.
-Adds tools for operating Unity Editor from Coding Agents.
+A plugin that extends the [MCP Server plugin](https://plugins.jetbrains.com/plugin/26071-mcp-server) built into JetBrains Rider.
+Adds tools for operating Unity Editor from any Coding Agents.
 
 ## Features
 
 - **No per-project MCP server package required** — no need to install an MCP server package into each Unity project.
 - **Zero agent configuration** — if the MCP Server is already enabled in Rider, Coding Agents can use the tools immediately with no additional setup.
+- **Multiple tools for Unity Editor** — currently provides `run_unity_tests` and `get_unity_compilation_result`, with more tools planned in the future.
 
 ## Requirements
 
 - JetBrains Rider 2025.3+
 
 ## Provided Tools
+
+### `run_unity_tests`
+
+Runs tests on Unity Test Runner.
+It is recommended to filter by `assemblyNames`, `categoryNames`, `groupNames`, or `testNames` to narrow down the tests to the scope of changes.
+
+> [!TIP]  
+> Recommended to use with the Agent Skills, see [example](#agent-skill-example).
+
+**Parameters**
+
+| Name            | Required     | Description                                                                                                                                                                                             |
+|-----------------|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `testMode`      | **Required** | `EditMode` or `PlayMode` (case insensitive). If the `includePlatforms` in the assembly definition file (`.asmdef`) contains `Editor`, it is an Edit Mode test; otherwise it is a Play Mode test.        |
+| `assemblyNames` | **Required** | Names of assemblies to include (without `.dll` extension, e.g. `MyFeature.Tests`). Use the `name` property in the assembly definition file. Find them in `.asmdef` files or Rider's Unit Test Explorer. |
+| `categoryNames` | Optional     | Category names to include in the run.                                                                                                                                                                   |
+| `groupNames`    | Optional     | Group names supporting Regex (e.g. `^MyNamespace\\.`). Useful for running specific fixtures or namespaces.                                                                                              |
+| `testNames`     | Optional     | Full test names to match (e.g. `MyTestClass2.MyTestWithMultipleValues(1)`).                                                                                                                             |
+
+**Response**
+
+| Field               | Type    | Description                                                    |
+|---------------------|---------|----------------------------------------------------------------|
+| `success`           | boolean | `true` if all tests passed                                     |
+| `passCount`         | number  | Number of passing tests                                        |
+| `skipCount`         | number  | Number of skipped tests                                        |
+| `failCount`         | number  | Number of failing tests                                        |
+| `inconclusiveCount` | number  | Number of inconclusive tests                                   |
+| `failedTests`       | array   | Details of failed tests (`testId`, `output`, `duration`)       |
+| `inconclusiveTests` | array   | Details of inconclusive tests (`testId`, `output`, `duration`) |
+| `errorMessage`      | string  | Error details (only present when the tool itself failed)       |
 
 ### `get_unity_compilation_result`
 
@@ -23,43 +55,10 @@ Useful for verifying that code changes compile before running tests.
 
 **Response**
 
-| Field | Type | Description |
-|---|---|---|
-| `success` | boolean | `true` if compilation succeeded |
-| `errorMessage` | string | Error details (only present when `success` is `false`) |
-
----
-
-### `run_unity_tests`
-
-Runs tests on Unity Test Runner.
-It is recommended to filter by `assemblyNames`, `categoryNames`, `groupNames`, or `testNames` to narrow down the tests to the scope of changes.
-
-> [!TIP]  
-> Recommended to use with the [Agent Skill Example](#agent-skill-example) described below.
-
-**Parameters**
-
-| Name | Required | Description |
-|---|---|---|
-| `testMode` | **Required** | `EditMode` or `PlayMode` (case insensitive). If the `includePlatforms` in the assembly definition file (`.asmdef`) contains `Editor`, it is an Edit Mode test; otherwise it is a Play Mode test. |
-| `assemblyNames` | **Required** | Names of assemblies to include (without `.dll` extension, e.g. `MyFeature.Tests`). Use the `name` property in the assembly definition file. Find them in `.asmdef` files or Rider's Unit Test Explorer. |
-| `categoryNames` | Optional | Category names to include in the run. |
-| `groupNames` | Optional | Group names supporting Regex (e.g. `^MyNamespace\\.`). Useful for running specific fixtures or namespaces. |
-| `testNames` | Optional | Full test names to match (e.g. `MyTestClass2.MyTestWithMultipleValues(1)`). |
-
-**Response**
-
-| Field | Type | Description |
-|---|---|---|
-| `success` | boolean | `true` if all tests passed |
-| `passCount` | number | Number of passing tests |
-| `skipCount` | number | Number of skipped tests |
-| `failCount` | number | Number of failing tests |
-| `inconclusiveCount` | number | Number of inconclusive tests |
-| `failedTests` | array | Details of failed tests (`testId`, `output`, `duration`) |
-| `inconclusiveTests` | array | Details of inconclusive tests (`testId`, `output`, `duration`) |
-| `errorMessage` | string | Error details (only present when the tool itself failed) |
+| Field          | Type    | Description                                            |
+|----------------|---------|--------------------------------------------------------|
+| `success`      | boolean | `true` if compilation succeeded                        |
+| `errorMessage` | string  | Error details (only present when `success` is `false`) |
 
 ## Architecture
 
@@ -98,7 +97,8 @@ If the MCP Server is already enabled in Rider, no additional configuration is re
 If it is not yet enabled:
 
 1. Open **Settings > Tools > MCP Server**.
-2. Enable the MCP Server.
+2. Click **Enable MCP Server**.
+3. Click **Auto-Configure** for the agent you want to use.
 
 > [!NOTE]  
 > See the [MCP Server](https://www.jetbrains.com/help/rider/mcp-server.html) for more details on configuration and usage.
@@ -115,13 +115,15 @@ description: Run tests on Unity editor using the run_unity_tests tool.
 
 Please run the tests on Unity editor with `run_unity_tests` tool.
 
-## Identify the assembly
+## Identify the Assembly
+
+Identify the test assembly name and test mode to run.
 
 1. First, identify the assembly definition file (.asmdef) located in the parent directory hierarchy of the run target file.
 2. The assembly name can be obtained from the `name` property in the assembly definition.
 3. If the `includePlatforms` in the assembly definition contains `Editor`, it is an Edit Mode test; otherwise, it is a Play Mode test.
 
-## Specify filters
+## Specify Filters
 
 The filters are determined in the following order to minimize the number of tests performed:
 
@@ -129,8 +131,18 @@ The filters are determined in the following order to minimize the number of test
 2. **groupNames**: Specify the test class that is the counterpart of the modified class. The namespace is the same as the modified class, the class name with "Test" appended.
 3. **categoryNames**: Specify the category name if the test class/ method is decorated with the `Category` attribute.
 
-## Run tests
+## Run Tests
 
 Use the `run_unity_tests` tool to run the tests.
 Specify the test mode, test assembly name, and filters as parameters to the tool.
+
+## Troubleshooting
+
+When a tool fails with a connection error, it may be due to the following reasons:
+
+- The connection may have been disconnected due to domain reloading caused by compilation, etc. Wait a moment and try again.
+- Play Mode tests cannot be run if there are any compilation errors. Check for any compilation errors using the `get_unity_compilation_result` and `get_file_problems` tool.
+- The test may be timing out due to a long execution time. Review the filter settings to narrow down the tests to be executed, or ask the user to extend the timeout setting.
 ```
+
+See full example: [nowsprinting/claude-code-settings-for-unity](https://github.com/nowsprinting/claude-code-settings-for-unity).
