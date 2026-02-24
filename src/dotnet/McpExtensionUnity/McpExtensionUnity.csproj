@@ -12,6 +12,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Required for net472 build on Linux CI (provides .NET Framework reference assemblies) -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Core Rd framework types: IProtocol, RdCall, Lifetime, etc. -->
     <Reference Include="JetBrains.RdFramework">
       <HintPath>$(RiderSdkPath)/lib/ReSharperHost/JetBrains.RdFramework.dll</HintPath>

@@ -6,10 +6,11 @@ plugins {
     kotlin("jvm") version "2.3.0"
     id("org.jetbrains.intellij.platform") version "2.11.0"
     kotlin("plugin.serialization") version "2.3.0"
+    id("org.jetbrains.changelog") version "2.2.1"
 }
 
-group = "com.nowsprinting.mcp-extension-unity"
-version = "1.0-SNAPSHOT"
+group = providers.gradleProperty("pluginGroup").get()
+version = providers.gradleProperty("pluginVersion").get()
 
 val dotNetPluginId: String by project
 val buildConfiguration: String by project
@@ -68,12 +69,19 @@ kotlin {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "253"
+            sinceBuild = providers.gradleProperty("pluginSinceBuild")
         }
 
-        changeNotes = """
-            Step 6: Custom Rd model for Unity test execution
-        """.trimIndent()
+        changeNotes = providers.gradleProperty("pluginVersion").map { pluginVersion ->
+            with(changelog) {
+                renderItem(
+                    (getOrNull(pluginVersion) ?: getUnreleased())
+                        .withHeader(false)
+                        .withEmptySections(false),
+                    org.jetbrains.changelog.Changelog.OutputType.HTML,
+                )
+            }
+        }
     }
 
     pluginVerification {
@@ -82,6 +90,24 @@ intellijPlatform {
             local(intellijPlatform.platformPath.toFile())
         }
     }
+
+    signing {
+        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("PRIVATE_KEY")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
+    }
+
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
+        channels = providers.gradleProperty("pluginVersion").map {
+            listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
+        }
+    }
+}
+
+changelog {
+    groups.empty()
+    repositoryUrl = providers.gradleProperty("pluginRepositoryUrl")
 }
 
 val rdGen = ":protocol:rdgen"
@@ -89,6 +115,14 @@ val rdGen = ":protocol:rdgen"
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         dependsOn(rdGen)
+    }
+
+    wrapper {
+        gradleVersion = providers.gradleProperty("gradleVersion").get()
+    }
+
+    publishPlugin {
+        dependsOn(patchChangelog)
     }
 }
 
@@ -111,11 +145,18 @@ val generateDotNetSdkProperties by tasks.registering {
     }
 }
 
+val restoreDotNet by tasks.registering(Exec::class) {
+    dependsOn(generateDotNetSdkProperties)
+    executable("dotnet")
+    args("restore", "src/dotnet/$dotNetPluginId.sln")
+}
+
 val compileDotNet by tasks.registering(Exec::class) {
     dependsOn(rdGen)
-    dependsOn(generateDotNetSdkProperties)
-    executable("msbuild")
+    dependsOn(restoreDotNet)
+    executable("dotnet")
     args(
+        "msbuild",
         "src/dotnet/$dotNetPluginId.sln",
         "/p:Configuration=$buildConfiguration",
         "/p:Platform=Any CPU",

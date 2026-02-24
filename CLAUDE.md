@@ -81,6 +81,13 @@ mcp-extension-unity/
 
 ## Build
 
+> **First-time setup**: On a fresh clone, run `dotnet restore` once before building.
+> The Gradle `restoreDotNet` task now handles this automatically, but if you encounter
+> `MSB3644: .NETFramework,Version=v4.7.2 reference assemblies not found`, run manually:
+> ```bash
+> dotnet restore src/dotnet/McpExtensionUnity.sln
+> ```
+
 ```bash
 JAVA_HOME=/usr/local/opt/openjdk@21 ./gradlew --no-configuration-cache buildPlugin
 ```

@@ -1,0 +1,141 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.properties.outputs.version }}
+      changelog: ${{ steps.properties.outputs.changelog }}
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      - name: Gradle Wrapper Validation
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Export Properties
+        id: properties
+        shell: bash
+        run: |
+          PROPERTIES="$(JAVA_HOME=$JAVA_HOME_21_X64 ./gradlew --no-configuration-cache properties --console=plain -q)"
+          VERSION="$(echo "$PROPERTIES" | grep "^version:" | cut -f2- -d ' ')"
+          CHANGELOG="$(JAVA_HOME=$JAVA_HOME_21_X64 ./gradlew --no-configuration-cache getChangelog --unreleased --no-header --console=plain -q)"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Build Plugin
+        run: JAVA_HOME=$JAVA_HOME_21_X64 ./gradlew --no-configuration-cache buildPlugin
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-artifact
+          path: build/distributions/*.zip
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Tests
+        run: JAVA_HOME=$JAVA_HOME_21_X64 ./gradlew --no-configuration-cache test
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: build/reports/tests/
+
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Plugin Verification
+        run: JAVA_HOME=$JAVA_HOME_21_X64 ./gradlew --no-configuration-cache verifyPlugin
+
+      - name: Upload Verification Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-results
+          path: build/reports/pluginVerifier/
+
+  releaseDraft:
+    name: Release Draft
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [ build, test, verify ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      - name: Remove Old Release Drafts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/releases \
+            --jq '.[] | select(.draft == true) | .id' \
+            | xargs -I '{}' gh api -X DELETE repos/${{ github.repository }}/releases/{}
+
+      - name: Create Release Draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ needs.build.outputs.version }}" \
+            --title "v${{ needs.build.outputs.version }}" \
+            --notes "${{ needs.build.outputs.changelog }}" \
+            --draft

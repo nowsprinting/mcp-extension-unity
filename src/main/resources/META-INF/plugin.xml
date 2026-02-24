@@ -1,8 +1,8 @@
 <idea-plugin>
     <id>com.nowsprinting.mcp-extension-unity</id>
     <name>MCP Server Extension for Unity</name>
-    <vendor>PoC</vendor>
-    <description>MCP tool for running Unity tests through Rider (PoC)</description>
+    <vendor url="https://github.com/nowsprinting/mcp-extension-unity">Koji Hasegawa</vendor>
+    <description>A plugin that extends the MCP Server plugin built into JetBrains Rider. Adds tools for operating Unity Editor from any Coding Agents.</description>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.mcpServer</depends>
