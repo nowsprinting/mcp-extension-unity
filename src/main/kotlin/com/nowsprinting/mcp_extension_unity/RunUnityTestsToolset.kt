@@ -123,34 +123,34 @@ class RunUnityTestsToolset : McpToolset {
     @McpTool(name = "run_unity_tests")
     @McpDescription(description = """
         Run tests on Unity Test Runner through Rider's test infrastructure.
-        Recommend filtering by assemblyNames, categoryNames, groupNames, or testNames to narrow down the tests to the scope of changes.
+        Recommend filtering by assemblyNames, categoryNames, groupNames, and testNames to narrow down the tests to the scope of changes.
     """)
     suspend fun run_unity_tests(
         @McpDescription(description = "REQUIRED. `EditMode` or `PlayMode` (case insensitive). If the `includePlatforms` in the assembly definition file (.asmdef) contains `Editor`, it is an Edit Mode test; otherwise, it is a Play Mode test.")
         testMode: String? = null,
-        @McpDescription(description = "REQUIRED. The names of assemblies included in the run (without .dll extension, e.g., 'MyFeature.Tests'). Specify the `name` property in the assembly definition file.")
+        @McpDescription(description = "REQUIRED. Names of test assemblies to run (without .dll extension, e.g., 'MyFeature.Tests'). Specify the `name` property in the assembly definition file.")
         assemblyNames: List<String>? = null,
-        @McpDescription(description = "The name of a Category to include in the run")
+        @McpDescription(description = "Names of a category to include in the run. Any test or fixture runs that have a category matching the string.")
         categoryNames: List<String>? = null,
-        @McpDescription(description = "Group names supporting Regex (e.g. \"^MyNamespace\\\\.\"). Useful for running specific fixtures or namespaces.")
+        @McpDescription(description = "Same as testNames, except that it allows for Regex. This is useful for running specific fixtures or namespaces.")
         groupNames: List<String>? = null,
-        @McpDescription(description = "Full test names to match (e.g. MyTestClass2.MyTestWithMultipleValues(1))")
+        @McpDescription(description = "The full name of the tests to match the filter. This is usually in the format FixtureName.TestName. If the test has test arguments, then include them in parentheses.")
         testNames: List<String>? = null
     ): RunUnityTestsResult {
         try {
-            val effectiveAssemblyNames = sanitizeAssemblyNames(assemblyNames)
-            if (effectiveAssemblyNames.isEmpty()) {
-                return TestErrorResult(
-                    errorMessage ="assemblyNames is required and must contain at least one non-empty assembly name."
-                )
-            }
-
             val project = currentCoroutineContext().project
             val solution = project.solution
             val protocol = solution.protocol
                 ?: return TestErrorResult(
                     errorMessage ="No protocol available. The solution may not be fully loaded."
                 )
+
+            val effectiveAssemblyNames = sanitizeAssemblyNames(assemblyNames)
+            if (effectiveAssemblyNames.isEmpty()) {
+                return TestErrorResult(
+                    errorMessage ="assemblyNames is required and must contain at least one non-empty assembly name."
+                )
+            }
 
             val parsedMode = parseTestMode(testMode)
                 ?: return TestErrorResult(

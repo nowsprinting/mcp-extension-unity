@@ -18,20 +18,20 @@ Adds tools for operating Unity Editor from any Coding Agents.
 ### `run_unity_tests`
 
 Runs tests on Unity Test Runner.
-It is recommended to filter by `assemblyNames`, `categoryNames`, `groupNames`, or `testNames` to narrow down the tests to the scope of changes.
+It is recommended to filter by `assemblyNames`, `categoryNames`, `groupNames`, and `testNames` to narrow down the tests to the scope of changes.
 
 > [!TIP]  
 > Recommended to use with the Agent Skills, see [example](#agent-skill-example).
 
 **Parameters**
 
-| Name            | Required     | Description                                                                                                                                                                                             |
-|-----------------|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `testMode`      | **Required** | `EditMode` or `PlayMode` (case insensitive). If the `includePlatforms` in the assembly definition file (`.asmdef`) contains `Editor`, it is an Edit Mode test; otherwise it is a Play Mode test.        |
-| `assemblyNames` | **Required** | Names of assemblies to include (without `.dll` extension, e.g. `MyFeature.Tests`). Use the `name` property in the assembly definition file. Find them in `.asmdef` files or Rider's Unit Test Explorer. |
-| `categoryNames` | Optional     | Category names to include in the run.                                                                                                                                                                   |
-| `groupNames`    | Optional     | Group names supporting Regex (e.g. `^MyNamespace\\.`). Useful for running specific fixtures or namespaces.                                                                                              |
-| `testNames`     | Optional     | Full test names to match (e.g. `MyTestClass2.MyTestWithMultipleValues(1)`).                                                                                                                             |
+| Name            | Required     | Description                                                                                                                                                                                      |
+|-----------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `testMode`      | **Required** | `EditMode` or `PlayMode` (case insensitive). If the `includePlatforms` in the assembly definition file (`.asmdef`) contains `Editor`, it is an Edit Mode test; otherwise it is a Play Mode test. |
+| `assemblyNames` | **Required** | Names of test assemblies to run (without `.dll` extension, e.g. `MyFeature.Tests`). Specify the `name` property in the assembly definition file.                                                 |
+| `categoryNames` | Optional     | Names of a category to include in the run. Any test or fixture runs that have a category matching the string.                                                                                    |
+| `groupNames`    | Optional     | Same as testNames, except that it allows for Regex. This is useful for running specific fixtures or namespaces.                                                                                  |
+| `testNames`     | Optional     | The full name of the tests to match the filter. This is usually in the format FixtureName.TestName. If the test has test arguments, then include them in parentheses.                            |
 
 **Response**
 
@@ -131,16 +131,46 @@ Identify the test assembly name and test mode to run.
 
 ## Specify Filters
 
-The filters are determined in the following order to minimize the number of tests performed:
+It is recommended to specify the following filter to minimize the number of tests that are run:
 
-1. **testNames**: Specify when only a specific test is failing, or when only a limited number of tests are affected.
-2. **groupNames**: Specify the test class that is the counterpart of the modified class. The namespace is the same as the modified class, the class name with "Test" appended.
-3. **categoryNames**: Specify the category name if the test class/ method is decorated with the `Category` attribute.
+### assemblyNames
+
+The name of test assemblies to run. That is the assembly file name, without `.dll` extension.
+e.g., `MyFeature.Tests`
+
+### categoryNames
+
+The names of a category to include in the run. Any test or fixture runs that have a category matching the string.
+
+Specify the category name if the test class/method is decorated with the `Category` attribute.
+
+### groupNames
+
+Same as testNames, except that it allows for Regex. This is useful for running specific fixtures or namespaces.
+
+Generally, specify the test class that corresponds to the modified class. The namespace is the same as the modified class, the class name with `Test` appended.
+
+### testNames
+
+The full name of the tests to match the filter. This is usually in the format `FixtureName.TestName`. If the test has test arguments, include them in parentheses.
+e.g., `FixtureName.TestName(1,2)`
+
+Generally, specify when only a specific test is failing, or when only a limited number of tests are affected.
 
 ## Run Tests
 
 Use the `run_unity_tests` tool to run the tests.
 Specify the test mode, test assembly name, and filters as parameters to the tool.
+
+## Rules for Test Failures
+
+If the same test(s) fail on two or more consecutive runs, stop and consult the user rather than continuing to fix.
+
+When consulting, clarify:
+
+- Current failure status: what is failing and the likely cause
+- Fix history: what was changed, how many times, and the scope of impact
+- Planned approach: what options are being considered next
 
 ## Troubleshooting
 
