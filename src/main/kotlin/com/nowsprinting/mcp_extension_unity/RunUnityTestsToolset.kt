@@ -64,7 +64,14 @@ class RunUnityTestsToolset : McpToolset {
                 }
             }
 
-            return TestRunResult(passCount, failCount, inconclusiveCount, skipCount, failedTests, inconclusiveTests)
+            return TestRunResult(
+                passCount = passCount,
+                failCount = failCount,
+                inconclusiveCount = inconclusiveCount,
+                skipCount = skipCount,
+                failedTests = failedTests,
+                inconclusiveTests = inconclusiveTests
+            )
         }
     }
 

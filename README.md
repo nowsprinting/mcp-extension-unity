@@ -39,12 +39,12 @@ It is recommended to filter by `assemblyNames`, `categoryNames`, `groupNames`, a
 |---------------------|---------|----------------------------------------------------------------|
 | `success`           | boolean | `true` if all tests passed                                     |
 | `passCount`         | number  | Number of passing tests                                        |
-| `skipCount`         | number  | Number of skipped tests                                        |
 | `failCount`         | number  | Number of failing tests                                        |
 | `inconclusiveCount` | number  | Number of inconclusive tests                                   |
+| `skipCount`         | number  | Number of skipped tests                                        |
 | `failedTests`       | array   | Details of failed tests (`testId`, `output`, `duration`)       |
 | `inconclusiveTests` | array   | Details of inconclusive tests (`testId`, `output`, `duration`) |
-| `errorMessage`      | string  | Error details (only present when the tool itself failed)       |
+| `errorMessage`      | string  | Error details (empty string on success; populated when the tool itself failed) |
 
 ### `get_unity_compilation_result`
 
