@@ -19,17 +19,30 @@ class UnityConsoleLogCollector(
     private var lifetimeDefinition: LifetimeDefinition? = null
 
     companion object {
-        internal fun toLogTypeName(type: LogEventType): String = TODO()
+        internal fun toLogTypeName(type: LogEventType): String = when (type) {
+            LogEventType.Error -> "Error"
+            LogEventType.Warning -> "Warning"
+            LogEventType.Message -> "Message"
+        }
 
-        internal fun toCollectedLogEntry(event: LogEvent): CollectedLogEntry = TODO()
+        internal fun toCollectedLogEntry(event: LogEvent): CollectedLogEntry = CollectedLogEntry(
+            type = toLogTypeName(event.type),
+            message = event.message,
+            stackTrace = event.stackTrace
+        )
     }
 
     fun start() {
-        // TODO: implement
+        val ltd = LifetimeDefinition()
+        lifetimeDefinition = ltd
+        onConsoleLogEvent.advise(ltd) { event ->
+            logs.add(toCollectedLogEntry(event))
+        }
     }
 
     fun stop(): List<CollectedLogEntry> {
-        // TODO: implement
-        return emptyList()
+        lifetimeDefinition?.terminate()
+        lifetimeDefinition = null
+        return logs.toList()
     }
 }

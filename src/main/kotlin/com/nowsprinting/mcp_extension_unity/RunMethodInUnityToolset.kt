@@ -67,6 +67,7 @@ class RunMethodInUnityToolset : McpToolset {
         val validMethodName = validateParam("methodName", methodName)
             ?: return RunMethodInUnityErrorResult("methodName is required and must be non-blank.")
 
+        var collector: UnityConsoleLogCollector? = null
         try {
             val project = currentCoroutineContext().project
             if (!project.isConnectedToEditor()) {
@@ -79,20 +80,34 @@ class RunMethodInUnityToolset : McpToolset {
 
             val timeoutSeconds = System.getenv("MCP_TOOL_TIMEOUT")?.toLongOrNull()?.takeIf { it > 0 } ?: 300L
 
+            val localCollector = UnityConsoleLogCollector(
+                solution.frontendBackendModel.consoleLogging.onConsoleLogEvent
+            )
+            collector = localCollector
+
             val response = withTimeout(timeoutSeconds * 1000) {
                 withContext(protocol.scheduler.asCoroutineDispatcher) {
+                    localCollector.start()
                     solution.frontendBackendModel.runMethodInUnity.startSuspending(
                         RunMethodData(validAssemblyName, validTypeName, validMethodName)
                     )
                 }
             }
 
+            delay(LOG_FLUSH_DELAY_MS)
+
+            val logs = withContext(protocol.scheduler.asCoroutineDispatcher) {
+                localCollector.stop()
+            }
+            collector = null
+
             return if (response.success) {
-                RunMethodInUnitySuccessResult(emptyList())
+                RunMethodInUnitySuccessResult(logs)
             } else {
-                RunMethodInUnityErrorResult(formatErrorMessage(response.message, response.stackTrace))
+                RunMethodInUnityErrorResult(formatErrorMessage(response.message, response.stackTrace), logs)
             }
         } catch (e: Exception) {
+            collector?.stop()
             LOG.error("run_method_in_unity failed", e)
             return RunMethodInUnityErrorResult("${e.javaClass.simpleName}: ${e.message}")
         }
