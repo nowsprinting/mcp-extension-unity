@@ -117,7 +117,7 @@ class RunUnityTestsToolsetTest {
         )
         val json = Json.encodeToString(result)
         assertEquals(
-            """{"success":false,"passCount":2,"failCount":1,"inconclusiveCount":0,"skipCount":0,"failedTests":[{"testId":"MyTest","output":"Expected true but was false","duration":100}],"inconclusiveTests":[],"errorMessage":""}""",
+            """{"success":false,"passCount":2,"failCount":1,"inconclusiveCount":0,"skipCount":0,"failedTests":[{"testId":"MyTest","output":"Expected true but was false","duration":100}],"inconclusiveTests":[]}""",
             json
         )
     }
@@ -134,7 +134,7 @@ class RunUnityTestsToolsetTest {
         )
         val json = Json.encodeToString(result)
         assertEquals(
-            """{"success":false,"passCount":2,"failCount":0,"inconclusiveCount":1,"skipCount":0,"failedTests":[],"inconclusiveTests":[{"testId":"MyTest","output":"Expected true but was false","duration":100}],"errorMessage":""}""",
+            """{"success":false,"passCount":2,"failCount":0,"inconclusiveCount":1,"skipCount":0,"failedTests":[],"inconclusiveTests":[{"testId":"MyTest","output":"Expected true but was false","duration":100}]}""",
             json
         )
     }
@@ -151,7 +151,7 @@ class RunUnityTestsToolsetTest {
         )
         val json = Json.encodeToString(result)
         assertEquals(
-            """{"success":false,"passCount":0,"failCount":0,"inconclusiveCount":0,"skipCount":0,"failedTests":[],"inconclusiveTests":[],"errorMessage":""}""",
+            """{"success":false,"passCount":0,"failCount":0,"inconclusiveCount":0,"skipCount":0,"failedTests":[],"inconclusiveTests":[]}""",
             json
         )
     }
@@ -168,7 +168,7 @@ class RunUnityTestsToolsetTest {
         )
         val json = Json.encodeToString(result)
         assertEquals(
-            """{"success":true,"passCount":3,"failCount":0,"inconclusiveCount":0,"skipCount":1,"failedTests":[],"inconclusiveTests":[],"errorMessage":""}""",
+            """{"success":true,"passCount":3,"failCount":0,"inconclusiveCount":0,"skipCount":1,"failedTests":[],"inconclusiveTests":[]}""",
             json
         )
     }

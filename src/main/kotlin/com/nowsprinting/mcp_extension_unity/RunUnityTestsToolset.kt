@@ -78,7 +78,7 @@ class RunUnityTestsToolset : McpToolset {
     @McpTool(name = "run_unity_tests")
     @McpDescription(description = """
         Run tests on Unity Test Runner through Rider's test infrastructure.
-        Recommend filtering by assemblyNames, categoryNames, groupNames, and testNames to narrow down the tests to the scope of changes.
+        Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `testNames` to narrow down the tests to the scope of changes.
     """)
     suspend fun run_unity_tests(
         @McpDescription(description = "REQUIRED. `EditMode` or `PlayMode` (case insensitive). If the `includePlatforms` in the assembly definition file (.asmdef) contains `Editor`, it is an Edit Mode test; otherwise, it is a Play Mode test.")
@@ -87,7 +87,7 @@ class RunUnityTestsToolset : McpToolset {
         assemblyNames: List<String>? = null,
         @McpDescription(description = "Names of a category to include in the run. Any test or fixture runs that have a category matching the string.")
         categoryNames: List<String>? = null,
-        @McpDescription(description = "Same as testNames, except that it allows for Regex. This is useful for running specific fixtures or namespaces.")
+        @McpDescription(description = "Same as `testNames`, except that it allows for Regex. This is useful for running specific fixtures or namespaces.")
         groupNames: List<String>? = null,
         @McpDescription(description = "The full name of the tests to match the filter. This is usually in the format FixtureName.TestName. If the test has test arguments, then include them in parentheses.")
         testNames: List<String>? = null
@@ -204,7 +204,6 @@ object RunUnityTestsResultSerializer : KSerializer<RunUnityTestsResult> {
                         }
                     }
                 }
-                put("errorMessage", "")
             }
         }
         jsonEncoder.encodeJsonElement(jsonObject)

@@ -44,18 +44,17 @@ class PlayControlToolset : McpToolset {
     @McpTool(name = "unity_play_control")
     @McpDescription(description = """
         Control Unity Editor's play mode. Requires Unity Editor to be connected to Rider.
-        Actions: play (enter play mode), stop (exit play mode), pause, resume, step (advance one frame), status (read-only).
     """)
     suspend fun unity_play_control(
-        @McpDescription(description = "Action to perform: play, stop, pause, resume, step, status")
+        @McpDescription(description = "Action to perform: `play`, `stop`, `pause`, `resume`, `step`, or `status` (case insensitive)")
         action: String? = null
     ): PlayControlResult {
         val parsedAction = parseAction(action)
             ?: return PlayControlErrorResult(
                 errorMessage = if (action == null)
-                    "action is required. Valid values: play, stop, pause, resume, step, status."
+                    "action is required. Valid values: `play`, `stop`, `pause`, `resume`, `step`, or `status`."
                 else
-                    "Invalid action: '$action'. Valid values: play, stop, pause, resume, step, status."
+                    "Invalid action: '$action'. Valid values: `play`, `stop`, `pause`, `resume`, `step`, or `status`."
             )
 
         try {

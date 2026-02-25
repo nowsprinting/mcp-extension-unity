@@ -1,13 +1,16 @@
 # IntelliJ MCP Server Extension for Unity
 
+[![Build](https://github.com/nowsprinting/mcp-extension-unity/actions/workflows/build.yml/badge.svg)](https://github.com/nowsprinting/mcp-extension-unity/actions/workflows/build.yml)
+
 A plugin that extends the [MCP Server plugin](https://plugins.jetbrains.com/plugin/26071-mcp-server) built into JetBrains Rider.
 Adds tools for operating Unity Editor from any Coding Agents.
 
 ## Features
 
 - **No per-project MCP server package required** — no need to install an MCP server package into each Unity project.
-- **Zero agent configuration** — if the MCP Server is already enabled in Rider, Coding Agents can use the tools immediately with no additional setup.
-- **Multiple tools for Unity Editor** — currently provides `run_unity_tests`, `get_unity_compilation_result`, `unity_play_control`, and `run_method_in_unity`.
+- **No agent configuration** — if the MCP Server is already enabled in Rider, Coding Agents can use the tools immediately with no additional setup.
+- **No additional configuration required for cloned workspaces** — if you clone a workspace with `git workspace`, `claude --workspace`, etc., you get tools that work without any additional configuration.
+- **Tools for Unity Editor** — provides `run_unity_tests`, `get_unity_compilation_result`, `unity_play_control`, and `run_method_in_unity`.
 
 ## Requirements
 
@@ -17,8 +20,8 @@ Adds tools for operating Unity Editor from any Coding Agents.
 
 ### `run_unity_tests`
 
-Runs tests on Unity Test Runner.
-It is recommended to filter by `assemblyNames`, `categoryNames`, `groupNames`, and `testNames` to narrow down the tests to the scope of changes.
+Run tests on Unity Test Runner through Rider's test infrastructure.
+Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `testNames` to narrow down the tests to the scope of changes.
 
 > [!TIP]  
 > Recommended to use with the Agent Skills, see [example](#agent-skill-example).
@@ -44,22 +47,35 @@ It is recommended to filter by `assemblyNames`, `categoryNames`, `groupNames`, a
 | `skipCount`         | number  | Number of skipped tests                                        |
 | `failedTests`       | array   | Details of failed tests (`testId`, `output`, `duration`)       |
 | `inconclusiveTests` | array   | Details of inconclusive tests (`testId`, `output`, `duration`) |
-| `errorMessage`      | string  | Error details (empty string on success; populated when the tool itself failed) |
+
+**Error Response**
+
+| Field          | Type    | Description    |
+|----------------|---------|----------------|
+| `success`      | boolean | Always `false` |
+| `errorMessage` | string  | Error details  |
 
 ### `get_unity_compilation_result`
 
-Triggers Unity's `AssetDatabase.Refresh()` and checks whether compilation succeeded.
-Useful for verifying that code changes compile before running tests.
+Trigger Unity's `AssetDatabase.Refresh()` and check if compilation succeeded.
+Console logs during compilation will be captured and returned in the `logs` field of the response.
 
 **Parameters**: none
 
 **Response**
 
-| Field          | Type    | Description                                                                                                                                                        |
-|----------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `success`      | boolean | `true` if compilation succeeded                                                                                                                                    |
-| `logs`         | array   | Console log entries captured during compilation (always present, may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
-| `errorMessage` | string  | Error details (only present when `success` is `false`)                                                                                                             |
+| Field     | Type    | Description                                                                                                                                               |
+|-----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `success` | boolean | Always `true`                                                                                                                                             |
+| `logs`    | array   | Console log entries captured during compilation (may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
+
+**Error Response**
+
+| Field          | Type    | Description                                                                                                                                             |
+|----------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `success`      | boolean | Always `false`                                                                                                                                          |
+| `errorMessage` | string  | Error details                                                                                                                                           |
+| `logs`         | array   | Console log entries captured before the error (may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
 
 ### `unity_play_control`
 
@@ -82,21 +98,26 @@ Controls Unity Editor's play mode. Requires Unity Editor to be connected to Ride
 
 **Response**
 
-| Field          | Type    | Description                                                                    |
-|----------------|---------|--------------------------------------------------------------------------------|
-| `success`      | boolean | `true` if the action was performed successfully                                |
-| `action`       | string  | The action that was performed (only when `success` is `true`)                  |
-| `isPlaying`    | boolean | Whether Unity Editor is currently in play mode (only when `success` is `true`) |
-| `isPaused`     | boolean | Whether Unity Editor is currently paused (only when `success` is `true`)       |
-| `errorMessage` | string  | Error details (only present when `success` is `false`)                         |
+| Field       | Type    | Description                                    |
+|-------------|---------|------------------------------------------------|
+| `success`   | boolean | Always `true`                                  |
+| `action`    | string  | The action that was performed                  |
+| `isPlaying` | boolean | Whether Unity Editor is currently in play mode |
+| `isPaused`  | boolean | Whether Unity Editor is currently paused       |
+
+**Error Response**
+
+| Field          | Type    | Description    |
+|----------------|---------|----------------|
+| `success`      | boolean | Always `false` |
+| `errorMessage` | string  | Error details  |
 
 ### `run_method_in_unity`
 
-Invoke a static method in Unity Editor via reflection.
-Requires Unity Editor to be connected to Rider.
-Console logs (`Debug.Log`, `Debug.LogWarning`, `Debug.LogError`) generated during execution are captured and returned in the `logs` field.
+Invoke a static method in Unity Editor via reflection. The method must be static and parameterless. The method's return value is NOT returned.
+Console logs during the method will be captured and returned in the `logs` field of the response.
 
-> [!IMPORTANT]
+> [!IMPORTANT]  
 > The method's return value is **NOT** returned. `success` only indicates whether the method was found and invoked (reflection succeeded). Even if the method throws internally, `success` may be `true` — the exception is captured in the `logs` field.
 
 **Parameters**
@@ -111,11 +132,17 @@ The method must be **static and parameterless**.
 
 **Response**
 
-| Field          | Type    | Description                                                       |
-|----------------|---------|-------------------------------------------------------------------|
-| `success`      | boolean | `true` if the method was found and invoked (reflection succeeded) |
-| `logs`         | array   | Console log entries captured during execution (always present, may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
-| `errorMessage` | string  | Error details (only present when `success` is `false`)            |
+| Field     | Type    | Description                                                                                                                                             |
+|-----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `success` | boolean | Always `true` (indicates reflection succeeded; does not mean the method executed without errors — internal exceptions are captured in `logs`)           |
+| `logs`    | array   | Console log entries captured during execution (may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
+
+**Error Response**
+
+| Field          | Type    | Description    |
+|----------------|---------|----------------|
+| `success`      | boolean | Always `false` |
+| `errorMessage` | string  | Error details  |
 
 ## Architecture
 
@@ -147,13 +174,6 @@ Rider uses two separate [Reactive Distributed (Rd)](https://github.com/JetBrains
 `run_method_in_unity` accesses `FrontendBackendModel.runMethodInUnity` directly from Kotlin, requiring no C# backend changes.
 `run_unity_tests` uses a custom Rd model (`UnityTestMcpModel`) to bridge the two layers, since the Kotlin Frontend cannot directly access `BackendUnityModel`.
 
-## Installation
-
-1. Download the plugin ZIP from the [Releases](../../releases) page.
-2. Open Rider and go to **Settings > Plugins**.
-3. Click the gear icon and select **Install Plugin from Disk...**.
-4. Select the downloaded ZIP file and restart Rider.
-
 ## Configuration
 
 If the MCP Server is already enabled in Rider, no additional configuration is required.
@@ -169,8 +189,8 @@ If it is not yet enabled:
 
 ### Environment Variables
 
-| Variable           | Default | Description                                                                                                                                                                           |
-|--------------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Variable           | Default | Description                                                                                                                                                                                                            |
+|--------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `MCP_TOOL_TIMEOUT` | `300`   | Timeout in seconds for `run_unity_tests`, `get_unity_compilation_result`, and `run_method_in_unity`. Set a smaller value to get faster feedback when Unity Test Runner cancellation does not fire a completion signal. |
 
 ## Agent Skill Example
@@ -226,16 +246,6 @@ Generally, specify when only a specific test is failing, or when only a limited 
 Use the `run_unity_tests` tool to run the tests.
 Specify the test mode, test assembly name, and filters as parameters to the tool.
 
-## Rules for Test Failures
-
-If the same test(s) fail on two or more consecutive runs, stop and consult the user rather than continuing to fix.
-
-When consulting, clarify:
-
-- Current failure status: what is failing and the likely cause
-- Fix history: what was changed, how many times, and the scope of impact
-- Planned approach: what options are being considered next
-
 ## Troubleshooting
 
 When a tool fails with a connection error, it may be due to the following reasons:
@@ -246,3 +256,16 @@ When a tool fails with a connection error, it may be due to the following reason
 ```
 
 See full example: [nowsprinting/claude-code-settings-for-unity](https://github.com/nowsprinting/claude-code-settings-for-unity).
+
+## FAQ
+
+**Can I collect Unity console logs?**
+
+No. The only API for retrieving Unity console logs is streaming-based, and MCP tools cannot return streaming responses. While buffering is technically possible, it would be inaccurate and misleading, so this is intentionally not provided. Read `editor.log` instead.
+
+## Contributing
+
+Contributions are welcome. However, the scope is limited to features that use Rider's `BackendUnityModel`. This plugin does not aim to be an all-in-one Unity toolbox.
+
+> [!NOTE]  
+> This project will be closed once JetBrains releases an official MCP extension for Unity.
