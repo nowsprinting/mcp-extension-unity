@@ -11,6 +11,7 @@ import com.jetbrains.rider.plugins.unity.model.RunMethodData
 import com.jetbrains.rider.plugins.unity.model.frontendBackend.frontendBackendModel
 import com.jetbrains.rider.projectView.solution
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.KSerializer
@@ -26,6 +27,8 @@ class RunMethodInUnityToolset : McpToolset {
     private val LOG = Logger.getInstance(RunMethodInUnityToolset::class.java)
 
     companion object {
+        internal const val LOG_FLUSH_DELAY_MS = 500L
+
         internal fun validateParam(name: String, value: String?): String? {
             if (value.isNullOrBlank()) return null
             return value.trim()
@@ -44,7 +47,8 @@ class RunMethodInUnityToolset : McpToolset {
         IMPORTANT: The method's return value is NOT returned.
         "success" indicates only whether the method was found and invoked (reflection succeeded).
         Even if the method throws internally, "success" may be true (the exception is logged to Unity Console).
-        Check Unity Console logs for execution results, side effects, or exceptions.
+        Console logs (Debug.Log, Debug.LogWarning, Debug.LogError) generated during execution are captured
+        and returned in the "logs" field of the response.
     """)
     suspend fun run_method_in_unity(
         @McpDescription(description = "Assembly name containing the type (e.g., 'Assembly-CSharp-Editor')")
@@ -84,7 +88,7 @@ class RunMethodInUnityToolset : McpToolset {
             }
 
             return if (response.success) {
-                RunMethodInUnitySuccessResult
+                RunMethodInUnitySuccessResult(emptyList())
             } else {
                 RunMethodInUnityErrorResult(formatErrorMessage(response.message, response.stackTrace))
             }
@@ -98,9 +102,14 @@ class RunMethodInUnityToolset : McpToolset {
 @Serializable(with = RunMethodInUnityResultSerializer::class)
 sealed interface RunMethodInUnityResult
 
-data class RunMethodInUnityErrorResult(val errorMessage: String) : RunMethodInUnityResult
+data class RunMethodInUnityErrorResult(
+    val errorMessage: String,
+    val logs: List<CollectedLogEntry> = emptyList()
+) : RunMethodInUnityResult
 
-data object RunMethodInUnitySuccessResult : RunMethodInUnityResult
+data class RunMethodInUnitySuccessResult(
+    val logs: List<CollectedLogEntry>
+) : RunMethodInUnityResult
 
 object RunMethodInUnityResultSerializer : KSerializer<RunMethodInUnityResult> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("RunMethodInUnityResult")
@@ -111,9 +120,27 @@ object RunMethodInUnityResultSerializer : KSerializer<RunMethodInUnityResult> {
             is RunMethodInUnityErrorResult -> buildJsonObject {
                 put("success", false)
                 put("errorMessage", value.errorMessage)
+                putJsonArray("logs") {
+                    value.logs.forEach { entry ->
+                        addJsonObject {
+                            put("type", entry.type)
+                            put("message", entry.message)
+                            put("stackTrace", entry.stackTrace)
+                        }
+                    }
+                }
             }
             is RunMethodInUnitySuccessResult -> buildJsonObject {
                 put("success", true)
+                putJsonArray("logs") {
+                    value.logs.forEach { entry ->
+                        addJsonObject {
+                            put("type", entry.type)
+                            put("message", entry.message)
+                            put("stackTrace", entry.stackTrace)
+                        }
+                    }
+                }
             }
         }
         jsonEncoder.encodeJsonElement(jsonObject)

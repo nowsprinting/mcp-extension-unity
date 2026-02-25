@@ -49,13 +49,46 @@ class RunMethodInUnityToolsetTest {
     fun `RunMethodInUnityErrorResult serializes to error pattern`() {
         val result: RunMethodInUnityResult = RunMethodInUnityErrorResult(errorMessage = "Assembly not found.")
         val json = Json.encodeToString(result)
-        assertEquals("""{"success":false,"errorMessage":"Assembly not found."}""", json)
+        assertEquals("""{"success":false,"errorMessage":"Assembly not found.","logs":[]}""", json)
     }
 
     @Test
-    fun `RunMethodInUnitySuccessResult serializes correctly`() {
-        val result: RunMethodInUnityResult = RunMethodInUnitySuccessResult
+    fun `RunMethodInUnitySuccessResult with empty logs serializes correctly`() {
+        val result: RunMethodInUnityResult = RunMethodInUnitySuccessResult(emptyList())
         val json = Json.encodeToString(result)
-        assertEquals("""{"success":true}""", json)
+        assertEquals("""{"success":true,"logs":[]}""", json)
+    }
+
+    @Test
+    fun `RunMethodInUnitySuccessResult with logs serializes correctly`() {
+        val logs = listOf(CollectedLogEntry(type = "Message", message = "Hello", stackTrace = ""))
+        val result: RunMethodInUnityResult = RunMethodInUnitySuccessResult(logs)
+        val json = Json.encodeToString(result)
+        assertEquals("""{"success":true,"logs":[{"type":"Message","message":"Hello","stackTrace":""}]}""", json)
+    }
+
+    @Test
+    fun `RunMethodInUnitySuccessResult log entry serializes all fields`() {
+        val logs = listOf(
+            CollectedLogEntry(type = "Error", message = "Crash!", stackTrace = "at Foo.Bar()")
+        )
+        val result: RunMethodInUnityResult = RunMethodInUnitySuccessResult(logs)
+        val json = Json.encodeToString(result)
+        assertEquals("""{"success":true,"logs":[{"type":"Error","message":"Crash!","stackTrace":"at Foo.Bar()"}]}""", json)
+    }
+
+    @Test
+    fun `RunMethodInUnityErrorResult with logs serializes correctly`() {
+        val logs = listOf(CollectedLogEntry(type = "Error", message = "Oops", stackTrace = ""))
+        val result: RunMethodInUnityResult = RunMethodInUnityErrorResult(errorMessage = "err", logs = logs)
+        val json = Json.encodeToString(result)
+        assertEquals("""{"success":false,"errorMessage":"err","logs":[{"type":"Error","message":"Oops","stackTrace":""}]}""", json)
+    }
+
+    @Test
+    fun `RunMethodInUnityErrorResult with default empty logs serializes correctly`() {
+        val result: RunMethodInUnityResult = RunMethodInUnityErrorResult(errorMessage = "err")
+        val json = Json.encodeToString(result)
+        assertEquals("""{"success":false,"errorMessage":"err","logs":[]}""", json)
     }
 }
