@@ -9,8 +9,8 @@
     <depends>com.intellij.resharper.unity</depends>
 
     <extensions defaultExtensionNs="com.intellij.mcpServer">
-        <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.CompilationResultToolset"/>
         <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.RunUnityTestsToolset"/>
+        <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.CompilationResultToolset"/>
         <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.PlayControlToolset"/>
         <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.RunMethodInUnityToolset"/>
     </extensions>

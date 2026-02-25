@@ -7,7 +7,7 @@ Adds tools for operating Unity Editor from any Coding Agents.
 
 - **No per-project MCP server package required** — no need to install an MCP server package into each Unity project.
 - **Zero agent configuration** — if the MCP Server is already enabled in Rider, Coding Agents can use the tools immediately with no additional setup.
-- **Multiple tools for Unity Editor** — currently provides `run_unity_tests`, `get_unity_compilation_result`, `unity_play_control`, and `run_method_in_unity`, with more tools planned in the future.
+- **Multiple tools for Unity Editor** — currently provides `run_unity_tests`, `get_unity_compilation_result`, `unity_play_control`, and `run_method_in_unity`.
 
 ## Requirements
 
