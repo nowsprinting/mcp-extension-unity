@@ -104,7 +104,7 @@ class RunMethodInUnityToolset : McpToolset {
             return if (response.success) {
                 RunMethodInUnitySuccessResult(logs)
             } else {
-                RunMethodInUnityErrorResult(formatErrorMessage(response.message, response.stackTrace), logs)
+                RunMethodInUnityErrorResult(formatErrorMessage(response.message, response.stackTrace))
             }
         } catch (e: Exception) {
             collector?.stop()
@@ -118,8 +118,7 @@ class RunMethodInUnityToolset : McpToolset {
 sealed interface RunMethodInUnityResult
 
 data class RunMethodInUnityErrorResult(
-    val errorMessage: String,
-    val logs: List<CollectedLogEntry> = emptyList()
+    val errorMessage: String
 ) : RunMethodInUnityResult
 
 data class RunMethodInUnitySuccessResult(
@@ -135,15 +134,6 @@ object RunMethodInUnityResultSerializer : KSerializer<RunMethodInUnityResult> {
             is RunMethodInUnityErrorResult -> buildJsonObject {
                 put("success", false)
                 put("errorMessage", value.errorMessage)
-                putJsonArray("logs") {
-                    value.logs.forEach { entry ->
-                        addJsonObject {
-                            put("type", entry.type)
-                            put("message", entry.message)
-                            put("stackTrace", entry.stackTrace)
-                        }
-                    }
-                }
             }
             is RunMethodInUnitySuccessResult -> buildJsonObject {
                 put("success", true)
