@@ -7,4 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-PoC implementation
+### Initial release
+
+- run_unity_tests tool
+- get_unity_compilation_result tool
+- unity_play_control tool
+- run_method_in_unity tool
