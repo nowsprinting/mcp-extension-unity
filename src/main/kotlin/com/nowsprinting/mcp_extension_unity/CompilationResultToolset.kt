@@ -6,9 +6,12 @@ import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
+import com.jetbrains.rider.plugins.unity.model.frontendBackend.frontendBackendModel
 import com.jetbrains.rider.projectView.solution
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -21,12 +24,19 @@ class CompilationResultToolset : McpToolset {
 
     private val LOG = Logger.getInstance(CompilationResultToolset::class.java)
 
+    companion object {
+        internal const val LOG_FLUSH_DELAY_MS = 500L
+    }
+
     @McpTool(name = "get_unity_compilation_result")
     @McpDescription(description = """
         Trigger Unity's AssetDatabase.Refresh() and check if compilation succeeded.
         Useful for verifying that code changes compile before running tests.
+        Console logs (Debug.Log, Debug.LogWarning, Debug.LogError) generated during compilation are captured
+        and returned in the "logs" field of the response.
     """)
     suspend fun get_unity_compilation_result(): CompilationResult {
+        var collector: UnityConsoleLogCollector? = null
         try {
             val project = currentCoroutineContext().project
             val solution = project.solution
@@ -35,19 +45,37 @@ class CompilationResultToolset : McpToolset {
                     errorMessage = "No protocol available. The solution may not be fully loaded."
                 )
 
+            val timeoutSeconds = System.getenv("MCP_TOOL_TIMEOUT")?.toLongOrNull()?.takeIf { it > 0 } ?: 300L
+
+            val localCollector = UnityConsoleLogCollector(
+                solution.frontendBackendModel.consoleLogging.onConsoleLogEvent
+            )
+            collector = localCollector
+
             LOG.info("get_unity_compilation_result: calling Rd model.getCompilationResult.startSuspending")
-            val response = withContext(protocol.scheduler.asCoroutineDispatcher) {
-                val model = UnityTestMcpModelProvider.getOrBindModel(protocol)
-                model.getCompilationResult.startSuspending(Unit)
+            val response = withTimeout(timeoutSeconds * 1000) {
+                withContext(protocol.scheduler.asCoroutineDispatcher) {
+                    localCollector.start()
+                    val model = UnityTestMcpModelProvider.getOrBindModel(protocol)
+                    model.getCompilationResult.startSuspending(Unit)
+                }
             }
             LOG.info("get_unity_compilation_result: Rd call completed, success=${response.success}")
 
+            delay(LOG_FLUSH_DELAY_MS)
+
+            val logs = withContext(protocol.scheduler.asCoroutineDispatcher) {
+                localCollector.stop()
+            }
+            collector = null
+
             if (!response.success) {
-                return CompilationErrorResult(errorMessage = response.errorMessage)
+                return CompilationErrorResult(errorMessage = response.errorMessage, logs = logs)
             }
 
-            return CompilationSuccessResult
+            return CompilationSuccessResult(logs)
         } catch (e: Exception) {
+            collector?.stop()
             LOG.error("get_unity_compilation_result failed", e)
             return CompilationErrorResult(errorMessage = "${e.javaClass.simpleName}: ${e.message}")
         }
@@ -58,10 +86,13 @@ class CompilationResultToolset : McpToolset {
 sealed interface CompilationResult
 
 data class CompilationErrorResult(
-    val errorMessage: String
+    val errorMessage: String,
+    val logs: List<CollectedLogEntry> = emptyList()
 ) : CompilationResult
 
-object CompilationSuccessResult : CompilationResult
+data class CompilationSuccessResult(
+    val logs: List<CollectedLogEntry>
+) : CompilationResult
 
 object CompilationResultSerializer : KSerializer<CompilationResult> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("CompilationResult")
@@ -72,9 +103,27 @@ object CompilationResultSerializer : KSerializer<CompilationResult> {
             is CompilationErrorResult -> buildJsonObject {
                 put("success", false)
                 put("errorMessage", value.errorMessage)
+                putJsonArray("logs") {
+                    value.logs.forEach { entry ->
+                        addJsonObject {
+                            put("type", entry.type)
+                            put("message", entry.message)
+                            put("stackTrace", entry.stackTrace)
+                        }
+                    }
+                }
             }
             is CompilationSuccessResult -> buildJsonObject {
                 put("success", true)
+                putJsonArray("logs") {
+                    value.logs.forEach { entry ->
+                        addJsonObject {
+                            put("type", entry.type)
+                            put("message", entry.message)
+                            put("stackTrace", entry.stackTrace)
+                        }
+                    }
+                }
             }
         }
         jsonEncoder.encodeJsonElement(jsonObject)

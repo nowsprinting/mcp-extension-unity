@@ -55,10 +55,11 @@ Useful for verifying that code changes compile before running tests.
 
 **Response**
 
-| Field          | Type    | Description                                            |
-|----------------|---------|--------------------------------------------------------|
-| `success`      | boolean | `true` if compilation succeeded                        |
-| `errorMessage` | string  | Error details (only present when `success` is `false`) |
+| Field          | Type    | Description                                                                                                                                                        |
+|----------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `success`      | boolean | `true` if compilation succeeded                                                                                                                                    |
+| `logs`         | array   | Console log entries captured during compilation (always present, may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
+| `errorMessage` | string  | Error details (only present when `success` is `false`)                                                                                                             |
 
 ### `unity_play_control`
 
@@ -170,7 +171,7 @@ If it is not yet enabled:
 
 | Variable           | Default | Description                                                                                                                                                                           |
 |--------------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `MCP_TOOL_TIMEOUT` | `300`   | Timeout in seconds for `run_unity_tests` and `run_method_in_unity`. Set a smaller value to get faster feedback when Unity Test Runner cancellation does not fire a completion signal. |
+| `MCP_TOOL_TIMEOUT` | `300`   | Timeout in seconds for `run_unity_tests`, `get_unity_compilation_result`, and `run_method_in_unity`. Set a smaller value to get faster feedback when Unity Test Runner cancellation does not fire a completion signal. |
 
 ## Agent Skill Example
 
