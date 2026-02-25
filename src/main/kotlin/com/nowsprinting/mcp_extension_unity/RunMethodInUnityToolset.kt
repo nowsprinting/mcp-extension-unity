@@ -46,7 +46,7 @@ class RunMethodInUnityToolset : McpToolset {
         The method must be static and parameterless.
         IMPORTANT: The method's return value is NOT returned.
         "success" indicates only whether the method was found and invoked (reflection succeeded).
-        Even if the method throws internally, "success" may be true (the exception is logged to Unity Console).
+        Even if the method throws internally, "success" may be true (the exception is captured in the "logs" field).
         Console logs (Debug.Log, Debug.LogWarning, Debug.LogError) generated during execution are captured
         and returned in the "logs" field of the response.
     """)
