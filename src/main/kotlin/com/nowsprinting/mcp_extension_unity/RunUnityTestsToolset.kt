@@ -64,7 +64,7 @@ class RunUnityTestsToolset : McpToolset {
                 }
             }
 
-            return TestRunResult(passCount, skipCount, failCount, inconclusiveCount, failedTests, inconclusiveTests)
+            return TestRunResult(passCount, failCount, inconclusiveCount, skipCount, failedTests, inconclusiveTests)
         }
     }
 
@@ -153,9 +153,9 @@ data class TestErrorResult(
 
 data class TestRunResult(
     val passCount: Int,
-    val skipCount: Int,
     val failCount: Int,
     val inconclusiveCount: Int,
+    val skipCount: Int,
     val failedTests: List<TestDetail>,
     val inconclusiveTests: List<TestDetail>
 ) : RunUnityTestsResult {
@@ -176,9 +176,9 @@ object RunUnityTestsResultSerializer : KSerializer<RunUnityTestsResult> {
             is TestRunResult -> buildJsonObject {
                 put("success", value.success)
                 put("passCount", value.passCount)
-                put("skipCount", value.skipCount)
                 put("failCount", value.failCount)
                 put("inconclusiveCount", value.inconclusiveCount)
+                put("skipCount", value.skipCount)
                 putJsonArray("failedTests") {
                     value.failedTests.forEach { detail ->
                         addJsonObject {
@@ -197,6 +197,7 @@ object RunUnityTestsResultSerializer : KSerializer<RunUnityTestsResult> {
                         }
                     }
                 }
+                put("errorMessage", "")
             }
         }
         jsonEncoder.encodeJsonElement(jsonObject)
