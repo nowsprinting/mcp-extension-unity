@@ -3,7 +3,12 @@ package com.nowsprinting.mcp_extension_unity
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.project
 import com.intellij.openapi.diagnostic.Logger
+import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
+import com.jetbrains.rider.projectView.solution
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -22,7 +27,30 @@ class CompilationResultToolset : McpToolset {
         Useful for verifying that code changes compile before running tests.
     """)
     suspend fun get_unity_compilation_result(): CompilationResult {
-        return CompilationErrorResult(errorMessage = "not implemented")
+        try {
+            val project = currentCoroutineContext().project
+            val solution = project.solution
+            val protocol = solution.protocol
+                ?: return CompilationErrorResult(
+                    errorMessage = "No protocol available. The solution may not be fully loaded."
+                )
+
+            LOG.info("get_unity_compilation_result: calling Rd model.getCompilationResult.startSuspending")
+            val response = withContext(protocol.scheduler.asCoroutineDispatcher) {
+                val model = UnityTestMcpModelProvider.getOrBindModel(protocol)
+                model.getCompilationResult.startSuspending(Unit)
+            }
+            LOG.info("get_unity_compilation_result: Rd call completed, success=${response.success}")
+
+            if (!response.success) {
+                return CompilationErrorResult(errorMessage = response.errorMessage)
+            }
+
+            return CompilationSuccessResult
+        } catch (e: Exception) {
+            LOG.error("get_unity_compilation_result failed", e)
+            return CompilationErrorResult(errorMessage = "${e.javaClass.simpleName}: ${e.message}")
+        }
     }
 }
 
