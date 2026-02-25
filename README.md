@@ -93,9 +93,10 @@ Controls Unity Editor's play mode. Requires Unity Editor to be connected to Ride
 
 Invoke a static method in Unity Editor via reflection.
 Requires Unity Editor to be connected to Rider.
+Console logs (`Debug.Log`, `Debug.LogWarning`, `Debug.LogError`) generated during execution are captured and returned in the `logs` field.
 
 > [!IMPORTANT]
-> The method's return value is **NOT** returned. `success` only indicates whether the method was found and invoked (reflection succeeded). Even if the method throws internally, `success` may be `true` — the exception is logged to the Unity Console.
+> The method's return value is **NOT** returned. `success` only indicates whether the method was found and invoked (reflection succeeded). Even if the method throws internally, `success` may be `true` — the exception is logged to the Unity Console and captured in `logs`.
 
 **Parameters**
 
@@ -112,6 +113,7 @@ The method must be **static and parameterless**.
 | Field          | Type    | Description                                                       |
 |----------------|---------|-------------------------------------------------------------------|
 | `success`      | boolean | `true` if the method was found and invoked (reflection succeeded) |
+| `logs`         | array   | Console log entries captured during execution (always present, may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
 | `errorMessage` | string  | Error details (only present when `success` is `false`)            |
 
 ## Architecture

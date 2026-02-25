@@ -10,7 +10,7 @@ A Rider IDE plugin (PoC stage) that extends the built-in JetBrains MCP Server wi
 The goal is to allow Coding Agents (e.g., Claude Code) to run Unity tests through Rider's test infrastructure,
 rather than invoking Unity directly.
 
-**Current status**: Steps 1–8 complete. Cancellation/disconnection handling and `MCP_TOOL_TIMEOUT` env var added in Step 8.
+**Current status**: Steps 1–9 complete. Console log collection added to `run_method_in_unity` in Step 9.
 
 ## Architecture
 
@@ -59,7 +59,8 @@ mcp-extension-unity/
 │       └── UnityTestMcpModel.kt                       # Rd DSL: McpRunTestsRequest/Response
 ├── src/main/
 │   ├── kotlin/com/nowsprinting/mcp_extension_unity/
-│   │   └── RunUnityTestsToolset.kt                   # MCP tool → Rd call (assemblyNames validation)
+│   │   ├── RunUnityTestsToolset.kt                   # MCP tool → Rd call (assemblyNames validation)
+│   │   └── UnityConsoleLogCollector.kt               # Console log collector (start/stop lifecycle)
 │   ├── generated/                                     # auto-generated Kotlin model (gitignored)
 │   └── resources/META-INF/
 │       └── plugin.xml                                 # plugin descriptor
@@ -176,6 +177,7 @@ Register in `plugin.xml`:
 | 6    | Define custom Rd model + implement C# handler calling `BackendUnityModel` | Done   |
 | 7    | Verify end-to-end test execution with a real Unity project                | Done   |
 | 8    | Add cancellation/disconnection handling and `MCP_TOOL_TIMEOUT` env var    | Done   |
+| 9    | Add console log collection to `run_method_in_unity`                       | Done   |
 
 ## Reference Documents
 
