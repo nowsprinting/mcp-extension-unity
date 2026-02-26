@@ -2,7 +2,11 @@
 
 [![Build](https://github.com/nowsprinting/mcp-extension-unity/actions/workflows/build.yml/badge.svg)](https://github.com/nowsprinting/mcp-extension-unity/actions/workflows/build.yml)
 
-A plugin that extends the [MCP Server plugin](https://plugins.jetbrains.com/plugin/26071-mcp-server) built into JetBrains Rider.
+[![Version](https://img.shields.io/jetbrains/plugin/v/30357-mcp-server-extension-for-unity.svg)](https://plugins.jetbrains.com/plugin/30357-mcp-server-extension-for-unity)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/30357-mcp-server-extension-for-unity.svg)](https://plugins.jetbrains.com/plugin/30357-mcp-server-extension-for-unity)
+[![rating](https://img.shields.io/jetbrains/plugin/r/rating/30357-mcp-server-extension-for-unity.svg)](https://plugins.jetbrains.com/plugin/30357-mcp-server-extension-for-unity)
+
+A plugin that extends the [MCP Server](https://plugins.jetbrains.com/plugin/26071-mcp-server) built into JetBrains Rider.
 Adds tools for operating Unity Editor from any Coding Agents.
 
 ## Features
@@ -10,7 +14,7 @@ Adds tools for operating Unity Editor from any Coding Agents.
 - **No per-project MCP server package required** — no need to install an MCP server package into each Unity project.
 - **No agent configuration** — if the MCP Server is already enabled in Rider, Coding Agents can use the tools immediately with no additional setup.
 - **No additional configuration required for cloned workspaces** — if you clone a workspace with `git workspace`, `claude --workspace`, etc., you get tools that work without any additional configuration.
-- **Tools for Unity Editor** — provides `run_unity_tests`, `get_unity_compilation_result`, `unity_play_control`, and `run_method_in_unity`.
+- **Tools for Unity Editor** — provides **Run tests**, **Run method**, **Check compilation**, and **Play control**.
 
 ## Requirements
 
@@ -18,13 +22,10 @@ Adds tools for operating Unity Editor from any Coding Agents.
 
 ## Provided Tools
 
-### `run_unity_tests`
+### Run Tests
 
-Run tests on Unity Test Runner through Rider's test infrastructure.
+The `run_unity_tests` tool runs tests on Unity Test Runner through Rider's test infrastructure.
 Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `testNames` to narrow down the tests to the scope of changes.
-
-> [!TIP]  
-> Recommended to use with the Agent Skills, see [example](#agent-skill-example).
 
 **Parameters**
 
@@ -55,9 +56,47 @@ Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `test
 | `success`      | boolean | Always `false` |
 | `errorMessage` | string  | Error details  |
 
-### `get_unity_compilation_result`
+> [!TIP]  
+> Recommended to use with the Agent Skills, see [Agent Skill Examples](#agent-skill-examples).
 
-Trigger Unity's `AssetDatabase.Refresh()` and check if compilation succeeded.
+### Run Method
+
+The `run_method_in_unity` tool invokes a static method in Unity Editor via reflection. The method must be static and parameterless. The method's return value is NOT returned.
+Console logs during the method will be captured and returned in the `logs` field of the response.
+
+**Parameters**
+
+| Name           | Required     | Description                                                        |
+|----------------|--------------|--------------------------------------------------------------------|
+| `assemblyName` | **Required** | Assembly name containing the type (e.g., `Assembly-CSharp-Editor`) |
+| `typeName`     | **Required** | Fully qualified type name (e.g., `MyNamespace.MyEditorTool`)       |
+| `methodName`   | **Required** | Static method name to invoke (e.g., `DoSomething`)                 |
+
+The method must be **static and parameterless**.
+
+**Response**
+
+| Field     | Type    | Description                                                                                                                                             |
+|-----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `success` | boolean | Always `true` (indicates reflection succeeded; does not mean the method executed without errors — internal exceptions are captured in `logs`)           |
+| `logs`    | array   | Console log entries captured during execution (may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
+
+**Error Response**
+
+| Field          | Type    | Description    |
+|----------------|---------|----------------|
+| `success`      | boolean | Always `false` |
+| `errorMessage` | string  | Error details  |
+
+> [!IMPORTANT]  
+> The method's return value is **NOT** returned. `success` only indicates whether the method was found and invoked (reflection succeeded). Even if the method throws internally, `success` may be `true` — the exception is captured in the `logs` field.
+
+> [!IMPORTANT]  
+> Async methods can be invoked, but the tool does not await their completion. Logs generated after the method returns to the caller will not be included in the response.
+
+### Check Compilation
+
+The `get_unity_compilation_result` tool triggers Unity's `AssetDatabase.Refresh()` and checks if compilation succeeded.
 Console logs during compilation will be captured and returned in the `logs` field of the response.
 
 **Parameters**: none
@@ -77,9 +116,15 @@ Console logs during compilation will be captured and returned in the `logs` fiel
 | `errorMessage` | string  | Error details                                                                                                                                           |
 | `logs`         | array   | Console log entries captured before the error (may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
 
-### `unity_play_control`
+> [!WARNING]  
+> If Unity Editor compiles before this tool triggers a refresh, the response will not include any logs. Compilation errors remain in the Console window, but there is no way to retrieve them via this tool. Use other tools instead, e.g., `getDiagnostics`.
 
-Controls Unity Editor's play mode. Requires Unity Editor to be connected to Rider.
+> [!TIP]  
+> When running the Run Tests or Run Method tools immediately after modifying code, it is recommended to run this tool first to ensure compilation succeeds before test execution.
+
+### Play Control
+
+The `unity_play_control` tool controls Unity Editor's play mode. Requires Unity Editor to be connected to Rider.
 
 **Parameters**
 
@@ -104,38 +149,6 @@ Controls Unity Editor's play mode. Requires Unity Editor to be connected to Ride
 | `action`    | string  | The action that was performed                  |
 | `isPlaying` | boolean | Whether Unity Editor is currently in play mode |
 | `isPaused`  | boolean | Whether Unity Editor is currently paused       |
-
-**Error Response**
-
-| Field          | Type    | Description    |
-|----------------|---------|----------------|
-| `success`      | boolean | Always `false` |
-| `errorMessage` | string  | Error details  |
-
-### `run_method_in_unity`
-
-Invoke a static method in Unity Editor via reflection. The method must be static and parameterless. The method's return value is NOT returned.
-Console logs during the method will be captured and returned in the `logs` field of the response.
-
-> [!IMPORTANT]  
-> The method's return value is **NOT** returned. `success` only indicates whether the method was found and invoked (reflection succeeded). Even if the method throws internally, `success` may be `true` — the exception is captured in the `logs` field.
-
-**Parameters**
-
-| Name           | Required     | Description                                                        |
-|----------------|--------------|--------------------------------------------------------------------|
-| `assemblyName` | **Required** | Assembly name containing the type (e.g., `Assembly-CSharp-Editor`) |
-| `typeName`     | **Required** | Fully qualified type name (e.g., `MyNamespace.MyEditorTool`)       |
-| `methodName`   | **Required** | Static method name to invoke (e.g., `DoSomething`)                 |
-
-The method must be **static and parameterless**.
-
-**Response**
-
-| Field     | Type    | Description                                                                                                                                             |
-|-----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `success` | boolean | Always `true` (indicates reflection succeeded; does not mean the method executed without errors — internal exceptions are captured in `logs`)           |
-| `logs`    | array   | Console log entries captured during execution (may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
 
 **Error Response**
 
@@ -174,9 +187,15 @@ Rider uses two separate [Reactive Distributed (Rd)](https://github.com/JetBrains
 `run_method_in_unity` accesses `FrontendBackendModel.runMethodInUnity` directly from Kotlin, requiring no C# backend changes.
 `run_unity_tests` uses a custom Rd model (`UnityTestMcpModel`) to bridge the two layers, since the Kotlin Frontend cannot directly access `BackendUnityModel`.
 
+## Installation
+
+1. Open **Settings > Plugins**.
+2. Select **Marketplace** and search for "mcp unity".
+3. Click **Install** on the "MCP Server Extension for Unity" plugin.
+
 ## Configuration
 
-If the MCP Server is already enabled in Rider, no additional configuration is required.
+If the built-in **MCP Server** is already enabled in Rider, no additional configuration is required.
 
 If it is not yet enabled:
 
@@ -185,7 +204,7 @@ If it is not yet enabled:
 3. Click **Auto-Configure** for the agent you want to use.
 
 > [!NOTE]
-> See the [MCP Server](https://www.jetbrains.com/help/rider/mcp-server.html) for more details on configuration and usage.
+> See the [MCP Server](https://www.jetbrains.com/help/rider/mcp-server.html) documentation for more details on configuration and usage.
 
 ### Environment Variables
 
@@ -193,7 +212,7 @@ If it is not yet enabled:
 |--------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `MCP_TOOL_TIMEOUT` | `300`   | Timeout in seconds for `run_unity_tests`, `get_unity_compilation_result`, and `run_method_in_unity`. Set a smaller value to get faster feedback when Unity Test Runner cancellation does not fire a completion signal. |
 
-## Agent Skill Example
+## Agent Skill Examples
 
 To use the `/run-tests` skill in Claude Code, create a skill file with the following content:
 
