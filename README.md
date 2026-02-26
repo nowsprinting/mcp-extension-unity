@@ -1,7 +1,6 @@
 # IntelliJ MCP Server Extension for Unity
 
 [![Build](https://github.com/nowsprinting/mcp-extension-unity/actions/workflows/build.yml/badge.svg)](https://github.com/nowsprinting/mcp-extension-unity/actions/workflows/build.yml)
-
 [![Version](https://img.shields.io/jetbrains/plugin/v/30357-mcp-server-extension-for-unity.svg)](https://plugins.jetbrains.com/plugin/30357-mcp-server-extension-for-unity)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/30357-mcp-server-extension-for-unity.svg)](https://plugins.jetbrains.com/plugin/30357-mcp-server-extension-for-unity)
 [![rating](https://img.shields.io/jetbrains/plugin/r/rating/30357-mcp-server-extension-for-unity.svg)](https://plugins.jetbrains.com/plugin/30357-mcp-server-extension-for-unity)
