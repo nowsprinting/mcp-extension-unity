@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add plugin icons
+
 ## [1.0.0] - 2026-02-26
 
 ### Initial Release
