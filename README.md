@@ -279,6 +279,10 @@ See full example: [nowsprinting/claude-code-settings-for-unity](https://github.c
 
 ## FAQ
 
+**Does it only work in the terminal window inside Rider?**
+
+No. As long as the Rider process connected to Unity Editor is running, you can use the tools from any coding agent launched in any external terminal.
+
 **Can I collect Unity console logs?**
 
 No. The only API for retrieving Unity console logs is streaming-based, and MCP tools cannot return streaming responses. While buffering is technically possible, it would be inaccurate and misleading, so this is intentionally not provided. Read `editor.log` instead.
