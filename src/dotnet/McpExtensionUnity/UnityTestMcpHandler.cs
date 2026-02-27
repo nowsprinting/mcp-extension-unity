@@ -28,7 +28,7 @@ using McpExtensionUnity.Model;
 
 namespace McpExtensionUnity
 {
-    // Binds UnityTestMcpModel to the solution protocol and handles the RunTests call.
+    // Handles the RunTests Rd endpoint.
     // Bridges: Kotlin Frontend → (custom Rd) → C# Backend → BackendUnityModel → Unity Editor.
     // GetCompilationResult is handled by UnityCompilationMcpHandler.
     [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
@@ -37,22 +37,18 @@ namespace McpExtensionUnity
         private static readonly ILogger ourLogger = Logger.GetLogger<UnityTestMcpHandler>();
 
         public UnityTestMcpHandler(
-            Lifetime lifetime,
-            ISolution solution,
+            UnityTestMcpModelProvider modelProvider,
             IProtocol protocol,
             BackendUnityHost backendUnityHost)
         {
-            ourLogger.Info("UnityTestMcpHandler: constructor called, binding Rd model");
-            var model = new UnityTestMcpModel(lifetime, protocol);
+            ourLogger.Info("UnityTestMcpHandler: constructor called, binding Rd handler");
 
             // Capture scheduler.Queue as a delegate to avoid naming the IScheduler type directly.
             // All Rd protocol operations must be dispatched via this delegate to ensure they run
             // on the Rd Shell Dispatcher thread.
             Action<Action> rdQueue = protocol.Scheduler.Queue;
 
-            new UnityCompilationMcpHandler(model, backendUnityHost, rdQueue);
-
-            RdTaskEx.SetAsync(model.RunTests, async (lt, request) =>
+            RdTaskEx.SetAsync(modelProvider.Model.RunTests, async (lt, request) =>
             {
                 ourLogger.Info("UnityTestMcpHandler: RunTests handler invoked");
                 ourLogger.Info($"  TestMode={request.TestMode}, " +

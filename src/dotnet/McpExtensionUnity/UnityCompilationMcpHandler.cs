@@ -4,10 +4,14 @@
 
 using System;
 using System.Threading.Tasks;
+using JetBrains.Application.Components;
+using JetBrains.Application.Parts;
 using JetBrains.Core;
 using JetBrains.Util;
 using JetBrains.Util.Logging;
 using JetBrains.Lifetimes;
+using JetBrains.ProjectModel;
+using JetBrains.Rd;
 using JetBrains.Rd.Tasks;
 using JetBrains.Rider.Model.Unity.BackendUnity;
 using JetBrains.ReSharper.Plugins.Unity.Rider.Integration.Protocol;
@@ -17,23 +21,23 @@ namespace McpExtensionUnity
 {
     // Handles the GetCompilationResult Rd endpoint.
     // Triggers AssetDatabase.Refresh() in Unity Editor and checks compilation status.
-    // Instantiated by UnityTestMcpHandler, which owns the UnityTestMcpModel.
-    internal class UnityCompilationMcpHandler
+    [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
+    public class UnityCompilationMcpHandler : IStartupActivity
     {
         private static readonly ILogger ourLogger = Logger.GetLogger<UnityCompilationMcpHandler>();
 
         private readonly BackendUnityHost _host;
         private readonly Action<Action> _rdQueue;
 
-        internal UnityCompilationMcpHandler(
-            UnityTestMcpModel model,
-            BackendUnityHost host,
-            Action<Action> rdQueue)
+        public UnityCompilationMcpHandler(
+            UnityTestMcpModelProvider modelProvider,
+            IProtocol protocol,
+            BackendUnityHost host)
         {
             _host = host;
-            _rdQueue = rdQueue;
+            _rdQueue = protocol.Scheduler.Queue;
 
-            RdTaskEx.SetAsync(model.GetCompilationResult, async (lt, _) =>
+            RdTaskEx.SetAsync(modelProvider.Model.GetCompilationResult, async (lt, _) =>
             {
                 ourLogger.Info("UnityCompilationMcpHandler: GetCompilationResult handler invoked");
                 return await RefreshAndCheckCompilation(lt).ConfigureAwait(false);
