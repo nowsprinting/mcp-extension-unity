@@ -5,6 +5,7 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/30357-mcp-server-extension-for-unity.svg)](https://plugins.jetbrains.com/plugin/30357-mcp-server-extension-for-unity)
 [![rating](https://img.shields.io/jetbrains/plugin/r/rating/30357-mcp-server-extension-for-unity.svg)](https://plugins.jetbrains.com/plugin/30357-mcp-server-extension-for-unity)
 
+<!-- Plugin description -->
 A plugin that extends the [MCP Server](https://plugins.jetbrains.com/plugin/26071-mcp-server) built into JetBrains Rider.
 Adds tools for operating Unity Editor from any Coding Agents.
 
@@ -14,6 +15,7 @@ Adds tools for operating Unity Editor from any Coding Agents.
 - **No agent configuration** — if the MCP Server is already enabled in Rider, Coding Agents can use the tools immediately with no additional setup.
 - **No additional configuration required for cloned workspaces** — if you clone a workspace with `git workspace`, `claude --workspace`, etc., you get tools that work without any additional configuration.
 - **Tools for Unity Editor** — provides **Run tests**, **Run method**, **Check compilation**, and **Play control**.
+<!-- Plugin description end -->
 
 ## Requirements
 

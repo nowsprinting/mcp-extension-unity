@@ -1,17 +1,16 @@
 <idea-plugin>
     <id>com.nowsprinting.mcp-extension-unity</id>
     <name>MCP Server Extension for Unity</name>
-    <vendor url="https://github.com/nowsprinting/mcp-extension-unity">Koji Hasegawa</vendor>
-    <description>A plugin that extends the MCP Server plugin built into JetBrains Rider. Adds tools for operating Unity Editor from any Coding Agents.</description>
+    <vendor url="https://github.com/nowsprinting">Koji Hasegawa</vendor>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.mcpServer</depends>
     <depends>com.intellij.resharper.unity</depends>
 
     <extensions defaultExtensionNs="com.intellij.mcpServer">
-        <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.RunUnityTestsToolset"/>
         <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.CompilationResultToolset"/>
-        <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.PlayControlToolset"/>
+        <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.RunUnityTestsToolset"/>
         <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.RunMethodInUnityToolset"/>
+        <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.PlayControlToolset"/>
     </extensions>
 </idea-plugin>
