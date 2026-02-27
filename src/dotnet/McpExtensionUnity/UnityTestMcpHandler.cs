@@ -28,8 +28,9 @@ using McpExtensionUnity.Model;
 
 namespace McpExtensionUnity
 {
-    // Binds UnityTestMcpModel to the solution protocol and handles RunTests / GetCompilationResult calls.
+    // Binds UnityTestMcpModel to the solution protocol and handles the RunTests call.
     // Bridges: Kotlin Frontend → (custom Rd) → C# Backend → BackendUnityModel → Unity Editor.
+    // GetCompilationResult is handled by UnityCompilationMcpHandler.
     [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
     public class UnityTestMcpHandler : IStartupActivity
     {
@@ -48,6 +49,8 @@ namespace McpExtensionUnity
             // All Rd protocol operations must be dispatched via this delegate to ensure they run
             // on the Rd Shell Dispatcher thread.
             Action<Action> rdQueue = protocol.Scheduler.Queue;
+
+            new UnityCompilationMcpHandler(model, backendUnityHost, rdQueue);
 
             RdTaskEx.SetAsync(model.RunTests, async (lt, request) =>
             {
@@ -104,12 +107,12 @@ namespace McpExtensionUnity
                 // we use ScheduleOnRd to keep the pattern consistent and future-proof.
                 await ScheduleOnRd(rdQueue, () =>
                 {
-                    // Re-acquire model after potential reconnection (Refresh may trigger domain reload)
+                    // Re-acquire model after potential reconnection
                     var backendUnityModel = backendUnityHost.BackendUnityModel.Value;
                     if (backendUnityModel == null)
                     {
                         // Cannot return from a closure; signal the error through a captured variable
-                        setupError = ErrorResponse("Unity Editor disconnected after compilation check.");
+                        setupError = ErrorResponse("Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
                         return;
                     }
 
@@ -190,141 +193,6 @@ namespace McpExtensionUnity
                 return BuildResponse(snapshot);
             });
 
-            RdTaskEx.SetAsync(model.GetCompilationResult, async (lt, _) =>
-            {
-                ourLogger.Info("UnityTestMcpHandler: GetCompilationResult handler invoked");
-                return await RefreshAndCheckCompilation().ConfigureAwait(false);
-
-                // Triggers AssetDatabase.Refresh(), waits for Unity reconnection (handles domain reload),
-                // then calls GetCompilationResult to verify compilation succeeded.
-                // Captures lt, backendUnityHost, rdQueue from the enclosing handler scope.
-                async Task<McpCompilationResponse> RefreshAndCheckCompilation()
-                {
-                    if (!backendUnityHost.IsConnectionEstablished())
-                        return CompilationErrorResponse(
-                            "Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
-
-                    var unityModel = backendUnityHost.BackendUnityModel.Value;
-                    if (unityModel == null)
-                        return CompilationErrorResponse(
-                            "Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
-
-                    // unityModel.Refresh.Start() is an Rd RPC and must be called on the Rd scheduler thread.
-                    // Schedule it via rdQueue and capture the returned IRdTask.
-                    ourLogger.Info("RefreshAndCheckCompilation: starting Refresh");
-                    IRdTask<Unit> rdRefreshTask;
-                    try
-                    {
-                        rdRefreshTask = await ScheduleOnRd(rdQueue, () => unityModel.Refresh.Start(lt, RefreshType.Normal)).ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        ourLogger.Warn($"RefreshAndCheckCompilation: failed to start Refresh: {e.Message}");
-                        return CompilationErrorResponse($"Failed to start AssetDatabase.Refresh(): {e.Message}");
-                    }
-
-                    try
-                    {
-                        var refreshTask = AwaitRdTask(rdRefreshTask);
-                        var timeoutTask = Task.Delay(TimeSpan.FromMinutes(2));
-                        if (await Task.WhenAny(refreshTask, timeoutTask).ConfigureAwait(false) != refreshTask)
-                        {
-                            ourLogger.Warn("RefreshAndCheckCompilation: Refresh timed out after 2 minutes");
-                            return CompilationErrorResponse("AssetDatabase.Refresh() timed out after 2 minutes.");
-                        }
-                        await refreshTask.ConfigureAwait(false);
-                        ourLogger.Info("RefreshAndCheckCompilation: Refresh completed");
-                    }
-                    catch (Exception e)
-                    {
-                        // Refresh may trigger a domain reload which disconnects Unity temporarily — not fatal
-                        ourLogger.Warn($"RefreshAndCheckCompilation: Refresh threw (likely domain reload): {e.Message}");
-                    }
-
-                    // Wait for the model to be available again (fires immediately if no reload occurred).
-                    // WaitForUnityModel schedules the Advise call on the Rd scheduler thread.
-                    ourLogger.Info("RefreshAndCheckCompilation: waiting for Unity model reconnection");
-                    var reconnectedModel = await WaitForUnityModel(TimeSpan.FromMinutes(2)).ConfigureAwait(false);
-                    if (reconnectedModel == null)
-                        return CompilationErrorResponse(
-                            "Unity Editor did not reconnect within 2 minutes after Refresh.");
-                    ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
-
-                    // GetCompilationResult.Start() is an Rd RPC and must be called on the Rd scheduler thread.
-                    bool compilationSucceeded;
-                    try
-                    {
-                        var rdCompileTask = await ScheduleOnRd(rdQueue, () => reconnectedModel.GetCompilationResult.Start(lt, Unit.Instance)).ConfigureAwait(false);
-                        var compileTask = AwaitRdTask(rdCompileTask);
-                        var timeoutTask = Task.Delay(TimeSpan.FromMinutes(1));
-                        if (await Task.WhenAny(compileTask, timeoutTask).ConfigureAwait(false) != compileTask)
-                            return CompilationErrorResponse("GetCompilationResult timed out after 1 minute.");
-                        compilationSucceeded = await compileTask.ConfigureAwait(false);
-                    }
-                    catch (Exception e)
-                    {
-                        return CompilationErrorResponse($"GetCompilationResult failed: {e.Message}");
-                    }
-
-                    ourLogger.Info($"RefreshAndCheckCompilation: compilationSucceeded={compilationSucceeded}");
-                    if (!compilationSucceeded)
-                        return new McpCompilationResponse(
-                            success: false,
-                            errorMessage: "Unity compilation failed. Fix compiler errors before running tests."
-                        );
-                    return new McpCompilationResponse(success: true, errorMessage: "");
-                }
-
-                // Waits for BackendUnityModel to become non-null. Fires immediately if already connected.
-                // The Advise call is scheduled on the Rd scheduler thread via rdQueue to satisfy Rd threading requirements.
-                // Captures lt, backendUnityHost, rdQueue from the enclosing handler scope.
-                async Task<BackendUnityModel> WaitForUnityModel(TimeSpan timeout)
-                {
-                    var tcs = new TaskCompletionSource<BackendUnityModel>(
-                        TaskCreationOptions.RunContinuationsAsynchronously);
-                    // Advise must be called on the Rd scheduler thread.
-                    // If the model is already non-null, Advise fires immediately on the scheduler thread,
-                    // setting the TCS result before we even reach Task.WhenAny.
-                    rdQueue(() =>
-                    {
-                        backendUnityHost.BackendUnityModel.Advise(lt, m =>
-                        {
-                            if (m != null) tcs.TrySetResult(m);
-                        });
-                    });
-                    var reconnectTask = tcs.Task;
-                    var timeoutTask = Task.Delay(timeout);
-                    if (await Task.WhenAny(reconnectTask, timeoutTask).ConfigureAwait(false) != reconnectTask)
-                        return null;
-                    return await reconnectTask.ConfigureAwait(false);
-                }
-
-                // Converts IRdTask<T> to Task<T> using Advise on the result property.
-                // Advise fires once when the task result is set (not with the initial null state).
-                // RdTaskResult<T>.Unwrap() returns the value on success, throws on failure/cancellation.
-                // Captures lt from the enclosing handler scope.
-                Task<T> AwaitRdTask<T>(IRdTask<T> rdTask)
-                {
-                    var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-                    rdTask.Result.Advise(lt, result =>
-                    {
-                        if (result == null) return;
-                        try
-                        {
-                            tcs.TrySetResult(result.Unwrap());
-                        }
-                        catch (Exception e)
-                        {
-                            tcs.TrySetException(e);
-                        }
-                    });
-                    return tcs.Task;
-                }
-
-                McpCompilationResponse CompilationErrorResponse(string message) =>
-                    new McpCompilationResponse(success: false, errorMessage: message);
-            });
-
             ourLogger.Info("UnityTestMcpHandler: Rd handlers registered");
         }
 
@@ -352,22 +220,9 @@ namespace McpExtensionUnity
             });
         }
 
-        // Schedules func on the Rd scheduler thread and returns a Task<T> that completes with the result.
-        // Required when calling Rd RPCs (e.g., Start) from a TP worker thread.
-        // Not naming IScheduler directly avoids coupling to a specific JetBrains.* namespace version.
-        private static Task<T> ScheduleOnRd<T>(Action<Action> rdQueue, Func<T> func)
-        {
-            var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-            rdQueue(() =>
-            {
-                try { tcs.TrySetResult(func()); }
-                catch (Exception e) { tcs.TrySetException(e); }
-            });
-            return tcs.Task;
-        }
-
         // Schedules action on the Rd scheduler thread and returns a Task that completes when done.
         // Required when calling Rd Advise/Set/Start from a TP worker thread.
+        // Not naming IScheduler directly avoids coupling to a specific JetBrains.* namespace version.
         private static Task ScheduleOnRd(Action<Action> rdQueue, Action action)
         {
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
