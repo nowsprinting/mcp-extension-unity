@@ -118,10 +118,10 @@ Console logs during compilation will be captured and returned in the `logs` fiel
 | `logs`         | array   | Console log entries captured before the error (may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
 
 > [!WARNING]  
-> If Unity Editor compiles before this tool triggers a refresh, the response will not include any logs. Compilation errors remain in the Console window, but there is no way to retrieve them via this tool. Use other tools instead, e.g., `getDiagnostics`.
+> If the Unity Editor was compiled before this tool triggered a refresh, the response will not include a log. Compilation errors will remain in the console window, but will not be available with this tool. Instead, use the `getDiagnostics` or `get_file_problems` tools, or read `editor.log`.
 
 > [!TIP]  
-> When running the Run Tests or Run Method tools immediately after modifying code, it is recommended to run this tool first to ensure compilation succeeds before test execution.
+> Recommended to run this tool to ensure compilation succeeds before `run_unity_tests` or `run_method_in_unity` tool if modified code.
 
 ### Play Control
 
