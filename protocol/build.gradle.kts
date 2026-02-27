@@ -40,6 +40,23 @@ rdgen {
         directory = csharpGeneratedDir.absolutePath
         generatedFileSuffix = ".Generated"
     }
+
+    generator {
+        language = "kotlin"
+        transform = "asis"
+        root = "model.rider.UnityCompilationMcpModel"
+        directory = kotlinGeneratedDir.absolutePath
+        generatedFileSuffix = ".Generated"
+    }
+
+    generator {
+        language = "csharp"
+        transform = "reversed"
+        root = "model.rider.UnityCompilationMcpModel"
+        namespace = "McpExtensionUnity.Model"
+        directory = csharpGeneratedDir.absolutePath
+        generatedFileSuffix = ".Generated"
+    }
 }
 
 tasks.withType<RdGenTask>().configureEach {

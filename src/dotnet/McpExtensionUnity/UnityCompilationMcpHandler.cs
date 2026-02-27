@@ -30,7 +30,7 @@ namespace McpExtensionUnity
         private readonly Action<Action> _rdQueue;
 
         public UnityCompilationMcpHandler(
-            UnityTestMcpModelProvider modelProvider,
+            UnityCompilationMcpModelProvider modelProvider,
             IProtocol protocol,
             BackendUnityHost host)
         {

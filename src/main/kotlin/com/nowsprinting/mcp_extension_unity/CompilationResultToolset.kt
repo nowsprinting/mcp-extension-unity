@@ -54,7 +54,7 @@ class CompilationResultToolset : McpToolset {
             val response = withTimeout(timeoutSeconds * 1000) {
                 withContext(protocol.scheduler.asCoroutineDispatcher) {
                     localCollector.start()
-                    val model = UnityTestMcpModelProvider.getOrBindModel(protocol)
+                    val model = UnityCompilationMcpModelProvider.getOrBindModel(protocol)
                     model.getCompilationResult.startSuspending(Unit)
                 }
             }

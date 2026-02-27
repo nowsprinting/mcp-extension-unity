@@ -8,8 +8,8 @@ using McpExtensionUnity.Model;
 namespace McpExtensionUnity
 {
     // Creates and exposes the UnityTestMcpModel bound to the solution protocol.
-    // Both UnityTestMcpHandler and UnityCompilationMcpHandler inject this provider
-    // to share the single model instance (Rd protocol binding must happen exactly once).
+    // UnityTestMcpHandler injects this provider to share the single model instance
+    // (Rd protocol binding must happen exactly once).
     [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
     public class UnityTestMcpModelProvider
     {
