@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add plugin icons
 
+### Fixed
+
+- Remove pre-test compilation check from RunTests handler
+
 ## [1.0.0] - 2026-02-26
 
 ### Initial Release

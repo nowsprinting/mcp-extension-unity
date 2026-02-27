@@ -69,14 +69,6 @@ namespace McpExtensionUnity
                 if (initialModel == null)
                     return ErrorResponse("Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
 
-                // Refresh assets and check compilation before running tests.
-                // After this await, execution continues on a .NET ThreadPool thread.
-                ourLogger.Info("UnityTestMcpHandler: RunTests - starting compilation check");
-                var compilationResult = await RefreshAndCheckCompilation(lt, backendUnityHost, rdQueue).ConfigureAwait(false);
-                if (!compilationResult.Success)
-                    return ErrorResponse(compilationResult.ErrorMessage);
-                ourLogger.Info("UnityTestMcpHandler: RunTests - compilation check passed");
-
                 // Build test params — no Rd operations, safe on any thread
                 var testFilters = BuildTestFilters(request.Filter);
                 ourLogger.Info($"  TestFilters count={testFilters.Count}");
@@ -108,8 +100,8 @@ namespace McpExtensionUnity
                 McpRunTestsResponse setupError = null;
 
                 // All Rd operations (Advise, property set, RPC start) must run on the Rd scheduler thread.
-                // We are currently on a TP worker thread (continuation after the compilation check await),
-                // so marshal back to the scheduler before touching any Rd objects.
+                // Although we are still on the Rd scheduler thread here (no prior await),
+                // we use ScheduleOnRd to keep the pattern consistent and future-proof.
                 await ScheduleOnRd(rdQueue, () =>
                 {
                     // Re-acquire model after potential reconnection (Refresh may trigger domain reload)
