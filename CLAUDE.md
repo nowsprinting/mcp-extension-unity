@@ -3,6 +3,7 @@
 ## Core Principles
 
 - **Do NOT maintain backward compatibility** unless explicitly requested. Break things boldly.
+- **When writing or modifying code**, read the `/code-writing-guide` skill.
 
 ## Project Overview
 
