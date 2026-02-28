@@ -1,10 +1,5 @@
 # CLAUDE.md — mcp-extension-unity
 
-## Core Principles
-
-- **Do NOT maintain backward compatibility** unless explicitly requested. Break things boldly.
-- **When writing or modifying code**, read the `/code-writing-guide` skill.
-
 ## Project Overview
 
 A Rider IDE plugin (PoC stage) that extends the built-in JetBrains MCP Server with a custom MCP tool.
@@ -197,15 +192,15 @@ Register in `plugin.xml`:
 - [JetBrains MCP Server Plugin](https://github.com/JetBrains/mcp-server-plugin) — extension point spec
 - [MCP Server | JetBrains Rider Documentation](https://www.jetbrains.com/help/rider/mcp-server.html)
 
+## Guidelines
+
+- **Implementation planning** (writing or modifying code planning in plan mode):
+  - Read the `/implementation-planning-guide` skill to include test design and development workflow in your planning
+  - After a plan is approved, copy the plan file to `./docs/plans/` with a `yyyy-MM-dd` date prefix. For example: `2026-01-18-plan-name.md`
+- **Writing or modifying code**:
+  - Read the `/code-writing-guide` skill
+
 ## Language
 
 - All files, commit messages, GitHub Issues, and Pull Requests must be written in **English**.
 - Exception: `docs/` — write in **Japanese**.
-
-## Plan Mode Guidelines
-
-If the plan involves **implementation** (writing or modifying code):
-- Read the `/plan-guide` skill for test design guidelines and development workflow
-- Include test cases and the development workflow in the plan
-
-After a plan is approved, copy the plan file to `./Docs/Plans/` directory with the current datetime prefix in `yyyy-MM-dd` format. For example: `2026-01-18-plan-name.md`

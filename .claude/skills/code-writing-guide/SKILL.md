@@ -5,6 +5,10 @@ description: Used when writing or modifying code. Provides coding guidelines for
 
 Guide for writing code in this project.
 
+## Backward Compatibility
+
+Do NOT maintain backward compatibility unless explicitly requested. Break things boldly.
+
 ## "Why Not" Comments
 
 Add a comment whenever a non-obvious implementation choice was made — especially when a natural
