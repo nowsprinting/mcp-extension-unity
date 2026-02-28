@@ -125,6 +125,7 @@ intellijPlatform {
 }
 
 changelog {
+    version = providers.gradleProperty("pluginVersion")
     groups.empty()
     repositoryUrl = providers.gradleProperty("pluginRepositoryUrl")
 }
