@@ -49,14 +49,13 @@ namespace McpExtensionUnity
         // _rdQueue dispatches actions to the Rd Shell Dispatcher thread so Rd RPCs are called correctly.
         private async Task<McpCompilationResponse> RefreshAndCheckCompilation(Lifetime lt)
         {
-            if (!_host.IsConnectionEstablished())
-                return CompilationErrorResponse(
-                    "Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
-
-            var unityModel = _host.BackendUnityModel.Value;
+            // Wait up to 30 seconds for Unity Editor to connect.
+            // This covers the domain-reload window where the Rd connection is temporarily unavailable.
+            var unityModel = await RdConnectionHelper.WaitForUnityModel(
+                _host, _rdQueue, lt, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
             if (unityModel == null)
                 return CompilationErrorResponse(
-                    "Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
+                    "Unity Editor did not connect within 30 seconds. Please open Unity Editor with the project.");
 
             // unityModel.Refresh.Start() is an Rd RPC and must be called on the Rd scheduler thread.
             // Schedule it via _rdQueue and capture the returned IRdTask.
@@ -64,7 +63,7 @@ namespace McpExtensionUnity
             IRdTask<JetBrains.Core.Unit> rdRefreshTask;
             try
             {
-                rdRefreshTask = await ScheduleOnRd(() => unityModel.Refresh.Start(lt, RefreshType.Normal)).ConfigureAwait(false);
+                rdRefreshTask = await RdConnectionHelper.ScheduleOnRd(_rdQueue, () => unityModel.Refresh.Start(lt, RefreshType.Normal)).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -74,7 +73,7 @@ namespace McpExtensionUnity
 
             try
             {
-                var refreshTask = AwaitRdTask(lt, rdRefreshTask);
+                var refreshTask = RdConnectionHelper.AwaitRdTask(lt, rdRefreshTask);
                 var timeoutTask = Task.Delay(TimeSpan.FromMinutes(2));
                 if (await Task.WhenAny(refreshTask, timeoutTask).ConfigureAwait(false) != refreshTask)
                 {
@@ -93,7 +92,7 @@ namespace McpExtensionUnity
             // Wait for the model to be available again (fires immediately if no reload occurred).
             // WaitForUnityModel schedules the Advise call on the Rd scheduler thread.
             ourLogger.Info("RefreshAndCheckCompilation: waiting for Unity model reconnection");
-            var reconnectedModel = await WaitForUnityModel(lt, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
+            var reconnectedModel = await RdConnectionHelper.WaitForUnityModel(_host, _rdQueue, lt, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
             if (reconnectedModel == null)
                 return CompilationErrorResponse(
                     "Unity Editor did not reconnect within 2 minutes after Refresh.");
@@ -103,8 +102,8 @@ namespace McpExtensionUnity
             bool compilationSucceeded;
             try
             {
-                var rdCompileTask = await ScheduleOnRd(() => reconnectedModel.GetCompilationResult.Start(lt, JetBrains.Core.Unit.Instance)).ConfigureAwait(false);
-                var compileTask = AwaitRdTask(lt, rdCompileTask);
+                var rdCompileTask = await RdConnectionHelper.ScheduleOnRd(_rdQueue, () => reconnectedModel.GetCompilationResult.Start(lt, JetBrains.Core.Unit.Instance)).ConfigureAwait(false);
+                var compileTask = RdConnectionHelper.AwaitRdTask(lt, rdCompileTask);
                 var timeoutTask = Task.Delay(TimeSpan.FromMinutes(1));
                 if (await Task.WhenAny(compileTask, timeoutTask).ConfigureAwait(false) != compileTask)
                     return CompilationErrorResponse("GetCompilationResult timed out after 1 minute.");
@@ -122,64 +121,6 @@ namespace McpExtensionUnity
                     errorMessage: "Unity compilation failed. Fix compiler errors before running tests."
                 );
             return new McpCompilationResponse(success: true, errorMessage: "");
-        }
-
-        // Waits for BackendUnityModel to become non-null. Fires immediately if already connected.
-        // The Advise call is scheduled on the Rd scheduler thread via _rdQueue to satisfy Rd threading requirements.
-        private async Task<BackendUnityModel> WaitForUnityModel(Lifetime lt, TimeSpan timeout)
-        {
-            var tcs = new TaskCompletionSource<BackendUnityModel>(
-                TaskCreationOptions.RunContinuationsAsynchronously);
-            // Advise must be called on the Rd scheduler thread.
-            // If the model is already non-null, Advise fires immediately on the scheduler thread,
-            // setting the TCS result before we even reach Task.WhenAny.
-            _rdQueue(() =>
-            {
-                _host.BackendUnityModel.Advise(lt, m =>
-                {
-                    if (m != null) tcs.TrySetResult(m);
-                });
-            });
-            var reconnectTask = tcs.Task;
-            var timeoutTask = Task.Delay(timeout);
-            if (await Task.WhenAny(reconnectTask, timeoutTask).ConfigureAwait(false) != reconnectTask)
-                return null;
-            return await reconnectTask.ConfigureAwait(false);
-        }
-
-        // Converts IRdTask<T> to Task<T> using Advise on the result property.
-        // Advise fires once when the task result is set (not with the initial null state).
-        // RdTaskResult<T>.Unwrap() returns the value on success, throws on failure/cancellation.
-        private Task<T> AwaitRdTask<T>(Lifetime lt, IRdTask<T> rdTask)
-        {
-            var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-            rdTask.Result.Advise(lt, result =>
-            {
-                if (result == null) return;
-                try
-                {
-                    tcs.TrySetResult(result.Unwrap());
-                }
-                catch (Exception e)
-                {
-                    tcs.TrySetException(e);
-                }
-            });
-            return tcs.Task;
-        }
-
-        // Schedules func on the Rd scheduler thread and returns a Task<T> that completes with the result.
-        // Required when calling Rd RPCs (e.g., Start) from a TP worker thread.
-        // Not naming IScheduler directly avoids coupling to a specific JetBrains.* namespace version.
-        private Task<T> ScheduleOnRd<T>(Func<T> func)
-        {
-            var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-            _rdQueue(() =>
-            {
-                try { tcs.TrySetResult(func()); }
-                catch (Exception e) { tcs.TrySetException(e); }
-            });
-            return tcs.Task;
         }
 
         private static McpCompilationResponse CompilationErrorResponse(string message) =>

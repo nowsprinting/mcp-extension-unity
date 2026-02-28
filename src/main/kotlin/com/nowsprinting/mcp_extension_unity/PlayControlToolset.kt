@@ -7,7 +7,6 @@ import com.intellij.mcpserver.project
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.rd.util.reactive.valueOrDefault
 import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
-import com.jetbrains.rider.plugins.unity.isConnectedToEditor
 import com.jetbrains.rider.plugins.unity.model.frontendBackend.frontendBackendModel
 import com.jetbrains.rider.projectView.solution
 import kotlinx.coroutines.currentCoroutineContext
@@ -59,11 +58,11 @@ class PlayControlToolset : McpToolset {
 
         try {
             val project = currentCoroutineContext().project
-            if (!project.isConnectedToEditor()) {
-                return PlayControlErrorResult(errorMessage = "Unity Editor is not connected to Rider.")
-            }
-
             val solution = project.solution
+            if (!EditorConnectionUtils.awaitEditorConnection(solution.frontendBackendModel.unityEditorConnected)) {
+                return PlayControlErrorResult(
+                    errorMessage = "Unity Editor did not connect within 30 seconds. Please open Unity Editor with the project.")
+            }
             val protocol = solution.protocol
                 ?: return PlayControlErrorResult(
                     errorMessage = "No protocol available. The solution may not be fully loaded."

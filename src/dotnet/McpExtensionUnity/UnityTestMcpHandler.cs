@@ -57,16 +57,13 @@ namespace McpExtensionUnity
                                $"Groups=[{string.Join(",", request.Filter.GroupNames)}], " +
                                $"Categories=[{string.Join(",", request.Filter.CategoryNames)}]");
 
-                // Check Unity Editor connectivity (on Rd scheduler thread — before any await)
-                var isConnected = backendUnityHost.IsConnectionEstablished();
-                ourLogger.Info($"  IsConnectionEstablished={isConnected}");
-                if (!isConnected)
-                    return ErrorResponse("Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
-
-                var initialModel = backendUnityHost.BackendUnityModel.Value;
+                // Wait up to 30 seconds for Unity Editor to connect.
+                // This covers the domain-reload window where the Rd connection is temporarily unavailable.
+                var initialModel = await RdConnectionHelper.WaitForUnityModel(
+                    backendUnityHost, rdQueue, lt, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
                 ourLogger.Info($"  BackendUnityModel={initialModel?.GetType().Name ?? "null"}");
                 if (initialModel == null)
-                    return ErrorResponse("Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
+                    return ErrorResponse("Unity Editor did not connect within 30 seconds. Please open Unity Editor with the project.");
 
                 // Build test params — no Rd operations, safe on any thread
                 var testFilters = BuildTestFilters(request.Filter);
@@ -87,7 +84,6 @@ namespace McpExtensionUnity
                 // statuses, only the last one is retained (last-write-wins).
                 var testResults = new ConcurrentDictionary<string, TestResult>();
                 var tcs = new TaskCompletionSource<RunResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-                McpRunTestsResponse setupError = null;
 
                 // Guards against concurrent reconnection attempts from rapid null transitions.
                 // 0 = idle, 1 = reconnecting.
@@ -96,17 +92,8 @@ namespace McpExtensionUnity
                 // All Rd operations (Advise, property set, RPC start) must run on the Rd scheduler thread.
                 // Although we are still on the Rd scheduler thread here (no prior await),
                 // we use ScheduleOnRd to keep the pattern consistent and future-proof.
-                await ScheduleOnRd(rdQueue, () =>
+                await RdConnectionHelper.ScheduleOnRd(rdQueue, () =>
                 {
-                    // Re-acquire model after potential reconnection
-                    var backendUnityModel = backendUnityHost.BackendUnityModel.Value;
-                    if (backendUnityModel == null)
-                    {
-                        // Cannot return from a closure; signal the error through a captured variable
-                        setupError = ErrorResponse("Unity Editor is not connected to Rider. Please open Unity Editor with the project.");
-                        return;
-                    }
-
                     // Cancel TCS when the Rd lifetime ends (protocol disconnect or Kotlin coroutine cancel).
                     // Runs on the Rd scheduler thread; TrySetCanceled is thread-safe.
                     lt.OnTermination(() => tcs.TrySetCanceled());
@@ -132,7 +119,7 @@ namespace McpExtensionUnity
                             {
                                 try
                                 {
-                                    var reconnected = await WaitForUnityModel(
+                                    var reconnected = await RdConnectionHelper.WaitForUnityModel(
                                         backendUnityHost, rdQueue, lt, TimeSpan.FromMinutes(2))
                                         .ConfigureAwait(false);
                                     if (reconnected == null)
@@ -143,7 +130,7 @@ namespace McpExtensionUnity
                                         return;
                                     }
                                     ourLogger.Info("  Unity Editor reconnected after domain reload, re-launching tests");
-                                    await ScheduleOnRd(rdQueue, () =>
+                                    await RdConnectionHelper.ScheduleOnRd(rdQueue, () =>
                                     {
                                         LaunchTests(reconnected, lt, testFilters, testMode, testResults, tcs);
                                     }).ConfigureAwait(false);
@@ -162,10 +149,8 @@ namespace McpExtensionUnity
 
                     // Initial test launch on the current model.
                     // Subscribe BEFORE setting the launch to avoid missing early events.
-                    LaunchTests(backendUnityModel, lt, testFilters, testMode, testResults, tcs);
+                    LaunchTests(initialModel, lt, testFilters, testMode, testResults, tcs);
                 }).ConfigureAwait(false);
-
-                if (setupError != null) return setupError;
 
                 // Wait for completion with configurable timeout.
                 // Timeout fires TrySetException (not TrySetCanceled) to distinguish from
@@ -227,44 +212,6 @@ namespace McpExtensionUnity
                     ourLogger.Warn($"TryAbortLaunch: failed (Unity may be disconnected): {e.Message}");
                 }
             });
-        }
-
-        // Schedules action on the Rd scheduler thread and returns a Task that completes when done.
-        // Required when calling Rd Advise/Set/Start from a TP worker thread.
-        // Not naming IScheduler directly avoids coupling to a specific JetBrains.* namespace version.
-        private static Task ScheduleOnRd(Action<Action> rdQueue, Action action)
-        {
-            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            rdQueue(() =>
-            {
-                try { action(); tcs.TrySetResult(true); }
-                catch (Exception e) { tcs.TrySetException(e); }
-            });
-            return tcs.Task;
-        }
-
-        // Waits for BackendUnityModel to become non-null. Fires immediately if already connected.
-        // Schedules the Advise call on the Rd scheduler thread via rdQueue to satisfy Rd threading requirements.
-        private static async Task<BackendUnityModel> WaitForUnityModel(
-            BackendUnityHost host, Action<Action> rdQueue, Lifetime lt, TimeSpan timeout)
-        {
-            var tcs = new TaskCompletionSource<BackendUnityModel>(
-                TaskCreationOptions.RunContinuationsAsynchronously);
-            // Advise must be called on the Rd scheduler thread.
-            // If the model is already non-null, Advise fires immediately on the scheduler thread,
-            // setting the TCS result before we even reach Task.WhenAny.
-            rdQueue(() =>
-            {
-                host.BackendUnityModel.Advise(lt, m =>
-                {
-                    if (m != null) tcs.TrySetResult(m);
-                });
-            });
-            var reconnectTask = tcs.Task;
-            var timeoutTask = Task.Delay(timeout);
-            if (await Task.WhenAny(reconnectTask, timeoutTask).ConfigureAwait(false) != reconnectTask)
-                return null;
-            return await reconnectTask.ConfigureAwait(false);
         }
 
         // Creates a new UnitTestLaunch, subscribes its TestResult/RunResult signals to the shared
