@@ -42,7 +42,7 @@ For each technique, derive coverage-aware test cases:
   - **Spy** — records interactions (calls, arguments) for later verification
   - **Fake** — a simplified but working implementation of a dependency
 - Drop test cases that cannot be verified by test code
-  - Instead, list them as manual test items in the `### Manual Tests` section of the plan file
+  - Instead, list them as E2E test items in the `### E2E Tests` section of the plan file
 
 ### 5. Test Case Format
 
@@ -58,7 +58,7 @@ Append test cases to the plan file using this format:
 | `Method_Condition_Expected` | Brief description of what is verified      |
 | `Method_Condition_Expected` | Brief description (uses stub: IDependency) |
 
-### Manual Tests
+### E2E Tests
 
 | # | Item                          | Verification Method               |
 |---|-------------------------------|-----------------------------------|
@@ -93,3 +93,9 @@ Create only the types and public method signatures for the product code that can
 2. Resolve diagnostics at the `suggestion` or higher severity level, re-run tests to pass.
 3. Reformat the modified files, using `mcp__jetbrains__reformat_file` tool.
 4. Commit to git.
+
+### Step 5: E2E Tests
+
+1. Create the E2E test cases file at the path: `docs/plans/{plan-file-name}-e2e-tests.md`
+   - `{plan-file-name}` is the plan file name copied to `docs/plans/` in the guidelines (e.g., `2026-01-18-plan-name`).
+2. Refer to `docs/e2e-tests.md` for the content and format of the E2E test cases.
