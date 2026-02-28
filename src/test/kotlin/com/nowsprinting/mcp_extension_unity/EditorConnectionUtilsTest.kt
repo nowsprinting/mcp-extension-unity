@@ -12,9 +12,23 @@ import org.junit.Test
 
 class EditorConnectionUtilsTest {
 
-    // Tests run with Dispatchers.Default to avoid blocking the EDT (IntelliJ platform test thread).
-    // The implementation uses java.util.Timer for the timeout, which fires on a daemon thread
-    // independently of the kotlinx.coroutines timer scheduler or the IntelliJ platform event loop.
+    // WHY java.util.Timer instead of withTimeout:
+    //
+    // In the IntelliJ platform test JVM, test methods run on the EDT (Event Dispatch Thread).
+    // kotlinx.coroutines' withTimeout relies on DefaultDelay, whose cancellation callback is
+    // dispatched back to the coroutine's event loop. When runBlocking is called from the EDT,
+    // it creates an event loop ON the EDT — but the EDT is blocked by runBlocking itself,
+    // so the cancellation callback can never be processed. The result: withTimeout never fires,
+    // and the test hangs until Gradle's test-process timeout kills it (~20 minutes).
+    //
+    // Using Dispatchers.Default moves coroutine execution off the EDT but runBlocking still
+    // blocks the EDT thread, reproducing the same deadlock via a different path.
+    //
+    // java.util.Timer runs on its own daemon thread and calls continuation.resume() directly,
+    // bypassing the coroutine scheduler entirely. This fires reliably regardless of EDT state.
+    //
+    // Tests run with Dispatchers.Default so that delay() inside launch{} is dispatched to the
+    // thread pool and does not also depend on the blocked EDT's event loop.
 
     @Test
     fun `awaitEditorConnection - already connected - returns true`() = runBlocking(Dispatchers.Default) {
