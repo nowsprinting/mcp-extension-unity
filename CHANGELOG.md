@@ -7,14 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- Add plugin icons
-
 ### Fixed
 
-- Add domain-reload reconnection handling in run Play Mode tests
-- Remove pre-test compilation check from RunTests handler
+- Fix domain-reload reconnection handling
 
 ## [1.0.0] - 2026-02-26
 
