@@ -12,7 +12,11 @@ plugins {
 }
 
 group = providers.gradleProperty("pluginGroup").get()
-version = providers.gradleProperty("pluginVersion").get()
+val gitShortHash = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+}.standardOutput.asText.map { it.trim() }
+
+version = providers.gradleProperty("buildVersion").orElse(gitShortHash).get()
 
 val dotNetPluginId: String by project
 val buildConfiguration: String by project

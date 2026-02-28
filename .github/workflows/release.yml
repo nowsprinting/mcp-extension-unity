@@ -48,7 +48,10 @@ jobs:
           CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
-        run: JAVA_HOME=$JAVA_HOME_21_X64 ./gradlew --no-configuration-cache publishPlugin
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          JAVA_HOME=$JAVA_HOME_21_X64 ./gradlew --no-configuration-cache publishPlugin -PbuildVersion=$VERSION
 
       - name: Upload Release Asset
         env:
