@@ -1,5 +1,5 @@
 // All resharper-unity APIs used in this file (BackendUnityHost, BackendUnityModel,
-// UnitTestLaunch, TestFilter, TestResult, RunResult, TestMode, RefreshType) are sourced from the
+// UnitTestLaunch, TestFilter, TestResult, RunResult, TestMode) are sourced from the
 // Apache 2.0 open-source resharper-unity plugin:
 //   https://github.com/JetBrains/resharper-unity
 // Key reference files:
@@ -73,15 +73,6 @@ namespace McpExtensionUnity
                 ourLogger.Info($"  TestFilters count={testFilters.Count}");
                 var testMode = request.TestMode == McpTestMode.PlayMode ? TestMode.Play : TestMode.Edit;
 
-                var sessionId = Guid.NewGuid();
-                var launch = new UnitTestLaunch(
-                    sessionId: sessionId,
-                    testFilters: testFilters,
-                    testMode: testMode,
-                    clientControllerInfo: null
-                );
-                ourLogger.Info($"  UnitTestLaunch created, sessionId={sessionId}");
-
                 // Read timeout from MCP_TOOL_TIMEOUT env var (seconds). Default: 300 (5 minutes).
                 var timeoutSeconds = 300;
                 var envTimeout = Environment.GetEnvironmentVariable("MCP_TOOL_TIMEOUT");
@@ -97,6 +88,10 @@ namespace McpExtensionUnity
                 var testResults = new ConcurrentDictionary<string, TestResult>();
                 var tcs = new TaskCompletionSource<RunResult>(TaskCreationOptions.RunContinuationsAsynchronously);
                 McpRunTestsResponse setupError = null;
+
+                // Guards against concurrent reconnection attempts from rapid null transitions.
+                // 0 = idle, 1 = reconnecting.
+                var reconnecting = 0;
 
                 // All Rd operations (Advise, property set, RPC start) must run on the Rd scheduler thread.
                 // Although we are still on the Rd scheduler thread here (no prior await),
@@ -118,38 +113,56 @@ namespace McpExtensionUnity
 
                     // Monitor for Unity Editor disconnection during test execution.
                     // BackendUnityModel.Advise fires immediately with the current value, then again on change.
-                    // When Unity disconnects, the model becomes null — signal failure immediately.
-                    // Runs on the Rd scheduler thread; TrySetException is thread-safe.
+                    // On null (domain reload or crash): wait up to 2 minutes for reconnection.
+                    // On reconnection: re-launch tests on the new model instance.
+                    // Domain reload is expected when running PlayMode tests or when project settings
+                    // require it, and causes a temporary null → non-null transition.
                     backendUnityHost.BackendUnityModel.Advise(lt, unityModel =>
                     {
                         if (unityModel == null)
-                            tcs.TrySetException(new Exception(
-                                "Unity Editor disconnected during test execution. " +
-                                "This may be caused by a domain reload, crash, or the editor being closed."));
-                    });
-
-                    // Subscribe BEFORE setting the launch to avoid missing early events
-                    launch.TestResult.Advise(lt, result =>
-                    {
-                        // Only collect terminal statuses (not Pending/Running)
-                        if (result.Status != Status.Pending && result.Status != Status.Running)
                         {
-                            ourLogger.Info($"  TestResult received: testId={result.TestId}, parentId={result.ParentId ?? "null"}, status={result.Status}");
-                            testResults[result.TestId] = result;
+                            if (Interlocked.CompareExchange(ref reconnecting, 1, 0) != 0)
+                            {
+                                ourLogger.Info("  BackendUnityModel became null (reconnection already in progress, ignoring)");
+                                return;
+                            }
+                            ourLogger.Info("  BackendUnityModel became null (domain reload or disconnection), waiting for reconnection...");
+                            // Advise callbacks run synchronously on the Rd thread; spawn reconnection off-thread.
+                            Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    var reconnected = await WaitForUnityModel(
+                                        backendUnityHost, rdQueue, lt, TimeSpan.FromMinutes(2))
+                                        .ConfigureAwait(false);
+                                    if (reconnected == null)
+                                    {
+                                        tcs.TrySetException(new Exception(
+                                            "Unity Editor did not reconnect within 2 minutes after domain reload. " +
+                                            "This may be caused by a crash or the editor being closed."));
+                                        return;
+                                    }
+                                    ourLogger.Info("  Unity Editor reconnected after domain reload, re-launching tests");
+                                    await ScheduleOnRd(rdQueue, () =>
+                                    {
+                                        LaunchTests(reconnected, lt, testFilters, testMode, testResults, tcs);
+                                    }).ConfigureAwait(false);
+                                }
+                                finally
+                                {
+                                    Interlocked.Exchange(ref reconnecting, 0);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            ourLogger.Info($"  BackendUnityModel available: {unityModel.GetType().Name}");
                         }
                     });
-                    launch.RunResult.Advise(lt, runResult =>
-                    {
-                        ourLogger.Info($"  RunResult received: passed={runResult.Passed}, testResults.Count={testResults.Count}");
-                        tcs.TrySetResult(runResult);
-                    });
 
-                    // Trigger test execution in Unity Editor
-                    backendUnityModel.UnitTestLaunch.Value = launch;
-                    ourLogger.Info("  UnitTestLaunch.Value set");
-                    // Fire-and-forget: results come via TestResult/RunResult signals
-                    backendUnityModel.RunUnitTestLaunch.Start(lt, Unit.Instance);
-                    ourLogger.Info("  RunUnitTestLaunch.Start called");
+                    // Initial test launch on the current model.
+                    // Subscribe BEFORE setting the launch to avoid missing early events.
+                    LaunchTests(backendUnityModel, lt, testFilters, testMode, testResults, tcs);
                 }).ConfigureAwait(false);
 
                 if (setupError != null) return setupError;
@@ -171,13 +184,13 @@ namespace McpExtensionUnity
                     catch (OperationCanceledException)
                     {
                         // Rd lifetime ended: protocol disconnection or Kotlin coroutine cancellation
-                        TryAbortLaunch(lt, backendUnityHost, launch, rdQueue);
+                        TryAbortLaunch(lt, backendUnityHost, rdQueue);
                         return ErrorResponse("Test execution was cancelled due to protocol disconnection or Kotlin coroutine cancellation.");
                     }
                     catch (Exception ex)
                     {
-                        // Timeout or Unity Editor disconnection
-                        TryAbortLaunch(lt, backendUnityHost, launch, rdQueue);
+                        // Timeout or Unity Editor disconnection without reconnection
+                        TryAbortLaunch(lt, backendUnityHost, rdQueue);
                         return ErrorResponse(ex.Message);
                     }
                 }
@@ -192,10 +205,10 @@ namespace McpExtensionUnity
             ourLogger.Info("UnityTestMcpHandler: Rd handlers registered");
         }
 
-        // Attempts to abort the Unity test launch. Best-effort: Unity may already be disconnected.
-        // Schedules the abort on the Rd scheduler thread via rdQueue to satisfy Rd threading requirements.
+        // Attempts to abort the Unity test launch currently set on the model. Best-effort: Unity may
+        // already be disconnected. Schedules the abort on the Rd scheduler thread via rdQueue.
         // Exceptions are caught and logged only — never propagated to the caller.
-        private static void TryAbortLaunch(Lifetime lt, BackendUnityHost host, UnitTestLaunch launch, Action<Action> rdQueue)
+        private static void TryAbortLaunch(Lifetime lt, BackendUnityHost host, Action<Action> rdQueue)
         {
             rdQueue(() =>
             {
@@ -204,8 +217,8 @@ namespace McpExtensionUnity
                     if (!lt.IsAlive) return;
                     var model = host.BackendUnityModel.Value;
                     if (model == null) return;
-                    var currentLaunch = model.UnitTestLaunch.Value;
-                    if (currentLaunch == null || currentLaunch.SessionId != launch.SessionId) return;
+                    var launch = model.UnitTestLaunch.Value;
+                    if (launch == null) return;
                     ourLogger.Info($"TryAbortLaunch: aborting session {launch.SessionId}");
                     launch.Abort.Start(lt, Unit.Instance);
                 }
@@ -228,6 +241,71 @@ namespace McpExtensionUnity
                 catch (Exception e) { tcs.TrySetException(e); }
             });
             return tcs.Task;
+        }
+
+        // Waits for BackendUnityModel to become non-null. Fires immediately if already connected.
+        // Schedules the Advise call on the Rd scheduler thread via rdQueue to satisfy Rd threading requirements.
+        private static async Task<BackendUnityModel> WaitForUnityModel(
+            BackendUnityHost host, Action<Action> rdQueue, Lifetime lt, TimeSpan timeout)
+        {
+            var tcs = new TaskCompletionSource<BackendUnityModel>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            // Advise must be called on the Rd scheduler thread.
+            // If the model is already non-null, Advise fires immediately on the scheduler thread,
+            // setting the TCS result before we even reach Task.WhenAny.
+            rdQueue(() =>
+            {
+                host.BackendUnityModel.Advise(lt, m =>
+                {
+                    if (m != null) tcs.TrySetResult(m);
+                });
+            });
+            var reconnectTask = tcs.Task;
+            var timeoutTask = Task.Delay(timeout);
+            if (await Task.WhenAny(reconnectTask, timeoutTask).ConfigureAwait(false) != reconnectTask)
+                return null;
+            return await reconnectTask.ConfigureAwait(false);
+        }
+
+        // Creates a new UnitTestLaunch, subscribes its TestResult/RunResult signals to the shared
+        // testResults/tcs, sets the launch on the model, and starts test execution.
+        // Must be called on the Rd scheduler thread.
+        // Called once initially and again after each domain-reload reconnection.
+        private static void LaunchTests(
+            BackendUnityModel model, Lifetime lt,
+            List<TestFilter> testFilters, TestMode testMode,
+            ConcurrentDictionary<string, TestResult> testResults,
+            TaskCompletionSource<RunResult> tcs)
+        {
+            var launch = new UnitTestLaunch(
+                sessionId: Guid.NewGuid(),
+                testFilters: testFilters,
+                testMode: testMode,
+                clientControllerInfo: null);
+            ourLogger.Info($"  UnitTestLaunch created, sessionId={launch.SessionId}");
+
+            // Subscribe BEFORE setting the launch to avoid missing early events
+            launch.TestResult.Advise(lt, result =>
+            {
+                // Only collect terminal statuses (not Pending/Running)
+                if (result.Status != Status.Pending && result.Status != Status.Running)
+                {
+                    ourLogger.Info($"  TestResult received: testId={result.TestId}, parentId={result.ParentId ?? "null"}, status={result.Status}");
+                    testResults[result.TestId] = result;
+                }
+            });
+            launch.RunResult.Advise(lt, runResult =>
+            {
+                ourLogger.Info($"  RunResult received: passed={runResult.Passed}, testResults.Count={testResults.Count}");
+                tcs.TrySetResult(runResult);
+            });
+
+            // Trigger test execution in Unity Editor
+            model.UnitTestLaunch.Value = launch;
+            ourLogger.Info("  UnitTestLaunch.Value set");
+            // Fire-and-forget: results come via TestResult/RunResult signals
+            model.RunUnitTestLaunch.Start(lt, Unit.Instance);
+            ourLogger.Info("  RunUnitTestLaunch.Start called");
         }
 
         private static McpRunTestsResponse ErrorResponse(string message) =>

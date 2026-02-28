@@ -10,7 +10,7 @@ A Rider IDE plugin (PoC stage) that extends the built-in JetBrains MCP Server wi
 The goal is to allow Coding Agents (e.g., Claude Code) to run Unity tests through Rider's test infrastructure,
 rather than invoking Unity directly.
 
-**Current status**: Steps 1–9 complete. Console log collection added to `run_method_in_unity` in Step 9.
+**Current status**: Steps 1–10 complete. Domain-reload reconnection handling added in Step 10.
 
 ## Architecture
 
@@ -157,11 +157,11 @@ Register in `plugin.xml`:
    - `testMode`: must be one of `EditMode`, `edit`, `PlayMode`, `play` (case insensitive)
    - Find assembly names in `.asmdef` files or Rider's Unit Test Explorer.
 
-6. **Cancellation and disconnection handling** — `UnityTestMcpHandler.cs` monitors three failure paths:
+6. **Cancellation, disconnection, and domain-reload handling** — `UnityTestMcpHandler.cs` monitors three failure paths:
    - `lt.OnTermination`: Rd lifetime ends (protocol disconnect, Kotlin coroutine cancel) → `TrySetCanceled()`
-   - `BackendUnityModel.Advise(null)`: Unity Editor disconnects mid-run → `TrySetException("Unity Editor disconnected...")`
+   - `BackendUnityModel.Advise(null)`: Unity Editor disconnects mid-run → waits up to **2 minutes** for reconnection (domain-reload tolerance). If reconnected, re-launches tests on the new model. If not, `TrySetException("did not reconnect within 2 minutes")`
    - Timeout timer: configurable via `MCP_TOOL_TIMEOUT` env var (seconds, default 300) → `TrySetException("timed out after N seconds")`
-   - All three error paths call `TryAbortLaunch` (best-effort; exceptions are logged, not propagated).
+   - All failure paths call `TryAbortLaunch` (best-effort; aborts whatever launch is currently on the model).
    - **Known limitation**: Unity Test Runner manual Cancel may not fire `RunResult`, causing a wait until timeout.
      Set `MCP_TOOL_TIMEOUT` to a smaller value to reduce feedback delay in this case.
 
@@ -178,6 +178,7 @@ Register in `plugin.xml`:
 | 7    | Verify end-to-end test execution with a real Unity project                | Done   |
 | 8    | Add cancellation/disconnection handling and `MCP_TOOL_TIMEOUT` env var    | Done   |
 | 9    | Add console log collection to `run_method_in_unity`                       | Done   |
+| 10   | Add domain-reload reconnection handling to `UnityTestMcpHandler`          | Done   |
 
 ## Reference Documents
 
