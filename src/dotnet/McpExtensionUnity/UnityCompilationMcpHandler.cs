@@ -118,7 +118,7 @@ namespace McpExtensionUnity
             if (!compilationSucceeded)
                 return new McpCompilationResponse(
                     success: false,
-                    errorMessage: "Unity compilation failed. Fix compiler errors before running tests."
+                    errorMessage: "Unity compilation failed. Console logs during compilation are captured in the `logs` field of the response. If `logs` is empty, the compilation may have occurred before this tool triggered a refresh; use the `get_file_problems` tool, `getDiagnostics` tool, or read `editor.log` for error details."
                 );
             return new McpCompilationResponse(success: true, errorMessage: "");
         }

@@ -42,8 +42,8 @@ class RunMethodInUnityToolset : McpToolset {
     @McpTool(name = "run_method_in_unity")
     @McpDescription(description = """
         Invoke a static method in Unity Editor via reflection. The method must be static and parameterless. The method's return value is NOT returned.
-        Console logs during the method will be captured and returned in the `logs` field of the response.
         `success` indicates only whether the method was found and invoked. Even if the method throws internally, `success` may be true.
+        Console logs during the method will be captured and returned in the `logs` field of the response.
     """)
     suspend fun run_method_in_unity(
         @McpDescription(description = "Assembly name containing the type (e.g., 'Assembly-CSharp-Editor')")

@@ -31,7 +31,6 @@ class CompilationResultToolset : McpToolset {
     @McpTool(name = "get_unity_compilation_result")
     @McpDescription(description = """
         Trigger Unity's AssetDatabase.Refresh() and check if compilation succeeded.
-        Console logs during compilation will be captured and returned in the `logs` field of the response.
         Recommended to run this tool to ensure compilation succeeds before `run_unity_tests` or `run_method_in_unity` tool if modified code.
     """)
     suspend fun get_unity_compilation_result(): CompilationResult {

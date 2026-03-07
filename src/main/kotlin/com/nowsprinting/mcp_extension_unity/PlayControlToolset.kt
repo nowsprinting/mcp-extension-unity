@@ -42,7 +42,7 @@ class PlayControlToolset : McpToolset {
 
     @McpTool(name = "unity_play_control")
     @McpDescription(description = """
-        Control Unity Editor's play mode. Requires Unity Editor to be connected to Rider.
+        Control Unity Editor's play mode.
     """)
     suspend fun unity_play_control(
         @McpDescription(description = "Action to perform: `play`, `stop`, `pause`, `resume`, `step`, or `status` (case insensitive)")
