@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-03-09
+
 ### Changed
 
 - Enrich tool descriptions with pre-execution workflow guidance
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_unity_compilation_result` tool
 - `unity_play_control` tool
 
-[Unreleased]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/nowsprinting/mcp-extension-unity/commits/v1.0.0
