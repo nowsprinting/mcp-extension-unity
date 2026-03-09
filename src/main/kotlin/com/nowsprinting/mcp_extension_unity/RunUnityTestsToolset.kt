@@ -151,7 +151,6 @@ class RunUnityTestsToolset : McpToolset {
     }
 }
 
-@Serializable
 data class TestDetail(
     val testId: String,
     val output: String,
