@@ -45,6 +45,11 @@ class RunMethodInUnityToolset : McpToolset {
         `success` indicates only whether the method was found and invoked. Even if the method throws internally, `success` may be true.
         Console logs during the method will be captured and returned in the `logs` field of the response.
 
+        Identify Assembly:
+        1. Find the assembly definition file (.asmdef) in the parent directory hierarchy of the target file.
+        2. The assembly name is the `name` property in the .asmdef file.
+        3. If no .asmdef exists in the hierarchy, check the directory path: if it contains a directory named `Editor`, use `Assembly-CSharp-Editor`; otherwise use `Assembly-CSharp`.
+
         IMPORTANT: If you have modified any C# source files, call `get_unity_compilation_result` first to trigger a refresh and verify compilation succeeds before invoking this tool.
     """)
     suspend fun run_method_in_unity(

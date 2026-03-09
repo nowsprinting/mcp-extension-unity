@@ -94,9 +94,9 @@ class RunUnityTestsToolset : McpToolset {
         assemblyNames: List<String>? = null,
         @McpDescription(description = "Names of a category to include in the run. Any test or fixture runs that have a category matching the string. Specify when the test class/method is decorated with the `Category` attribute.")
         categoryNames: List<String>? = null,
-        @McpDescription(description = "Same as `testNames`, except that it allows for Regex. This is useful for running specific fixtures or namespaces. Generally, specify the test class that corresponds to the modified class (same namespace, class name with `Test` appended).")
+        @McpDescription(description = "Regex patterns to filter tests by their full name. Matches against test fixtures, namespaces, or individual test names. Generally, specify the test class that corresponds to the modified class (same namespace, class name with `Test` appended).")
         groupNames: List<String>? = null,
-        @McpDescription(description = "The full name of the tests to match the filter. This is usually in the format FixtureName.TestName. If the test has test arguments, then include them in parentheses (e.g. `FixtureName.TestName(1,2)`). Generally, specify when only a specific test is failing, or when only a limited number of tests are affected.")
+        @McpDescription(description = "The full name of the tests to match the filter. This is usually in the format `Namespace.FixtureName.TestName`. If the test has test arguments, then include them in parentheses (e.g. `Namespace.FixtureName.TestName(1,2)`). Generally, specify when only a specific test is failing, or when only a limited number of tests are affected.")
         testNames: List<String>? = null
     ): RunUnityTestsResult {
         try {
