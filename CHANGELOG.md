@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Enrich tool descriptions with pre-execution workflow guidance
 - Enrich tool descriptions to work without agent skills
 
 ## [1.0.1] - 2026-02-28
