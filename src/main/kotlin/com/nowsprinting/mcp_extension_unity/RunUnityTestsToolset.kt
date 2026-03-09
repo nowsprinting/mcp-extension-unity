@@ -77,19 +77,26 @@ class RunUnityTestsToolset : McpToolset {
 
     @McpTool(name = "run_unity_tests")
     @McpDescription(description = """
-        Run tests on Unity Test Runner through Rider's test infrastructure.
+        Run tests on Unity Editor through Rider's test infrastructure.
         Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `testNames` to narrow down the tests to the scope of changes.
+
+        Identify Assembly and Test Mode:
+        1. Find the assembly definition file (.asmdef) in the parent directory hierarchy of the target file.
+        2. The assembly name is the `name` property in the .asmdef file.
+        3. If `includePlatforms` in the .asmdef contains `Editor`, it is EditMode; otherwise PlayMode.
+
+        IMPORTANT: If you have modified any C# source files, call `get_unity_compilation_result` first to trigger a refresh and verify compilation succeeds before running tests.
     """)
     suspend fun run_unity_tests(
-        @McpDescription(description = "REQUIRED. `EditMode` or `PlayMode` (case insensitive). If the `includePlatforms` in the assembly definition file (.asmdef) contains `Editor`, it is an Edit Mode test; otherwise, it is a Play Mode test.")
+        @McpDescription(description = "REQUIRED. `EditMode` or `PlayMode` (case insensitive).")
         testMode: String? = null,
-        @McpDescription(description = "REQUIRED. Names of test assemblies to run (without .dll extension, e.g., 'MyFeature.Tests'). Specify the `name` property in the assembly definition file.")
+        @McpDescription(description = "REQUIRED. Names of test assemblies to run (without .dll extension, e.g., 'MyFeature.Tests').")
         assemblyNames: List<String>? = null,
-        @McpDescription(description = "Names of a category to include in the run. Any test or fixture runs that have a category matching the string.")
+        @McpDescription(description = "Names of a category to include in the run. Any test or fixture runs that have a category matching the string. Specify when the test class/method is decorated with the `Category` attribute.")
         categoryNames: List<String>? = null,
-        @McpDescription(description = "Same as `testNames`, except that it allows for Regex. This is useful for running specific fixtures or namespaces.")
+        @McpDescription(description = "Regex patterns to filter tests by their full name. Matches against test fixtures, namespaces, or individual test names. Generally, specify the test class that corresponds to the modified class (same namespace, class name with `Test` appended).")
         groupNames: List<String>? = null,
-        @McpDescription(description = "The full name of the tests to match the filter. This is usually in the format FixtureName.TestName. If the test has test arguments, then include them in parentheses.")
+        @McpDescription(description = "The full name of the tests to match the filter. This is usually in the format `Namespace.FixtureName.TestName`. If the test has test arguments, then include them in parentheses (e.g. `Namespace.FixtureName.TestName(1,2)`). Generally, specify when only a specific test is failing, or when only a limited number of tests are affected.")
         testNames: List<String>? = null
     ): RunUnityTestsResult {
         try {

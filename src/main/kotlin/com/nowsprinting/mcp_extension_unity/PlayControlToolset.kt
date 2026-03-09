@@ -42,7 +42,15 @@ class PlayControlToolset : McpToolset {
 
     @McpTool(name = "unity_play_control")
     @McpDescription(description = """
-        Control Unity Editor's play mode. Requires Unity Editor to be connected to Rider.
+        Control Unity Editor's play mode.
+
+        Actions:
+        - `play`: Enter play mode.
+        - `stop`: Exit play mode. IMPORTANT: Must stop play mode before calling `get_unity_compilation_result`.
+        - `pause`: Pause at the current frame while in play mode.
+        - `resume`: Resume from paused state.
+        - `step`: Advance exactly one frame while paused.
+        - `status`: Read-only query. Returns current `isPlaying` and `isPaused` state without changing anything.
     """)
     suspend fun unity_play_control(
         @McpDescription(description = "Action to perform: `play`, `stop`, `pause`, `resume`, `step`, or `status` (case insensitive)")
