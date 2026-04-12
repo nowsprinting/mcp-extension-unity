@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Merge all four MCP tools under `UnityEditorToolset`
+
 ## [1.0.2] - 2026-03-10
 
 ### Changed

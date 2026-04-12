@@ -6,7 +6,7 @@ A Rider IDE plugin (PoC stage) that extends the built-in JetBrains MCP Server wi
 The goal is to allow Coding Agents (e.g., Claude Code) to run Unity tests through Rider's test infrastructure,
 rather than invoking Unity directly.
 
-**Current status**: Steps 1–10 complete. Domain-reload reconnection handling added in Step 10.
+**Current status**: Steps 1–11 complete. Initial connection wait added in Step 11.
 
 ## Architecture
 
@@ -15,7 +15,7 @@ Coding Agent (Claude Code)
     ↓ MCP (HTTP/SSE)
 JetBrains MCP Server (built into Rider 2025.3+)
     ↓ extension point (com.intellij.mcpServer)
-[This Plugin — Kotlin Frontend]   ← RunUnityTestsToolset.kt
+[This Plugin — Kotlin Frontend]   ← UnityEditorToolset.kt
     ↓ UnityTestMcpModel (custom Rd: IRdCall<McpRunTestsRequest, McpRunTestsResponse>)
 [Plugin Backend — C# / UnityTestMcpHandler]
     ↓ BackendUnityModel.UnitTestLaunch + RunUnitTestLaunch (existing Rd)
@@ -39,7 +39,7 @@ The Kotlin Frontend **cannot** directly access `BackendUnityModel`; a custom Rd 
 | Serialization | kotlinx-serialization 1.6.3 (`compileOnly`) |
 | Build plugin  | IntelliJ Platform Gradle Plugin 2.11.0      |
 | Target IDE    | Rider 2025.3.3 (build `RD-253.31033.136`)   |
-| JDK           | 21                                          |
+| JDK           | JBR 25.0.2 (`~/Library/Java/JavaVirtualMachines/jbr-25.0.2`) |
 | Gradle        | 9.3.1                                       |
 
 ## Key Files
@@ -52,28 +52,57 @@ mcp-extension-unity/
 ├── settings.gradle.kts
 ├── protocol/                                          # Rd model definition (rdgen)
 │   └── src/main/kotlin/model/rider/
-│       └── UnityTestMcpModel.kt                       # Rd DSL: McpRunTestsRequest/Response
+│       ├── UnityTestMcpModel.kt                       # Rd DSL: McpRunTestsRequest/Response
+│       └── UnityCompilationMcpModel.kt                # Rd DSL: compilation result model
 ├── src/main/
 │   ├── kotlin/com/nowsprinting/mcp_extension_unity/
-│   │   ├── RunUnityTestsToolset.kt                   # MCP tool → Rd call (assemblyNames validation)
-│   │   └── UnityConsoleLogCollector.kt               # Console log collector (start/stop lifecycle)
+│   │   ├── UnityEditorToolset.kt                     # Delegating facade — the only McpToolset
+│   │   ├── CompilationResultTool.kt                  # get_unity_compilation_result implementation
+│   │   ├── RunUnityTestsTool.kt                      # run_unity_tests implementation
+│   │   ├── RunMethodInUnityTool.kt                   # run_method_in_unity implementation
+│   │   ├── PlayControlTool.kt                        # unity_play_control implementation
+│   │   ├── UnityConsoleLogCollector.kt               # Console log collector (start/stop lifecycle)
+│   │   ├── EditorConnectionUtils.kt                  # Initial connection wait (30s timeout)
+│   │   ├── UnityTestMcpModelProvider.kt              # Rd model provider for UnityTestMcpModel
+│   │   └── UnityCompilationMcpModelProvider.kt       # Rd model provider for UnityCompilationMcpModel
 │   ├── generated/                                     # auto-generated Kotlin model (gitignored)
 │   └── resources/META-INF/
 │       └── plugin.xml                                 # plugin descriptor
 ├── src/test/
 │   └── kotlin/com/nowsprinting/mcp_extension_unity/
-│       └── RunUnityTestsToolsetTest.kt                # Kotlin unit tests (20 cases)
+│   │   ├── CompilationResultToolTest.kt               # Kotlin unit tests (6 cases)
+│   │   ├── RunUnityTestsToolTest.kt                   # Kotlin unit tests (26 cases)
+│   │   ├── RunMethodInUnityToolTest.kt                # Kotlin unit tests (12 cases)
+│   │   ├── PlayControlToolTest.kt                     # Kotlin unit tests (14 cases)
+│   │   ├── EditorConnectionUtilsTest.kt               # Kotlin unit tests (6 cases)
+│   │   └── UnityConsoleLogCollectorTest.kt            # Kotlin unit tests (5 cases)
 ├── src/dotnet/
 │   ├── McpExtensionUnity.sln
 │   ├── McpExtensionUnity/
 │   │   ├── McpExtensionUnity.csproj
-│   │   ├── UnityTestMcpHandler.cs                     # C# handler → BackendUnityModel
+│   │   ├── UnityTestMcpHandler.cs                     # C# handler → BackendUnityModel (test execution)
+│   │   ├── UnityCompilationMcpHandler.cs              # C# handler → BackendUnityModel (compilation check)
+│   │   ├── UnityTestMcpModelProvider.cs               # C# Rd model provider for test model
+│   │   ├── UnityCompilationMcpModelProvider.cs        # C# Rd model provider for compilation model
+│   │   ├── RdConnectionHelper.cs                      # Shared connection wait utilities
 │   │   ├── ZoneMarker.cs
 │   │   └── Model/                                     # auto-generated C# model (gitignored)
 └── docs/plans/
-    ├── 2026-02-22-poc-rider-mcp-unity-test.md        # PoC investigation report
-    ├── 2026-02-22-step5-frontend-backend-model.md    # Step 5: FrontendBackendModel access
-    └── 2026-02-23-step7-end-to-end-verification.md   # Step 7: E2E verification checklist (9 test cases)
+    ├── 2026-02-22-poc-rider-mcp-unity-test.md                  # PoC investigation report
+    ├── 2026-02-22-step5-frontend-backend-model.md              # Step 5: FrontendBackendModel access
+    ├── 2026-02-23-step6-custom-rd-model-unity-test-execution.md # Step 6: custom Rd model design
+    ├── 2026-02-23-step7-end-to-end-verification.md             # Step 7: E2E verification checklist (9 test cases)
+    ├── 2026-02-24-step8-cancellation-disconnection-handling.md  # Step 8: cancellation/disconnection
+    ├── 2026-02-26-add-logs-to-get-unity-compilation-result.md  # Add logs to compilation result
+    ├── 2026-02-26-fix-rd-scheduler-threading.md                # Fix Rd scheduler threading
+    ├── 2026-02-26-remove-logs-from-error-result.md             # Remove logs from error result
+    ├── 2026-02-28-remove-compilation-check-from-run-tests.md   # Remove compilation check from run_tests
+    ├── 2026-02-28-split-rd-protocol-model.md                   # Split Rd protocol model
+    ├── 2026-02-28-step10-domain-reload-reconnection.md         # Step 10: domain-reload reconnection
+    ├── 2026-02-28-step11-initial-connection-wait.md            # Step 11: initial connection wait
+    ├── 2026-02-28-use-git-hash-as-build-version.md             # Use git hash as build version
+    ├── 2026-03-09-improve-tool-descriptions.md                 # Improve tool descriptions
+    └── 2026-04-11-merge-toolsets-into-unity-editor-toolset.md  # Merge toolsets into UnityEditorToolset
 ```
 
 ## Build
@@ -86,7 +115,7 @@ mcp-extension-unity/
 > ```
 
 ```bash
-JAVA_HOME=/usr/local/opt/openjdk@21 ./gradlew --no-configuration-cache buildPlugin
+JAVA_HOME=~/Library/Java/JavaVirtualMachines/jbr-25.0.2/Contents/Home ./gradlew --no-configuration-cache buildPlugin
 ```
 
 > **Note**: `--no-configuration-cache` is required due to incompatibilities with the `rdgen` and
@@ -99,7 +128,7 @@ Output ZIP is generated under `build/distributions/`.
 ## Unit Tests
 
 ```bash
-JAVA_HOME=/usr/local/opt/openjdk@21 ./gradlew --no-configuration-cache test
+JAVA_HOME=~/Library/Java/JavaVirtualMachines/jbr-25.0.2/Contents/Home ./gradlew --no-configuration-cache test
 ```
 
 ## MCP Extension Pattern
@@ -121,7 +150,7 @@ Register in `plugin.xml`:
 
 ```xml
 <extensions defaultExtensionNs="com.intellij.mcpServer">
-    <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.RunUnityTestsToolset"/>
+    <mcpToolset implementation="com.nowsprinting.mcp_extension_unity.UnityEditorToolset"/>
 </extensions>
 ```
 
@@ -142,18 +171,22 @@ Register in `plugin.xml`:
 
 4. **`@McpTool` annotation is required** — omitting it causes a runtime warning and the toolset is skipped:
    ```
-   WARN - ReflectionToolsProvider - Cannot load tools for RunUnityTestsToolset
-   java.lang.IllegalArgumentException: No tools found in class ...RunUnityTestsToolset
+   WARN - ReflectionToolsProvider - Cannot load tools for UnityEditorToolset
+   java.lang.IllegalArgumentException: No tools found in class ...UnityEditorToolset
    ```
 
 5. **All input validation is done on the Kotlin side (fail-fast)** — `assemblyNames` and `testMode`
-   are validated in `RunUnityTestsToolset.kt` before the Rd call is made. Invalid inputs return an
+   are validated in `RunUnityTestsTool.kt` before the Rd call is made. Invalid inputs return an
    immediate error without reaching the C# backend or Unity Editor.
    - `assemblyNames`: must contain at least one non-blank name (empty `TestFilter` disconnects Unity Editor)
    - `testMode`: must be one of `EditMode`, `edit`, `PlayMode`, `play` (case insensitive)
    - Find assembly names in `.asmdef` files or Rider's Unit Test Explorer.
 
-6. **Cancellation, disconnection, and domain-reload handling** — `UnityTestMcpHandler.cs` monitors three failure paths:
+6. **Initial connection wait** — All 4 MCP tools wait up to **30 seconds** for the Unity Editor to connect
+   before failing with "not connected". This covers the domain-reload window after `.cs` file creation/modification.
+   Implemented in `EditorConnectionUtils.kt` (Kotlin side) and `RdConnectionHelper.cs` (C# side).
+
+7. **Cancellation, disconnection, and domain-reload handling** — `UnityTestMcpHandler.cs` monitors three failure paths:
    - `lt.OnTermination`: Rd lifetime ends (protocol disconnect, Kotlin coroutine cancel) → `TrySetCanceled()`
    - `BackendUnityModel.Advise(null)`: Unity Editor disconnects mid-run → waits up to **2 minutes** for reconnection (domain-reload tolerance). If reconnected, re-launches tests on the new model. If not, `TrySetException("did not reconnect within 2 minutes")`
    - Timeout timer: configurable via `MCP_TOOL_TIMEOUT` env var (seconds, default 300) → `TrySetException("timed out after N seconds")`
@@ -175,6 +208,7 @@ Register in `plugin.xml`:
 | 8    | Add cancellation/disconnection handling and `MCP_TOOL_TIMEOUT` env var    | Done   |
 | 9    | Add console log collection to `run_method_in_unity`                       | Done   |
 | 10   | Add domain-reload reconnection handling to `UnityTestMcpHandler`          | Done   |
+| 11   | Add initial connection wait (30s) to all 4 MCP tools                      | Done   |
 
 ## Reference Documents
 
@@ -182,6 +216,8 @@ Register in `plugin.xml`:
   Rd model details, MCP extension mechanism, encountered issues, and verification results.
 - `docs/plans/2026-02-23-step7-end-to-end-verification.md` — Step 7: End-to-end verification checklist
   with phases for build, install, Unity project setup, MCP configuration, and test case execution.
+- `docs/plans/2026-02-28-step11-initial-connection-wait.md` — Step 11: initial connection wait design
+  and implementation details for `EditorConnectionUtils` and `RdConnectionHelper`.
 
 ## External References
 

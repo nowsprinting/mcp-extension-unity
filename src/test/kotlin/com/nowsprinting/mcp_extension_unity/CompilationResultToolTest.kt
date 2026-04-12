@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class CompilationResultToolsetTest {
+class CompilationResultToolTest {
 
     @Test
     fun `CompilationErrorResult_serializes_to_error_pattern`() {

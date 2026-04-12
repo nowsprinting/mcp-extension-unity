@@ -1,8 +1,5 @@
 package com.nowsprinting.mcp_extension_unity
 
-import com.intellij.mcpserver.McpToolset
-import com.intellij.mcpserver.annotations.McpDescription
-import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.rd.util.reactive.valueOrDefault
@@ -19,9 +16,9 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
 
-class PlayControlToolset : McpToolset {
+class PlayControlTool {
 
-    private val LOG = Logger.getInstance(PlayControlToolset::class.java)
+    private val LOG = Logger.getInstance(PlayControlTool::class.java)
 
     companion object {
         enum class PlayAction { PLAY, STOP, PAUSE, RESUME, STEP, STATUS }
@@ -40,20 +37,7 @@ class PlayControlToolset : McpToolset {
         }
     }
 
-    @McpTool(name = "unity_play_control")
-    @McpDescription(description = """
-        Control Unity Editor's play mode.
-
-        Actions:
-        - `play`: Enter play mode.
-        - `stop`: Exit play mode. IMPORTANT: Must stop play mode before calling `get_unity_compilation_result`.
-        - `pause`: Pause at the current frame while in play mode.
-        - `resume`: Resume from paused state.
-        - `step`: Advance exactly one frame while paused.
-        - `status`: Read-only query. Returns current `isPlaying` and `isPaused` state without changing anything.
-    """)
     suspend fun unity_play_control(
-        @McpDescription(description = "Action to perform: `play`, `stop`, `pause`, `resume`, `step`, or `status` (case insensitive)")
         action: String? = null
     ): PlayControlResult {
         val parsedAction = parseAction(action)

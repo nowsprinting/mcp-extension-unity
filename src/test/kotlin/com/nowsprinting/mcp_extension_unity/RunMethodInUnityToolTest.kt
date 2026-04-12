@@ -6,42 +6,42 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class RunMethodInUnityToolsetTest {
+class RunMethodInUnityToolTest {
 
     @Test
     fun `validateParam - valid string returns trimmed`() {
-        assertEquals("myAssembly", RunMethodInUnityToolset.validateParam("assemblyName", "myAssembly"))
+        assertEquals("myAssembly", RunMethodInUnityTool.validateParam("assemblyName", "myAssembly"))
     }
 
     @Test
     fun `validateParam - string with whitespace returns trimmed`() {
-        assertEquals("myAssembly", RunMethodInUnityToolset.validateParam("assemblyName", "  myAssembly  "))
+        assertEquals("myAssembly", RunMethodInUnityTool.validateParam("assemblyName", "  myAssembly  "))
     }
 
     @Test
     fun `validateParam - null returns null`() {
-        assertNull(RunMethodInUnityToolset.validateParam("assemblyName", null))
+        assertNull(RunMethodInUnityTool.validateParam("assemblyName", null))
     }
 
     @Test
     fun `validateParam - empty string returns null`() {
-        assertNull(RunMethodInUnityToolset.validateParam("assemblyName", ""))
+        assertNull(RunMethodInUnityTool.validateParam("assemblyName", ""))
     }
 
     @Test
     fun `validateParam - blank string returns null`() {
-        assertNull(RunMethodInUnityToolset.validateParam("assemblyName", "   "))
+        assertNull(RunMethodInUnityTool.validateParam("assemblyName", "   "))
     }
 
     @Test
     fun `formatErrorMessage - message only when stackTrace is blank`() {
-        val result = RunMethodInUnityToolset.formatErrorMessage("Type not found", "")
+        val result = RunMethodInUnityTool.formatErrorMessage("Type not found", "")
         assertEquals("Type not found", result)
     }
 
     @Test
     fun `formatErrorMessage - message with stackTrace combined`() {
-        val result = RunMethodInUnityToolset.formatErrorMessage("Type not found", "at Foo.Bar()")
+        val result = RunMethodInUnityTool.formatErrorMessage("Type not found", "at Foo.Bar()")
         assertEquals("Type not found\nStack trace:\nat Foo.Bar()", result)
     }
 

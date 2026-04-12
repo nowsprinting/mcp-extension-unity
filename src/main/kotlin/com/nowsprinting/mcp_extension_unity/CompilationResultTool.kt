@@ -1,8 +1,5 @@
 package com.nowsprinting.mcp_extension_unity
 
-import com.intellij.mcpserver.McpToolset
-import com.intellij.mcpserver.annotations.McpDescription
-import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
@@ -20,21 +17,14 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
 
-class CompilationResultToolset : McpToolset {
+class CompilationResultTool {
 
-    private val LOG = Logger.getInstance(CompilationResultToolset::class.java)
+    private val LOG = Logger.getInstance(CompilationResultTool::class.java)
 
     companion object {
         internal const val LOG_FLUSH_DELAY_MS = 500L
     }
 
-    @McpTool(name = "get_unity_compilation_result")
-    @McpDescription(description = """
-        Trigger Unity's AssetDatabase.Refresh() and check if compilation succeeded.
-        Recommended to run this tool to ensure compilation succeeds before `run_unity_tests` or `run_method_in_unity` tool if modified code.
-
-        IMPORTANT: Before calling this tool, call `unity_play_control` with `action='status'` to check the Unity Editor state. If `isPlaying` is true, call `unity_play_control` with `action='stop'` first, then call this tool.
-    """)
     suspend fun get_unity_compilation_result(): CompilationResult {
         var collector: UnityConsoleLogCollector? = null
         try {

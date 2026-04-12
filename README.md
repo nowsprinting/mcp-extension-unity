@@ -163,7 +163,7 @@ Coding Agent (e.g., Claude Code)
 JetBrains MCP Server (built into Rider 2025.3+)
     ↓ extension point (com.intellij.mcpServer)
 [This Plugin — Kotlin Frontend]
-    ├── RunUnityTestsToolset.kt / PlayControlToolset.kt / RunMethodInUnityToolset.kt
+    ├── UnityEditorToolset.kt (facade → CompilationResultTool / RunUnityTestsTool / RunMethodInUnityTool / PlayControlTool)
     │       ↓ (unity_play_control, get_unity_compilation_result, run_method_in_unity)
     │   FrontendBackendModel.playControls / FrontendBackendModel.runMethodInUnity / UnityTestMcpModel.getCompilationResult
     │       ↓ (run_unity_tests)
