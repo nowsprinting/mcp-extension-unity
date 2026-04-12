@@ -1,67 +1,67 @@
 package com.nowsprinting.mcp_extension_unity
 
-import com.nowsprinting.mcp_extension_unity.PlayControlToolset.Companion.PlayAction
+import com.nowsprinting.mcp_extension_unity.PlayControlTool.Companion.PlayAction
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class PlayControlToolsetTest {
+class PlayControlToolTest {
 
     @Test
     fun `parseAction - play returns PLAY`() {
-        assertEquals(PlayAction.PLAY, PlayControlToolset.parseAction("play"))
+        assertEquals(PlayAction.PLAY, PlayControlTool.parseAction("play"))
     }
 
     @Test
     fun `parseAction - Play returns PLAY (case insensitive)`() {
-        assertEquals(PlayAction.PLAY, PlayControlToolset.parseAction("Play"))
+        assertEquals(PlayAction.PLAY, PlayControlTool.parseAction("Play"))
     }
 
     @Test
     fun `parseAction - stop returns STOP`() {
-        assertEquals(PlayAction.STOP, PlayControlToolset.parseAction("stop"))
+        assertEquals(PlayAction.STOP, PlayControlTool.parseAction("stop"))
     }
 
     @Test
     fun `parseAction - pause returns PAUSE`() {
-        assertEquals(PlayAction.PAUSE, PlayControlToolset.parseAction("pause"))
+        assertEquals(PlayAction.PAUSE, PlayControlTool.parseAction("pause"))
     }
 
     @Test
     fun `parseAction - resume returns RESUME`() {
-        assertEquals(PlayAction.RESUME, PlayControlToolset.parseAction("resume"))
+        assertEquals(PlayAction.RESUME, PlayControlTool.parseAction("resume"))
     }
 
     @Test
     fun `parseAction - step returns STEP`() {
-        assertEquals(PlayAction.STEP, PlayControlToolset.parseAction("step"))
+        assertEquals(PlayAction.STEP, PlayControlTool.parseAction("step"))
     }
 
     @Test
     fun `parseAction - status returns STATUS`() {
-        assertEquals(PlayAction.STATUS, PlayControlToolset.parseAction("status"))
+        assertEquals(PlayAction.STATUS, PlayControlTool.parseAction("status"))
     }
 
     @Test
     fun `parseAction - invalid returns null`() {
-        assertNull(PlayControlToolset.parseAction("invalid"))
+        assertNull(PlayControlTool.parseAction("invalid"))
     }
 
     @Test
     fun `parseAction - empty string returns null`() {
-        assertNull(PlayControlToolset.parseAction(""))
+        assertNull(PlayControlTool.parseAction(""))
     }
 
     @Test
     fun `parseAction - blank string returns null`() {
-        assertNull(PlayControlToolset.parseAction("   "))
+        assertNull(PlayControlTool.parseAction("   "))
     }
 
     @Test
     fun `parseAction - null returns null`() {
-        assertNull(PlayControlToolset.parseAction(null))
+        assertNull(PlayControlTool.parseAction(null))
     }
 
     @Test

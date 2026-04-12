@@ -10,91 +10,91 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class RunUnityTestsToolsetTest {
+class RunUnityTestsToolTest {
 
     @Test
     fun `parseTestMode - editmode returns EditMode`() {
-        assertEquals(McpTestMode.EditMode, RunUnityTestsToolset.parseTestMode("editmode"))
+        assertEquals(McpTestMode.EditMode, RunUnityTestsTool.parseTestMode("editmode"))
     }
 
     @Test
     fun `parseTestMode - edit returns EditMode`() {
-        assertEquals(McpTestMode.EditMode, RunUnityTestsToolset.parseTestMode("edit"))
+        assertEquals(McpTestMode.EditMode, RunUnityTestsTool.parseTestMode("edit"))
     }
 
     @Test
     fun `parseTestMode - EditMode returns EditMode`() {
-        assertEquals(McpTestMode.EditMode, RunUnityTestsToolset.parseTestMode("EditMode"))
+        assertEquals(McpTestMode.EditMode, RunUnityTestsTool.parseTestMode("EditMode"))
     }
 
     @Test
     fun `parseTestMode - playmode returns PlayMode`() {
-        assertEquals(McpTestMode.PlayMode, RunUnityTestsToolset.parseTestMode("playmode"))
+        assertEquals(McpTestMode.PlayMode, RunUnityTestsTool.parseTestMode("playmode"))
     }
 
     @Test
     fun `parseTestMode - play returns PlayMode`() {
-        assertEquals(McpTestMode.PlayMode, RunUnityTestsToolset.parseTestMode("play"))
+        assertEquals(McpTestMode.PlayMode, RunUnityTestsTool.parseTestMode("play"))
     }
 
     @Test
     fun `parseTestMode - PlayMode returns PlayMode`() {
-        assertEquals(McpTestMode.PlayMode, RunUnityTestsToolset.parseTestMode("PlayMode"))
+        assertEquals(McpTestMode.PlayMode, RunUnityTestsTool.parseTestMode("PlayMode"))
     }
 
     @Test
     fun `parseTestMode - invalid value returns null`() {
-        assertNull(RunUnityTestsToolset.parseTestMode("invalid"))
+        assertNull(RunUnityTestsTool.parseTestMode("invalid"))
     }
 
     @Test
     fun `parseTestMode - empty string returns null`() {
-        assertNull(RunUnityTestsToolset.parseTestMode(""))
+        assertNull(RunUnityTestsTool.parseTestMode(""))
     }
 
     @Test
     fun `parseTestMode - blank string returns null`() {
-        assertNull(RunUnityTestsToolset.parseTestMode("   "))
+        assertNull(RunUnityTestsTool.parseTestMode("   "))
     }
 
     @Test
     fun `parseTestMode - null returns null`() {
-        assertNull(RunUnityTestsToolset.parseTestMode(null))
+        assertNull(RunUnityTestsTool.parseTestMode(null))
     }
 
     @Test
     fun `sanitizeAssemblyNames - null returns empty list`() {
-        val result = RunUnityTestsToolset.sanitizeAssemblyNames(null)
+        val result = RunUnityTestsTool.sanitizeAssemblyNames(null)
         assertTrue(result.isEmpty())
     }
 
     @Test
     fun `sanitizeAssemblyNames - empty list returns empty list`() {
-        val result = RunUnityTestsToolset.sanitizeAssemblyNames(emptyList())
+        val result = RunUnityTestsTool.sanitizeAssemblyNames(emptyList())
         assertTrue(result.isEmpty())
     }
 
     @Test
     fun `sanitizeAssemblyNames - list with only blank strings returns empty`() {
-        val result = RunUnityTestsToolset.sanitizeAssemblyNames(listOf("", "   ", "\t"))
+        val result = RunUnityTestsTool.sanitizeAssemblyNames(listOf("", "   ", "\t"))
         assertTrue(result.isEmpty())
     }
 
     @Test
     fun `sanitizeAssemblyNames - valid names are preserved`() {
-        val result = RunUnityTestsToolset.sanitizeAssemblyNames(listOf("MyTests.EditMode", "MyTests.PlayMode"))
+        val result = RunUnityTestsTool.sanitizeAssemblyNames(listOf("MyTests.EditMode", "MyTests.PlayMode"))
         assertEquals(listOf("MyTests.EditMode", "MyTests.PlayMode"), result)
     }
 
     @Test
     fun `sanitizeAssemblyNames - blank strings are filtered out`() {
-        val result = RunUnityTestsToolset.sanitizeAssemblyNames(listOf("", "  "))
+        val result = RunUnityTestsTool.sanitizeAssemblyNames(listOf("", "  "))
         assertTrue(result.isEmpty())
     }
 
     @Test
     fun `sanitizeAssemblyNames - mixed valid and blank strings keeps only valid`() {
-        val result = RunUnityTestsToolset.sanitizeAssemblyNames(listOf("", "MyTests.EditMode", "  ", "MyTests.PlayMode"))
+        val result = RunUnityTestsTool.sanitizeAssemblyNames(listOf("", "MyTests.EditMode", "  ", "MyTests.PlayMode"))
         assertEquals(listOf("MyTests.EditMode", "MyTests.PlayMode"), result)
     }
 
@@ -191,7 +191,7 @@ class RunUnityTestsToolsetTest {
             item("test3", status = McpTestResultStatus.Ignored),
             item("test4", status = McpTestResultStatus.Inconclusive, output = "inconc msg"),
         )
-        val actual = RunUnityTestsToolset.filterLeafResults(results)
+        val actual = RunUnityTestsTool.filterLeafResults(results)
         assertEquals(1, actual.passCount)
         assertEquals(1, actual.failCount)
         assertEquals(1, actual.skipCount)
@@ -208,7 +208,7 @@ class RunUnityTestsToolsetTest {
             item("child1", parentId = "parent", status = McpTestResultStatus.Success),
             item("child2", parentId = "parent", status = McpTestResultStatus.Success),
         )
-        val actual = RunUnityTestsToolset.filterLeafResults(results)
+        val actual = RunUnityTestsTool.filterLeafResults(results)
         assertEquals(2, actual.passCount)
         assertEquals(0, actual.failCount)
     }
@@ -222,7 +222,7 @@ class RunUnityTestsToolsetTest {
             item("ParamTest(1)", parentId = "ParamTest", status = McpTestResultStatus.Failure, output = "fail"),
             item("ParamTest(2)", parentId = "ParamTest", status = McpTestResultStatus.Success),
         )
-        val actual = RunUnityTestsToolset.filterLeafResults(results)
+        val actual = RunUnityTestsTool.filterLeafResults(results)
         assertEquals(2, actual.passCount)
         assertEquals(1, actual.failCount)
         assertEquals(0, actual.skipCount)
@@ -231,7 +231,7 @@ class RunUnityTestsToolsetTest {
 
     @Test
     fun `filterLeafResults - empty list returns all zeros`() {
-        val actual = RunUnityTestsToolset.filterLeafResults(emptyList())
+        val actual = RunUnityTestsTool.filterLeafResults(emptyList())
         assertEquals(0, actual.passCount)
         assertEquals(0, actual.failCount)
         assertEquals(0, actual.skipCount)
@@ -247,7 +247,7 @@ class RunUnityTestsToolsetTest {
             item("test1", parentId = "", status = McpTestResultStatus.Success),
             item("test2", parentId = "   ", status = McpTestResultStatus.Failure),
         )
-        val actual = RunUnityTestsToolset.filterLeafResults(results)
+        val actual = RunUnityTestsTool.filterLeafResults(results)
         assertEquals(1, actual.passCount)
         assertEquals(1, actual.failCount)
     }
