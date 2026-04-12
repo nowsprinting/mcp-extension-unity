@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Consolidate all four MCP tools under a single `UnityEditorToolset` category in Rider's Tool Filtering UI (Settings → MCP Server → Tool Filtering)
+
 ## [1.0.2] - 2026-03-10
 
 ### Changed
