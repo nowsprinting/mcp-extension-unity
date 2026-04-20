@@ -59,7 +59,9 @@ Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `test
 
 ### Run Method
 
-The `run_method_in_unity` tool invokes a static method in Unity Editor via reflection. The method must be static and parameterless. The method's return value is NOT returned.
+The `run_method_in_unity` tool invokes a static method in Unity Editor via reflection.
+You can use this tool to edit scenes and prefabs.
+
 Console logs during the method will be captured and returned in the `logs` field of the response.
 
 **Parameters**
@@ -160,7 +162,7 @@ The `unity_play_control` tool controls Unity Editor's play mode.
 ```
 Coding Agent (e.g., Claude Code)
     ↓ MCP (HTTP/SSE)
-JetBrains MCP Server (built into Rider 2025.3+)
+JetBrains MCP Server (built into Rider 2025.2+)
     ↓ extension point (com.intellij.mcpServer)
 [This Plugin — Kotlin Frontend]
     ├── UnityEditorToolset.kt (facade → CompilationResultTool / RunUnityTestsTool / RunMethodInUnityTool / PlayControlTool)
