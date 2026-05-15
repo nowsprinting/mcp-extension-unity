@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix race condition in `get_unity_compilation_result` when called during Unity compilation or domain reload
+
 ## [1.0.3] - 2026-04-12
 
 ### Changed
