@@ -63,6 +63,34 @@ namespace McpExtensionUnity
             return tcs.Task;
         }
 
+        // Waits for BackendUnityModel to become a non-null instance different from previousModel.
+        // Use this after Refresh throws (domain reload detected) to wait for the post-reload reconnect.
+        internal static async Task<BackendUnityModel> WaitForModelReconnect(
+            BackendUnityHost host, Action<Action> rdQueue, Lifetime lt,
+            BackendUnityModel previousModel, TimeSpan timeout)
+        {
+            var tcs = new TaskCompletionSource<BackendUnityModel>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            // WHY !ReferenceEquals guard instead of re-using WaitForUnityModel:
+            // After Refresh.Start() throws (domain reload in progress), BackendUnityModel may still
+            // hold the stale pre-reload instance because Rider has not yet propagated the disconnect.
+            // Advise on the same property would fire immediately with that stale instance, making
+            // GetCompilationResult.Start() fail on a model that is being torn down.
+            // Requiring a different instance ensures we wait for the actual post-reload reconnect.
+            rdQueue(() =>
+            {
+                host.BackendUnityModel.Advise(lt, m =>
+                {
+                    if (m != null && !ReferenceEquals(m, previousModel)) tcs.TrySetResult(m);
+                });
+            });
+            var reconnectTask = tcs.Task;
+            var timeoutTask = Task.Delay(timeout);
+            if (await Task.WhenAny(reconnectTask, timeoutTask).ConfigureAwait(false) != reconnectTask)
+                return null;
+            return await reconnectTask.ConfigureAwait(false);
+        }
+
         // Converts IRdTask<T> to Task<T> using Advise on the result property.
         // Advise fires once when the task result is set (not with the initial null state).
         // RdTaskResult<T>.Unwrap() returns the value on success, throws on failure/cancellation.

@@ -71,6 +71,7 @@ namespace McpExtensionUnity
                 return CompilationErrorResponse($"Failed to start AssetDatabase.Refresh(): {e.Message}");
             }
 
+            var refreshThrew = false;
             try
             {
                 var refreshTask = RdConnectionHelper.AwaitRdTask(lt, rdRefreshTask);
@@ -87,12 +88,28 @@ namespace McpExtensionUnity
             {
                 // Refresh may trigger a domain reload which disconnects Unity temporarily — not fatal
                 ourLogger.Warn($"RefreshAndCheckCompilation: Refresh threw (likely domain reload): {e.Message}");
+                refreshThrew = true;
             }
 
-            // Wait for the model to be available again (fires immediately if no reload occurred).
-            // WaitForUnityModel schedules the Advise call on the Rd scheduler thread.
+            // Wait for the model to be available again.
+            // WHY two separate wait paths:
+            // When refreshThrew, BackendUnityModel may still point to the stale pre-reload instance
+            // because Rider has not yet propagated the disconnect. WaitForUnityModel would fire
+            // immediately with that stale instance, causing GetCompilationResult to be cancelled.
+            // WaitForModelReconnect requires a different instance, ensuring we get the post-reload model.
+            // When !refreshThrew, no domain reload occurred and the existing model is still valid.
             ourLogger.Info("RefreshAndCheckCompilation: waiting for Unity model reconnection");
-            var reconnectedModel = await RdConnectionHelper.WaitForUnityModel(_host, _rdQueue, lt, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
+            BackendUnityModel reconnectedModel;
+            if (refreshThrew)
+            {
+                reconnectedModel = await RdConnectionHelper.WaitForModelReconnect(
+                    _host, _rdQueue, lt, unityModel, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
+            }
+            else
+            {
+                reconnectedModel = await RdConnectionHelper.WaitForUnityModel(
+                    _host, _rdQueue, lt, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
+            }
             if (reconnectedModel == null)
                 return CompilationErrorResponse(
                     "Unity Editor did not reconnect within 2 minutes after Refresh.");
@@ -108,6 +125,12 @@ namespace McpExtensionUnity
                 if (await Task.WhenAny(compileTask, timeoutTask).ConfigureAwait(false) != compileTask)
                     return CompilationErrorResponse("GetCompilationResult timed out after 1 minute.");
                 compilationSucceeded = await compileTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return CompilationErrorResponse(
+                    "Unity is currently compiling or reloading assemblies. " +
+                    "Wait a few seconds and retry get_unity_compilation_result.");
             }
             catch (Exception e)
             {

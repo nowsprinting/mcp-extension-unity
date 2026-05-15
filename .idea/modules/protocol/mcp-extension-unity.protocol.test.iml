@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id=":protocol:test" external.linked.project.path="$MODULE_DIR$/../../../protocol" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="mcp-extension-unity" external.system.module.type="sourceSet" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet external-system-id="GRADLE" type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false" pureKotlinSourceFolders="$MODULE_DIR$/../../../protocol/src/test/kotlin;/Users/ko2hase/Documents/mcp-extension-unity/protocol/src/main/kotlin">
+        <additionalVisibleModuleNames>:protocol:main</additionalVisibleModuleNames>
+        <compilerSettings />
+        <compilerArguments>
+          <flagArguments>
+            <flagArg name="allowNoSourceFiles" arg="true" />
+            <flagArg name="noReflect" arg="true" />
+            <flagArg name="noStdlib" arg="true" />
+          </flagArguments>
+          <stringArguments>
+            <stringArg name="destination" arg="$MODULE_DIR$/../../../protocol/build/classes/kotlin/test" />
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="moduleName" arg="protocol_test" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-jvm/2.3.0/ba43e136497851b3079ebcc4b0f9c462c1410eab/kotlin-scripting-jvm-2.3.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-common/2.3.0/ed166c96b64d63647c7ee106da3a8a1c95596285/kotlin-scripting-common-2.3.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.3.0/ebc4eb2b6e6c91b6c844c1e3183920d86f2ef656/kotlin-stdlib-2.3.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.3.0/fb89e0ab064ea19d08c6d6bc9f044d16c5487fc4/kotlin-script-runtime-2.3.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar</arg>
+              </args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager">
+    <output-test url="file://$MODULE_DIR$/../../../protocol/build/classes/java/test" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../protocol/src/test" />
+    <orderEntry type="jdk" jdkName="temurin-21" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="mcp-extension-unity.protocol.main" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.rd:rd-gen:2025.3.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.rd:rd-core:2025.3.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-compiler-embeddable:1.8.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-reflect:1.8.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.8.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-script-runtime:1.8.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij.deps:trove4j:1.0.20200330" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: commons-logging:commons-logging:1.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-daemon-embeddable:1.8.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: net.java.dev.jna:jna:5.6.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:1.8.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains:annotations:13.0" level="project" />
+  </component>
+  <component name="TestModuleProperties" production-module="mcp-extension-unity.protocol.main" />
+</module>
