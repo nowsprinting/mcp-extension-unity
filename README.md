@@ -208,9 +208,9 @@ If it is not yet enabled:
 
 ### Environment Variables
 
-| Variable           | Default | Description                                                                                                                                                                                                            |
-|--------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `MCP_TOOL_TIMEOUT` | `300`   | Timeout in seconds for `run_unity_tests`, `get_unity_compilation_result`, and `run_method_in_unity`. Set a smaller value to get faster feedback when Unity Test Runner cancellation does not fire a completion signal. |
+| Variable           | Default | Description                                                                                                                                                                                                                                                                                                                                                          |
+|--------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `MCP_TOOL_TIMEOUT` | `300`   | Timeout in seconds for `run_unity_tests` and `get_unity_compilation_result`. Increase this value when running a large test suite, a slow `PlayMode` test, or a long-running compilation that may exceed 5 minutes. Decrease it to get faster feedback when Unity Test Runner cancellation does not fire a completion signal (manual Cancel in Test Runner is a known case). |
 
 ## FAQ
 

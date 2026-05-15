@@ -71,11 +71,10 @@ namespace McpExtensionUnity
                 var testMode = request.TestMode == McpTestMode.PlayMode ? TestMode.Play : TestMode.Edit;
 
                 // Read timeout from MCP_TOOL_TIMEOUT env var (seconds). Default: 300 (5 minutes).
-                var timeoutSeconds = 300;
-                var envTimeout = Environment.GetEnvironmentVariable("MCP_TOOL_TIMEOUT");
-                if (envTimeout != null && int.TryParse(envTimeout, out var parsed) && parsed > 0)
-                    timeoutSeconds = parsed;
+                var timeoutSeconds = (int)RdConnectionHelper.GetMcpToolTimeout().TotalSeconds;
                 ourLogger.Info($"  Timeout={timeoutSeconds}s");
+
+                var reconnectTimeout = TimeSpan.FromSeconds(timeoutSeconds);
 
                 // TCS is thread-safe; create it here so Advise callbacks inside ScheduleOnRd can reference it.
                 // ConcurrentDictionary provides thread-safe access across the Rd scheduler thread
@@ -120,12 +119,12 @@ namespace McpExtensionUnity
                                 try
                                 {
                                     var reconnected = await RdConnectionHelper.WaitForUnityModel(
-                                        backendUnityHost, rdQueue, lt, TimeSpan.FromMinutes(2))
+                                        backendUnityHost, rdQueue, lt, reconnectTimeout)
                                         .ConfigureAwait(false);
                                     if (reconnected == null)
                                     {
                                         tcs.TrySetException(new Exception(
-                                            "Unity Editor did not reconnect within 2 minutes after domain reload. " +
+                                            $"Unity Editor did not reconnect within {timeoutSeconds} seconds after domain reload. " +
                                             "This may be caused by a crash or the editor being closed."));
                                         return;
                                     }

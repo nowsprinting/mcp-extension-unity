@@ -63,6 +63,16 @@ namespace McpExtensionUnity
             return tcs.Task;
         }
 
+        // Reads MCP_TOOL_TIMEOUT env var (seconds). Defaults to 300 when absent or invalid.
+        // Used by both test and compilation handlers so the same variable controls all phases.
+        internal static TimeSpan GetMcpToolTimeout()
+        {
+            var env = Environment.GetEnvironmentVariable("MCP_TOOL_TIMEOUT");
+            if (env != null && int.TryParse(env, out var sec) && sec > 0)
+                return TimeSpan.FromSeconds(sec);
+            return TimeSpan.FromSeconds(300);
+        }
+
         // Waits for BackendUnityModel to become a non-null instance different from previousModel.
         // Use this after Refresh throws (domain reload detected) to wait for the post-reload reconnect.
         internal static async Task<BackendUnityModel> WaitForModelReconnect(

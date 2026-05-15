@@ -9,7 +9,6 @@ import com.jetbrains.rider.projectView.solution
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -61,20 +60,20 @@ class RunMethodInUnityTool {
             val protocol = solution.protocol
                 ?: return RunMethodInUnityErrorResult("No protocol available. The solution may not be fully loaded.")
 
-            val timeoutSeconds = System.getenv("MCP_TOOL_TIMEOUT")?.toLongOrNull()?.takeIf { it > 0 } ?: 300L
-
             val localCollector = UnityConsoleLogCollector(
                 solution.frontendBackendModel.consoleLogging.onConsoleLogEvent
             )
             collector = localCollector
 
-            val response = withTimeout(timeoutSeconds * 1000) {
-                withContext(protocol.scheduler.asCoroutineDispatcher) {
-                    localCollector.start()
-                    solution.frontendBackendModel.runMethodInUnity.startSuspending(
-                        RunMethodData(validAssemblyName, validTypeName, validMethodName)
-                    )
-                }
+            // WHY NOT withTimeout here:
+            // runMethodInUnity is a resharper-unity Rd RPC with its own backend timeout.
+            // Cancelling from the Kotlin side would orphan the in-flight RPC on the C# side;
+            // a retry from the caller could then invoke the method a second time.
+            val response = withContext(protocol.scheduler.asCoroutineDispatcher) {
+                localCollector.start()
+                solution.frontendBackendModel.runMethodInUnity.startSuspending(
+                    RunMethodData(validAssemblyName, validTypeName, validMethodName)
+                )
             }
 
             delay(LOG_FLUSH_DELAY_MS)
