@@ -219,10 +219,9 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
        THIS_DOES_NOT_EXIST();
    }
    ```
-2. Wait for Unity to detect the compilation error
-3. Run `get_unity_compilation_result` (no parameters)
-4. Verify: `success=false`, `logs` contains error info (`type="Error"`, `message` contains the error message)
-5. Remove the added code and wait for Unity to finish compilation
+2. Run `get_unity_compilation_result` immediately (no parameters) — do **not** wait for Unity to finish compilation
+3. Verify: `success=false`, `logs` contains error info (`type="Error"`, `message` contains the error message)
+4. Remove the added code and wait for Unity to finish compilation
 
 ---
 
@@ -316,5 +315,5 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
 
 For the following tool calls, if the expected result is not obtained, **wait 5 seconds and retry** up to 10 times.
 
-- `get_unity_compilation_result`: May temporarily fail when called before Unity finishes compilation
+- `get_unity_compilation_result`: If Unity is still compiling when the tool is called, the response may contain `"Unity is currently compiling or reloading assemblies"` — wait 5 seconds and retry
 - `unity_play_control` (`action="status"` only): Unity Editor state may take time to reflect immediately after play/stop

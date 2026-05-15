@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="mcp-extension-unity:test" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="com.nowsprinting.mcp-extension-unity" external.system.module.type="sourceSet" external.system.module.version="8ea8eab" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet external-system-id="GRADLE" type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false" pureKotlinSourceFolders="$MODULE_DIR$/../../src/main/generated;/Users/ko2hase/Documents/mcp-extension-unity/src/main/kotlin;/Users/ko2hase/Documents/mcp-extension-unity/src/test/kotlin">
+        <additionalVisibleModuleNames>mcp-extension-unity:main</additionalVisibleModuleNames>
+        <compilerSettings />
+        <compilerArguments>
+          <flagArguments>
+            <flagArg name="allowNoSourceFiles" arg="true" />
+            <flagArg name="noReflect" arg="true" />
+            <flagArg name="noStdlib" arg="true" />
+          </flagArguments>
+          <stringArguments>
+            <stringArg name="destination" arg="$MODULE_DIR$/../../build/classes/kotlin/test" />
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="moduleName" arg="mcp-extension-unity_test" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-serialization-compiler-plugin-embeddable/2.3.0/d471247fbfe1cfff64d23118c74d8fb5ca9cec69/kotlin-serialization-compiler-plugin-embeddable-2.3.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-jvm/2.3.0/ba43e136497851b3079ebcc4b0f9c462c1410eab/kotlin-scripting-jvm-2.3.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-common/2.3.0/ed166c96b64d63647c7ee106da3a8a1c95596285/kotlin-scripting-common-2.3.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.3.0/ebc4eb2b6e6c91b6c844c1e3183920d86f2ef656/kotlin-stdlib-2.3.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.3.0/fb89e0ab064ea19d08c6d6bc9f044d16c5487fc4/kotlin-script-runtime-2.3.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar</arg>
+              </args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager">
+    <output-test url="file://$MODULE_DIR$/../../build/classes/kotlin/test" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../src/test">
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/kotlin" isTestSource="true" />
+    </content>
+    <orderEntry type="jdk" jdkName="temurin-21" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="mcp-extension-unity.main" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="Gradle: bundledPlugin:com.intellij.mcpServer:RD-253.31033.136">
+        <CLASSES>
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/mcpserver/lib/io.github.smiley4.schema.kenerator.core.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/mcpserver/lib/io.github.smiley4.schema.kenerator.jsonschema.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/mcpserver/lib/io.github.smiley4.schema.kenerator.serialization.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/mcpserver/lib/ktor-server-cio-internal.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/mcpserver/lib/mcpserver-frontend.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/mcpserver/lib/mcpserver.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: bundledPlugin:com.intellij.resharper.unity:RD-253.31033.136" level="project" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="Gradle: rider:JetBrains.Rider:aarch64:2025.3.3">
+        <CLASSES>
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/annotations.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/app-backend.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/app.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/eclipse.lsp4j.debug.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/eclipse.lsp4j.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/eclipse.lsp4j.jsonrpc.debug.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/eclipse.lsp4j.jsonrpc.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/external-system-rt.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/externalProcess-rt.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/forms_rt.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/groovy.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/javax.activation.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/javax.annotation-api.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/jaxb-api.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/jaxb-runtime.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/jps-model.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/jsch-agent.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/lib-backend.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/lib.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.aalto.xml.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.asm.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.asm.tools.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.automaton.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.blockmap.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.bouncy.castle.pgp.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.bouncy.castle.provider.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.caffeine.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.cglib.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.classgraph.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.cli.parser.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.commons.cli.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.commons.codec.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.commons.compress.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.commons.imaging.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.commons.io.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.commons.lang3.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.commons.logging.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.fastutil.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.gson.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.guava.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.hash4j.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.hdr.histogram.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.http.client.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.icu4j.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.imgscalr.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.ini4j.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.ion.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jackson.databind.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jackson.dataformat.yaml.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jackson.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jackson.jr.objects.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jackson.module.kotlin.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.java.websocket.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.javax.annotation.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jaxen.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jbr.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jcef.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jcip.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jediterm.core.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jediterm.ui.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jettison.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jsonpath.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jsoup.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jsvg.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jvm.native.trusted.roots.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.jzlib.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kotlin.reflect.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kotlinx.collections.immutable.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kotlinx.coroutines.slf4j.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kotlinx.datetime.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kotlinx.html.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kotlinx.io.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kotlinx.serialization.core.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kotlinx.serialization.json.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kotlinx.serialization.protobuf.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.kryo5.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.ktor.client.cio.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.ktor.client.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.ktor.io.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.ktor.network.tls.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.ktor.utils.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.lz4.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.markdown.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.miglayout.swing.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.mvstore.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.oro.matcher.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.proxy.vole.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.pty4j.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.rd.text.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.rhino.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.snakeyaml.engine.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.snakeyaml.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.sshj.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.stream.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.velocity.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.winp.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.xerces.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.xstream.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.xtext.xbase.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.libraries.xz.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.debugger.impl.rpc.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.debugger.impl.shared.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.eel.impl.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.find.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.managed.cache.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.polySymbols.backend.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.polySymbols.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.rpc.topics.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.scopes.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.vcs.core.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.vcs.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.platform.vcs.shared.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.regexp.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.rider.icons.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.analysis.impl.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.analysis.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.dom.impl.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.dom.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.impl.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.parser.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.psi.impl.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.psi.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.structureView.impl.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.structureView.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.syntax.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/module-intellij.xml.ui.common.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/modules/intellij.rider.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/opentelemetry.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/platform-loader.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/product-backend.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/product.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/protobuf.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/rd.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/rhino.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/stats.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/trove.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/util-8.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/util.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/lib/util_rt.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: com.jetbrains.intellij.platform:test-framework:253.31033.131" level="project" />
+    <orderEntry type="library" name="Gradle: junit:junit:4.13.2" level="project" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="Gradle: bundledPlugin:rider.intellij.plugin.appender:RD-253.31033.136">
+        <CLASSES>
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/rider-plugins-appender/lib/modules/intellij.rider.appender.grazie.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/rider-plugins-appender/lib/rider-plugins-appender.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="Gradle: bundledPlugin:com.intellij.modules.json:RD-253.31033.136">
+        <CLASSES>
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/json/lib/json.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/json/lib/modules/intellij.json.backend.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/json/lib/modules/intellij.json.backend.regexp.jar!/" />
+          <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/b86cda9cb570c32dabea3295ca2dd3d2/transformed/JetBrains.Rider-2025.3.3-aarch64/plugins/json/lib/modules/intellij.json.frontend.split.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: com.jetbrains.intellij.platform:test-framework-common:253.31033.131" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: com.jetbrains.intellij.platform:test-framework-core:253.31033.131" level="project" />
+    <orderEntry type="library" name="Gradle: org.hamcrest:hamcrest-core:1.3" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.6.3" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.jetbrains.runtime:jbr-api:1.9.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.19.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.19.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.apache.httpcomponents:httpmime:4.5.14" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.4.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.9.22" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.19.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.apache.httpcomponents:httpclient:4.5.14" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.6.3" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains:annotations:13.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.apache.httpcomponents:httpcore:4.4.16" level="project" />
+  </component>
+  <component name="TestModuleProperties" production-module="mcp-extension-unity.main" />
+</module>

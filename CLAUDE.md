@@ -102,7 +102,9 @@ mcp-extension-unity/
     ├── 2026-02-28-step11-initial-connection-wait.md            # Step 11: initial connection wait
     ├── 2026-02-28-use-git-hash-as-build-version.md             # Use git hash as build version
     ├── 2026-03-09-improve-tool-descriptions.md                 # Improve tool descriptions
-    └── 2026-04-11-merge-toolsets-into-unity-editor-toolset.md  # Merge toolsets into UnityEditorToolset
+    ├── 2026-04-11-merge-toolsets-into-unity-editor-toolset.md  # Merge toolsets into UnityEditorToolset
+    ├── 2026-05-16-fix-compilation-result-race-condition.md     # Fix race condition in get_unity_compilation_result
+    └── 2026-05-16-fix-compilation-result-race-condition-e2e-tests.md  # E2E tests for race condition fix
 ```
 
 ## Build
@@ -193,6 +195,11 @@ Register in `plugin.xml`:
    - All failure paths call `TryAbortLaunch` (best-effort; aborts whatever launch is currently on the model).
    - **Known limitation**: Unity Test Runner manual Cancel may not fire `RunResult`, causing a wait until timeout.
      Set `MCP_TOOL_TIMEOUT` to a smaller value to reduce feedback delay in this case.
+
+8. **`get_unity_compilation_result` domain-reload race condition** — `UnityCompilationMcpHandler.cs` handles two race conditions that occur when the tool is called while Unity is compiling:
+   - **Stale model race**: After `Refresh.Start()` throws (domain reload detected), `BackendUnityModel` may still point to the pre-reload instance. `WaitForModelReconnect` (in `RdConnectionHelper.cs`) requires a *different* instance (`!ReferenceEquals`) to ensure the post-reload model is used.
+   - **Transient model race**: During domain reload, the Rd client may briefly expose a new `BackendUnityModel` instance that is immediately rejected ("lifetime is already canceled"). A retry loop updates `previousModel` on each transient rejection and waits for the next candidate, eventually reaching the stable connection.
+   - If `GetCompilationResult` is still cancelled after reconnection, the error message instructs the agent to wait and retry.
 
 ## Development Roadmap
 
