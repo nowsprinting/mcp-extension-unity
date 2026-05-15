@@ -96,10 +96,10 @@ class RunUnityTestsTool {
 
             val parsedMode = parseTestMode(testMode)
                 ?: return TestErrorResult(
-                    errorMessage =if (testMode == null)
+                    errorMessage = if (testMode == null)
                         "testMode is required. Valid values: EditMode, PlayMode (case insensitive)."
                     else
-                        "Invalid testMode: '$testMode'. Valid values: EditMode, edit, PlayMode, play (case insensitive)."
+                        "Invalid testMode: '$testMode'. Valid values: EditMode, PlayMode (case insensitive)."
                 )
 
             val request = McpRunTestsRequest(

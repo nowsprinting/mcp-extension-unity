@@ -43,9 +43,9 @@ class PlayControlTool {
         val parsedAction = parseAction(action)
             ?: return PlayControlErrorResult(
                 errorMessage = if (action == null)
-                    "action is required. Valid values: `play`, `stop`, `pause`, `resume`, `step`, or `status`."
+                    "action is required. Valid values: play, stop, pause, resume, step, or status (case insensitive)."
                 else
-                    "Invalid action: '$action'. Valid values: `play`, `stop`, `pause`, `resume`, `step`, or `status`."
+                    "Invalid action: '$action'. Valid values: play, stop, pause, resume, step, or status (case insensitive)."
             )
 
         try {
