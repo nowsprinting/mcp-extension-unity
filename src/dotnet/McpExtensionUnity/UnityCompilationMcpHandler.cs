@@ -91,7 +91,7 @@ namespace McpExtensionUnity
                 refreshThrew = true;
             }
 
-            // Wait for the model to be available again.
+            // Wait for the model to be available again and call GetCompilationResult.
             // WHY two separate wait paths:
             // When refreshThrew, BackendUnityModel may still point to the stale pre-reload instance
             // because Rider has not yet propagated the disconnect. WaitForUnityModel would fire
@@ -99,27 +99,57 @@ namespace McpExtensionUnity
             // WaitForModelReconnect requires a different instance, ensuring we get the post-reload model.
             // When !refreshThrew, no domain reload occurred and the existing model is still valid.
             ourLogger.Info("RefreshAndCheckCompilation: waiting for Unity model reconnection");
-            BackendUnityModel reconnectedModel;
-            if (refreshThrew)
-            {
-                reconnectedModel = await RdConnectionHelper.WaitForModelReconnect(
-                    _host, _rdQueue, lt, unityModel, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
-            }
-            else
-            {
-                reconnectedModel = await RdConnectionHelper.WaitForUnityModel(
-                    _host, _rdQueue, lt, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
-            }
-            if (reconnectedModel == null)
-                return CompilationErrorResponse(
-                    "Unity Editor did not reconnect within 2 minutes after Refresh.");
-            ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
 
-            // GetCompilationResult.Start() is an Rd RPC and must be called on the Rd scheduler thread.
+            if (!refreshThrew)
+            {
+                var reconnectedModel = await RdConnectionHelper.WaitForUnityModel(
+                    _host, _rdQueue, lt, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
+                if (reconnectedModel == null)
+                    return CompilationErrorResponse(
+                        "Unity Editor did not reconnect within 2 minutes after Refresh.");
+                ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
+                return await CallGetCompilationResult(reconnectedModel, lt);
+            }
+
+            // WHY retry loop instead of a single WaitForModelReconnect call:
+            // During domain reload, BackendUnityModel may briefly expose a transient instance
+            // (a premature reconnect attempt that gets immediately rejected — "lifetime is already canceled").
+            // WaitForModelReconnect correctly fires on this transient instance (it is a different reference),
+            // but GetCompilationResult on it throws OperationCanceledException right away.
+            // Updating previousModel to the rejected instance and retrying waits for the next candidate,
+            // eventually reaching the stable post-reload connection without surfacing a spurious error.
+            var deadline = DateTime.Now.AddMinutes(2);
+            var previousModel = unityModel;
+            while (true)
+            {
+                var remaining = deadline - DateTime.Now;
+                if (remaining <= TimeSpan.Zero)
+                    return CompilationErrorResponse(
+                        "Unity Editor did not reconnect within 2 minutes after Refresh.");
+
+                var candidate = await RdConnectionHelper.WaitForModelReconnect(
+                    _host, _rdQueue, lt, previousModel, remaining).ConfigureAwait(false);
+                if (candidate == null)
+                    return CompilationErrorResponse(
+                        "Unity Editor did not reconnect within 2 minutes after Refresh.");
+
+                ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
+                var result = await TryCallGetCompilationResult(candidate, lt);
+                if (result != null)
+                    return result;
+
+                ourLogger.Warn("RefreshAndCheckCompilation: GetCompilationResult cancelled on transient model, retrying");
+                previousModel = candidate;
+            }
+        }
+
+        // Calls GetCompilationResult and returns the response. Throws on OperationCanceledException or other exceptions.
+        private async Task<McpCompilationResponse> CallGetCompilationResult(BackendUnityModel model, Lifetime lt)
+        {
             bool compilationSucceeded;
             try
             {
-                var rdCompileTask = await RdConnectionHelper.ScheduleOnRd(_rdQueue, () => reconnectedModel.GetCompilationResult.Start(lt, JetBrains.Core.Unit.Instance)).ConfigureAwait(false);
+                var rdCompileTask = await RdConnectionHelper.ScheduleOnRd(_rdQueue, () => model.GetCompilationResult.Start(lt, JetBrains.Core.Unit.Instance)).ConfigureAwait(false);
                 var compileTask = RdConnectionHelper.AwaitRdTask(lt, rdCompileTask);
                 var timeoutTask = Task.Delay(TimeSpan.FromMinutes(1));
                 if (await Task.WhenAny(compileTask, timeoutTask).ConfigureAwait(false) != compileTask)
@@ -144,6 +174,36 @@ namespace McpExtensionUnity
                     errorMessage: "Unity compilation failed. Console logs during compilation are captured in the `logs` field of the response. If `logs` is empty, the compilation may have occurred before this tool triggered a refresh; use the `get_file_problems` tool, `getDiagnostics` tool, or read `editor.log` for error details."
                 );
             return new McpCompilationResponse(success: true, errorMessage: "");
+        }
+
+        // Returns null if GetCompilationResult was cancelled (transient model), otherwise returns the response.
+        private async Task<McpCompilationResponse> TryCallGetCompilationResult(BackendUnityModel model, Lifetime lt)
+        {
+            try
+            {
+                var rdCompileTask = await RdConnectionHelper.ScheduleOnRd(_rdQueue, () => model.GetCompilationResult.Start(lt, JetBrains.Core.Unit.Instance)).ConfigureAwait(false);
+                var compileTask = RdConnectionHelper.AwaitRdTask(lt, rdCompileTask);
+                var timeoutTask = Task.Delay(TimeSpan.FromMinutes(1));
+                if (await Task.WhenAny(compileTask, timeoutTask).ConfigureAwait(false) != compileTask)
+                    return CompilationErrorResponse("GetCompilationResult timed out after 1 minute.");
+                var compilationSucceeded = await compileTask.ConfigureAwait(false);
+                ourLogger.Info($"RefreshAndCheckCompilation: compilationSucceeded={compilationSucceeded}");
+                if (!compilationSucceeded)
+                    return new McpCompilationResponse(
+                        success: false,
+                        errorMessage: "Unity compilation failed. Console logs during compilation are captured in the `logs` field of the response. If `logs` is empty, the compilation may have occurred before this tool triggered a refresh; use the `get_file_problems` tool, `getDiagnostics` tool, or read `editor.log` for error details."
+                    );
+                return new McpCompilationResponse(success: true, errorMessage: "");
+            }
+            catch (OperationCanceledException)
+            {
+                // Signal to the caller that this model was transient (retry needed)
+                return null;
+            }
+            catch (Exception e)
+            {
+                return CompilationErrorResponse($"GetCompilationResult failed: {e.Message}");
+            }
         }
 
         private static McpCompilationResponse CompilationErrorResponse(string message) =>
