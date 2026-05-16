@@ -14,7 +14,7 @@ Adds tools for operating Unity Editor from any Coding Agents.
 - **No per-project MCP server package required** — no need to install an MCP server package into each Unity project.
 - **No agent configuration** — if the MCP Server is already enabled in Rider, Coding Agents can use the tools immediately with no additional setup.
 - **No additional configuration required for cloned workspaces** — if you clone a workspace with `git workspace`, `claude --workspace`, etc., you get tools that work without any additional configuration.
-- **Tools for Unity Editor** — provides **Run tests**, **Run method**, **Check compilation**, and **Play control**.
+- **Tools for Unity Editor** — provides **Run tests**, **Run editor script**, **Check compilation**, and **Play mode control**.
 <!-- Plugin description end -->
 
 ## Requirements
@@ -23,7 +23,7 @@ Adds tools for operating Unity Editor from any Coding Agents.
 
 ## Provided Tools
 
-### Run Tests
+### Run tests
 
 The `run_unity_tests` tool runs tests on Unity Editor through Rider's test infrastructure.
 Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `testNames` to narrow down the tests to the scope of changes.
@@ -57,7 +57,7 @@ Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `test
 | `success`      | boolean | Always `false` |
 | `errorMessage` | string  | Error details  |
 
-### Run Method
+### Run editor script
 
 The `run_method_in_unity` tool invokes a static method in Unity Editor via reflection.
 You can use this tool to edit scenes and prefabs.
@@ -94,7 +94,7 @@ The method must be **static and parameterless**.
 > [!IMPORTANT]  
 > Async methods can be invoked, but the tool does not await their completion. Logs generated after the method returns to the caller will not be included in the response.
 
-### Check Compilation
+### Check compilation
 
 The `get_unity_compilation_result` tool triggers Unity's `AssetDatabase.Refresh()` and checks if compilation succeeded.
 Console logs during compilation will be captured and returned in the `logs` field of the response.
@@ -122,7 +122,7 @@ Console logs during compilation will be captured and returned in the `logs` fiel
 > [!TIP]  
 > Recommended to run this tool to ensure compilation succeeds before `run_unity_tests` or `run_method_in_unity` tool if modified code.
 
-### Play Control
+### Play mode control
 
 The `unity_play_control` tool controls Unity Editor's play mode.
 
