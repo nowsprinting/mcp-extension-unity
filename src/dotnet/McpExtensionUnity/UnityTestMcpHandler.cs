@@ -63,7 +63,7 @@ namespace McpExtensionUnity
                     backendUnityHost, rdQueue, lt, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
                 ourLogger.Info($"  BackendUnityModel={initialModel?.GetType().Name ?? "null"}");
                 if (initialModel == null)
-                    return ErrorResponse("Unity Editor did not connect within 30 seconds. Please open Unity Editor with the project.");
+                    return ErrorResponse("Unity Editor did not connect within 30 seconds. Check idea.log and Editor.log to understand the situation. If Editor not running, use the `execute_run_configuration` tool to launch the `Start Unity` configuration, then retry.");
 
                 // Build test params — no Rd operations, safe on any thread
                 var testFilters = BuildTestFilters(request.Filter);
@@ -125,7 +125,8 @@ namespace McpExtensionUnity
                                     {
                                         tcs.TrySetException(new Exception(
                                             $"Unity Editor did not reconnect within {timeoutSeconds} seconds after domain reload. " +
-                                            "This may be caused by a crash or the editor being closed."));
+                                            "This may be caused by a crash or the editor being closed. " +
+                                            "However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation."));
                                         return;
                                     }
                                     ourLogger.Info("  Unity Editor reconnected after domain reload, re-launching tests");

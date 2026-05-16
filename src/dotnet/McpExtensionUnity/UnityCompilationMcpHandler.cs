@@ -60,7 +60,7 @@ namespace McpExtensionUnity
                 _host, _rdQueue, lt, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
             if (unityModel == null)
                 return CompilationErrorResponse(
-                    "Unity Editor did not connect within 30 seconds. Please open Unity Editor with the project.");
+                    "Unity Editor did not connect within 30 seconds. Check idea.log and Editor.log to understand the situation. If Editor not running, use the `execute_run_configuration` tool to launch the `Start Unity` configuration, then retry.");
 
             // unityModel.Refresh.Start() is an Rd RPC and must be called on the Rd scheduler thread.
             // Schedule it via _rdQueue and capture the returned IRdTask.
@@ -111,7 +111,7 @@ namespace McpExtensionUnity
                     _host, _rdQueue, lt, timeout).ConfigureAwait(false);
                 if (reconnectedModel == null)
                     return CompilationErrorResponse(
-                        $"Unity Editor did not reconnect within {(int)timeout.TotalSeconds} seconds after Refresh.");
+                        $"Unity Editor did not reconnect within {(int)timeout.TotalSeconds} seconds after Refresh. However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation.");
                 ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
                 return await CallGetCompilationResult(reconnectedModel, lt, timeout);
             }
@@ -130,13 +130,13 @@ namespace McpExtensionUnity
                 var remaining = deadline - DateTime.Now;
                 if (remaining <= TimeSpan.Zero)
                     return CompilationErrorResponse(
-                        $"Unity Editor did not reconnect within {(int)timeout.TotalSeconds} seconds after Refresh.");
+                        $"Unity Editor did not reconnect within {(int)timeout.TotalSeconds} seconds after Refresh. However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation.");
 
                 var candidate = await RdConnectionHelper.WaitForModelReconnect(
                     _host, _rdQueue, lt, previousModel, remaining).ConfigureAwait(false);
                 if (candidate == null)
                     return CompilationErrorResponse(
-                        $"Unity Editor did not reconnect within {(int)timeout.TotalSeconds} seconds after Refresh.");
+                        $"Unity Editor did not reconnect within {(int)timeout.TotalSeconds} seconds after Refresh. However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation.");
 
                 ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
                 var result = await TryCallGetCompilationResult(candidate, lt, timeout);

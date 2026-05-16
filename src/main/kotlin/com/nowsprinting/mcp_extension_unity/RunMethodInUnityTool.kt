@@ -55,7 +55,7 @@ class RunMethodInUnityTool {
             val solution = project.solution
             if (!EditorConnectionUtils.awaitEditorConnection(solution.frontendBackendModel.unityEditorConnected)) {
                 return RunMethodInUnityErrorResult(
-                    "Unity Editor did not connect within 30 seconds. Please open Unity Editor with the project.")
+                    "Unity Editor did not connect within 30 seconds. Check idea.log and Editor.log to understand the situation. If Editor not running, use the `execute_run_configuration` tool to launch the `Start Unity` configuration, then retry.")
             }
             val protocol = solution.protocol
                 ?: return RunMethodInUnityErrorResult("No protocol available. The solution may not be fully loaded.")
