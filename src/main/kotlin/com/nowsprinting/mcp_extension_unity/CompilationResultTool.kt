@@ -8,7 +8,6 @@ import com.jetbrains.rider.projectView.solution
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -35,20 +34,20 @@ class CompilationResultTool {
                     errorMessage = "No protocol available. The solution may not be fully loaded."
                 )
 
-            val timeoutSeconds = System.getenv("MCP_TOOL_TIMEOUT")?.toLongOrNull()?.takeIf { it > 0 } ?: 300L
-
             val localCollector = UnityConsoleLogCollector(
                 solution.frontendBackendModel.consoleLogging.onConsoleLogEvent
             )
             collector = localCollector
 
             LOG.info("get_unity_compilation_result: calling Rd model.getCompilationResult.startSuspending")
-            val response = withTimeout(timeoutSeconds * 1000) {
-                withContext(protocol.scheduler.asCoroutineDispatcher) {
-                    localCollector.start()
-                    val model = UnityCompilationMcpModelProvider.getOrBindModel(protocol)
-                    model.getCompilationResult.startSuspending(Unit)
-                }
+            // WHY NOT withTimeout here:
+            // The C# handler (UnityCompilationMcpHandler) owns the timeout via MCP_TOOL_TIMEOUT.
+            // Cancelling from the Kotlin side would abort the Rd coroutine while the C# side may still
+            // be running, causing a stale or double-invocation state on the next retry.
+            val response = withContext(protocol.scheduler.asCoroutineDispatcher) {
+                localCollector.start()
+                val model = UnityCompilationMcpModelProvider.getOrBindModel(protocol)
+                model.getCompilationResult.startSuspending(Unit)
             }
             LOG.info("get_unity_compilation_result: Rd call completed, success=${response.success}")
 

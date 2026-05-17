@@ -32,6 +32,8 @@ class UnityEditorToolset : McpToolset {
         3. If `includePlatforms` in the .asmdef contains `Editor`, it is EditMode; otherwise PlayMode.
 
         IMPORTANT: If you have modified any C# source files, call `get_unity_compilation_result` first to trigger a refresh and verify compilation succeeds before running tests.
+
+        IMPORTANT: This tool blocks until the test run completes or times out. Do not call it again while waiting — duplicate calls launch a second test run on top of the first. On timeout, before retrying or adjusting filters, check idea.log and Editor.log for signs of an infinite loop in a test.
     """)
     suspend fun run_unity_tests(
         @McpDescription(description = "REQUIRED. `EditMode` or `PlayMode` (case insensitive).")
@@ -59,6 +61,8 @@ class UnityEditorToolset : McpToolset {
         3. If no .asmdef exists in the hierarchy, check the directory path: if it contains a directory named `Editor`, use `Assembly-CSharp-Editor`; otherwise use `Assembly-CSharp`.
 
         IMPORTANT: If you have modified any C# source files, call `get_unity_compilation_result` first to trigger a refresh and verify compilation succeeds before invoking this tool.
+
+        IMPORTANT: This tool blocks until the method returns — do not call it again while waiting. Async methods invoked here are not awaited; logs generated after the method returns will not appear in the response.
     """)
     suspend fun run_method_in_unity(
         @McpDescription(description = "Assembly name containing the type (e.g., 'Assembly-CSharp-Editor')")

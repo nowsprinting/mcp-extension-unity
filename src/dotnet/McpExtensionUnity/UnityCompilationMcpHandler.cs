@@ -49,13 +49,18 @@ namespace McpExtensionUnity
         // _rdQueue dispatches actions to the Rd Shell Dispatcher thread so Rd RPCs are called correctly.
         private async Task<McpCompilationResponse> RefreshAndCheckCompilation(Lifetime lt)
         {
+            var timeout = RdConnectionHelper.GetMcpToolTimeout();
+            ourLogger.Info($"RefreshAndCheckCompilation: timeout={timeout.TotalSeconds}s");
+
             // Wait up to 30 seconds for Unity Editor to connect.
             // This covers the domain-reload window where the Rd connection is temporarily unavailable.
+            // WHY NOT using MCP_TOOL_TIMEOUT for initial connection: 30s is intentionally fixed
+            // across all tools so the initial wait behaviour is consistent regardless of env var.
             var unityModel = await RdConnectionHelper.WaitForUnityModel(
                 _host, _rdQueue, lt, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
             if (unityModel == null)
                 return CompilationErrorResponse(
-                    "Unity Editor did not connect within 30 seconds. Please open Unity Editor with the project.");
+                    "Unity Editor did not connect within 30 seconds. Check idea.log and Editor.log to understand the situation. If Editor not running, use the `execute_run_configuration` tool to launch the `Start Unity` configuration, then retry.");
 
             // unityModel.Refresh.Start() is an Rd RPC and must be called on the Rd scheduler thread.
             // Schedule it via _rdQueue and capture the returned IRdTask.
@@ -75,11 +80,11 @@ namespace McpExtensionUnity
             try
             {
                 var refreshTask = RdConnectionHelper.AwaitRdTask(lt, rdRefreshTask);
-                var timeoutTask = Task.Delay(TimeSpan.FromMinutes(2));
+                var timeoutTask = Task.Delay(timeout);
                 if (await Task.WhenAny(refreshTask, timeoutTask).ConfigureAwait(false) != refreshTask)
                 {
-                    ourLogger.Warn("RefreshAndCheckCompilation: Refresh timed out after 2 minutes");
-                    return CompilationErrorResponse("AssetDatabase.Refresh() timed out after 2 minutes.");
+                    ourLogger.Warn($"RefreshAndCheckCompilation: Refresh timed out after {(int)timeout.TotalSeconds} seconds");
+                    return CompilationErrorResponse($"AssetDatabase.Refresh() timed out after {(int)timeout.TotalSeconds} seconds.");
                 }
                 await refreshTask.ConfigureAwait(false);
                 ourLogger.Info("RefreshAndCheckCompilation: Refresh completed");
@@ -103,12 +108,12 @@ namespace McpExtensionUnity
             if (!refreshThrew)
             {
                 var reconnectedModel = await RdConnectionHelper.WaitForUnityModel(
-                    _host, _rdQueue, lt, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
+                    _host, _rdQueue, lt, timeout).ConfigureAwait(false);
                 if (reconnectedModel == null)
                     return CompilationErrorResponse(
-                        "Unity Editor did not reconnect within 2 minutes after Refresh.");
+                        $"Unity Editor did not reconnect within {(int)timeout.TotalSeconds} seconds after Refresh. However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation.");
                 ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
-                return await CallGetCompilationResult(reconnectedModel, lt);
+                return await CallGetCompilationResult(reconnectedModel, lt, timeout);
             }
 
             // WHY retry loop instead of a single WaitForModelReconnect call:
@@ -118,23 +123,23 @@ namespace McpExtensionUnity
             // but GetCompilationResult on it throws OperationCanceledException right away.
             // Updating previousModel to the rejected instance and retrying waits for the next candidate,
             // eventually reaching the stable post-reload connection without surfacing a spurious error.
-            var deadline = DateTime.Now.AddMinutes(2);
+            var deadline = DateTime.Now.Add(timeout);
             var previousModel = unityModel;
             while (true)
             {
                 var remaining = deadline - DateTime.Now;
                 if (remaining <= TimeSpan.Zero)
                     return CompilationErrorResponse(
-                        "Unity Editor did not reconnect within 2 minutes after Refresh.");
+                        $"Unity Editor did not reconnect within {(int)timeout.TotalSeconds} seconds after Refresh. However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation.");
 
                 var candidate = await RdConnectionHelper.WaitForModelReconnect(
                     _host, _rdQueue, lt, previousModel, remaining).ConfigureAwait(false);
                 if (candidate == null)
                     return CompilationErrorResponse(
-                        "Unity Editor did not reconnect within 2 minutes after Refresh.");
+                        $"Unity Editor did not reconnect within {(int)timeout.TotalSeconds} seconds after Refresh. However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation.");
 
                 ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
-                var result = await TryCallGetCompilationResult(candidate, lt);
+                var result = await TryCallGetCompilationResult(candidate, lt, timeout);
                 if (result != null)
                     return result;
 
@@ -144,16 +149,16 @@ namespace McpExtensionUnity
         }
 
         // Calls GetCompilationResult and returns the response. Throws on OperationCanceledException or other exceptions.
-        private async Task<McpCompilationResponse> CallGetCompilationResult(BackendUnityModel model, Lifetime lt)
+        private async Task<McpCompilationResponse> CallGetCompilationResult(BackendUnityModel model, Lifetime lt, TimeSpan timeout)
         {
             bool compilationSucceeded;
             try
             {
                 var rdCompileTask = await RdConnectionHelper.ScheduleOnRd(_rdQueue, () => model.GetCompilationResult.Start(lt, JetBrains.Core.Unit.Instance)).ConfigureAwait(false);
                 var compileTask = RdConnectionHelper.AwaitRdTask(lt, rdCompileTask);
-                var timeoutTask = Task.Delay(TimeSpan.FromMinutes(1));
+                var timeoutTask = Task.Delay(timeout);
                 if (await Task.WhenAny(compileTask, timeoutTask).ConfigureAwait(false) != compileTask)
-                    return CompilationErrorResponse("GetCompilationResult timed out after 1 minute.");
+                    return CompilationErrorResponse($"GetCompilationResult timed out after {(int)timeout.TotalSeconds} seconds.");
                 compilationSucceeded = await compileTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException)
@@ -177,15 +182,15 @@ namespace McpExtensionUnity
         }
 
         // Returns null if GetCompilationResult was cancelled (transient model), otherwise returns the response.
-        private async Task<McpCompilationResponse> TryCallGetCompilationResult(BackendUnityModel model, Lifetime lt)
+        private async Task<McpCompilationResponse> TryCallGetCompilationResult(BackendUnityModel model, Lifetime lt, TimeSpan timeout)
         {
             try
             {
                 var rdCompileTask = await RdConnectionHelper.ScheduleOnRd(_rdQueue, () => model.GetCompilationResult.Start(lt, JetBrains.Core.Unit.Instance)).ConfigureAwait(false);
                 var compileTask = RdConnectionHelper.AwaitRdTask(lt, rdCompileTask);
-                var timeoutTask = Task.Delay(TimeSpan.FromMinutes(1));
+                var timeoutTask = Task.Delay(timeout);
                 if (await Task.WhenAny(compileTask, timeoutTask).ConfigureAwait(false) != compileTask)
-                    return CompilationErrorResponse("GetCompilationResult timed out after 1 minute.");
+                    return CompilationErrorResponse($"GetCompilationResult timed out after {(int)timeout.TotalSeconds} seconds.");
                 var compilationSucceeded = await compileTask.ConfigureAwait(false);
                 ourLogger.Info($"RefreshAndCheckCompilation: compilationSucceeded={compilationSucceeded}");
                 if (!compilationSucceeded)

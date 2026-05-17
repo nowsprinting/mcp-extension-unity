@@ -43,9 +43,9 @@ class PlayControlTool {
         val parsedAction = parseAction(action)
             ?: return PlayControlErrorResult(
                 errorMessage = if (action == null)
-                    "action is required. Valid values: `play`, `stop`, `pause`, `resume`, `step`, or `status`."
+                    "action is required. Valid values: play, stop, pause, resume, step, or status (case insensitive)."
                 else
-                    "Invalid action: '$action'. Valid values: `play`, `stop`, `pause`, `resume`, `step`, or `status`."
+                    "Invalid action: '$action'. Valid values: play, stop, pause, resume, step, or status (case insensitive)."
             )
 
         try {
@@ -53,7 +53,7 @@ class PlayControlTool {
             val solution = project.solution
             if (!EditorConnectionUtils.awaitEditorConnection(solution.frontendBackendModel.unityEditorConnected)) {
                 return PlayControlErrorResult(
-                    errorMessage = "Unity Editor did not connect within 30 seconds. Please open Unity Editor with the project.")
+                    errorMessage = "Unity Editor did not connect within 30 seconds. Check idea.log and Editor.log to understand the situation. If Editor not running, use the `execute_run_configuration` tool to launch the `Start Unity` configuration, then retry.")
             }
             val protocol = solution.protocol
                 ?: return PlayControlErrorResult(
