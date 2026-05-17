@@ -96,6 +96,7 @@ Create only the types and public method signatures for the product code that can
 
 ### Step 5: E2E Tests
 
-1. Create the E2E test cases file at the path: `docs/plans/{plan-file-name}-e2e-tests.md`
-   - `{plan-file-name}` is the plan file name copied to `docs/plans/` in the guidelines (e.g., `2026-01-18-plan-name`).
-2. Refer to `docs/e2e-tests.md` for the content and format of the E2E test cases.
+1. Add new E2E test cases directly to `docs/e2e-tests.md` under the relevant tool section.
+   - Follow the existing format and numbering in that file.
+2. **Exception**: If a test case requires a disruptive user operation that is impractical to run every regression cycle (e.g., stopping Unity Editor, disconnecting the network), create a separate file at `docs/plans/{plan-file-name}-e2e-tests.md` instead.
+   - `{plan-file-name}` is the plan file name copied to `docs/plans/` (e.g., `2026-01-18-plan-name`).

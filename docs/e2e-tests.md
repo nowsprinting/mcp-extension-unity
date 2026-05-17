@@ -245,6 +245,15 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
 3. Verify: `success=false`, `logs` contains error info (`type="Error"`, `message` contains the error message)
 4. Remove the added code and wait for Unity to finish compilation
 
+### 2-3. Rapid successive calls during compilation
+
+1. Edit `McpExtensionUnityTest.cs` to introduce any code change (e.g., add a blank line)
+2. Call `get_unity_compilation_result` twice back-to-back without any delay between calls
+3. Verify:
+   - Neither call produces `"Unity Editor did not connect within 30 seconds"`
+   - The second call either returns `success=true` or `"Unity is currently compiling or reloading assemblies. Wait a few seconds and retry get_unity_compilation_result."`
+   - No call hangs for more than 2 minutes
+
 ---
 
 ## 3. `unity_play_control`
