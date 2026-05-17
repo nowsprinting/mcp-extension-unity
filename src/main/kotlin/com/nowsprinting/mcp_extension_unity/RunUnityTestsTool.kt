@@ -33,6 +33,8 @@ class RunUnityTestsTool {
             }
         }
 
+        internal fun playModeRejectionMessage(isPlaying: Boolean): String? = null
+
         internal fun filterLeafResults(results: List<McpTestResultItem>): TestRunResult {
             val parentIds = results.mapNotNullTo(mutableSetOf()) {
                 it.parentId.takeIf { id -> id.isNotBlank() }
