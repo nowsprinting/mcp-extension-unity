@@ -36,9 +36,9 @@ class RunMethodInUnityTool {
     }
 
     suspend fun run_method_in_unity(
-        assemblyName: String? = null,
-        typeName: String? = null,
-        methodName: String? = null
+        assemblyName: String,
+        typeName: String,
+        methodName: String
     ): RunMethodInUnityResult {
         val validAssemblyName = validateParam("assemblyName", assemblyName)
             ?: return RunMethodInUnityErrorResult("assemblyName is required and must be non-blank.")

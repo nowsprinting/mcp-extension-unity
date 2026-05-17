@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Mark required parameters as required in the MCP tool schema (`testMode`, `assemblyNames`, `assemblyName`, `typeName`, `methodName`, `action`)
 - Add troubleshooting tips to tool descriptions and error messages
 
 ### Fixed

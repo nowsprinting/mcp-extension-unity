@@ -36,10 +36,10 @@ class UnityEditorToolset : McpToolset {
         IMPORTANT: This tool blocks until the test run completes or times out. Do not call it again while waiting — duplicate calls launch a second test run on top of the first. On timeout, before retrying or adjusting filters, check idea.log and Editor.log for signs of an infinite loop in a test.
     """)
     suspend fun run_unity_tests(
-        @McpDescription(description = "REQUIRED. `EditMode` or `PlayMode` (case insensitive).")
-        testMode: String? = null,
-        @McpDescription(description = "REQUIRED. Names of test assemblies to run (without .dll extension, e.g., 'MyFeature.Tests').")
-        assemblyNames: List<String>? = null,
+        @McpDescription(description = "`EditMode` or `PlayMode` (case insensitive).")
+        testMode: String,
+        @McpDescription(description = "Names of test assemblies to run (without .dll extension, e.g., 'MyFeature.Tests').")
+        assemblyNames: List<String>,
         @McpDescription(description = "Names of a category to include in the run. Any test or fixture runs that have a category matching the string. Specify when the test class/method is decorated with the `Category` attribute.")
         categoryNames: List<String>? = null,
         @McpDescription(description = "Regex patterns to filter tests by their full name. Matches against test fixtures, namespaces, or individual test names. Generally, specify the test class that corresponds to the modified class (same namespace, class name with `Test` appended).")
@@ -66,11 +66,11 @@ class UnityEditorToolset : McpToolset {
     """)
     suspend fun run_method_in_unity(
         @McpDescription(description = "Assembly name containing the type (e.g., 'Assembly-CSharp-Editor')")
-        assemblyName: String? = null,
+        assemblyName: String,
         @McpDescription(description = "Fully qualified type name (e.g., 'MyNamespace.MyEditorTool')")
-        typeName: String? = null,
+        typeName: String,
         @McpDescription(description = "Static method name to invoke (e.g., 'DoSomething')")
-        methodName: String? = null
+        methodName: String
     ): RunMethodInUnityResult =
         runMethodInUnityTool.run_method_in_unity(assemblyName, typeName, methodName)
 
@@ -88,7 +88,7 @@ class UnityEditorToolset : McpToolset {
     """)
     suspend fun unity_play_control(
         @McpDescription(description = "Action to perform: `play`, `stop`, `pause`, `resume`, `step`, or `status` (case insensitive)")
-        action: String? = null
+        action: String
     ): PlayControlResult =
         playControlTool.unity_play_control(action)
 }

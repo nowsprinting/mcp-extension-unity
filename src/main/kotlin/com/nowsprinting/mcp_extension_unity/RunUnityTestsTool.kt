@@ -73,8 +73,8 @@ class RunUnityTestsTool {
     }
 
     suspend fun run_unity_tests(
-        testMode: String? = null,
-        assemblyNames: List<String>? = null,
+        testMode: String,
+        assemblyNames: List<String>,
         categoryNames: List<String>? = null,
         groupNames: List<String>? = null,
         testNames: List<String>? = null
@@ -96,10 +96,7 @@ class RunUnityTestsTool {
 
             val parsedMode = parseTestMode(testMode)
                 ?: return TestErrorResult(
-                    errorMessage = if (testMode == null)
-                        "testMode is required. Valid values: EditMode, PlayMode (case insensitive)."
-                    else
-                        "Invalid testMode: '$testMode'. Valid values: EditMode, PlayMode (case insensitive)."
+                    errorMessage = "Invalid testMode: '$testMode'. Valid values: EditMode, PlayMode (case insensitive)."
                 )
 
             val request = McpRunTestsRequest(

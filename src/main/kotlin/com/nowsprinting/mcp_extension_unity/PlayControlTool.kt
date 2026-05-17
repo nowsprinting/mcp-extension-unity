@@ -38,14 +38,11 @@ class PlayControlTool {
     }
 
     suspend fun unity_play_control(
-        action: String? = null
+        action: String
     ): PlayControlResult {
         val parsedAction = parseAction(action)
             ?: return PlayControlErrorResult(
-                errorMessage = if (action == null)
-                    "action is required. Valid values: play, stop, pause, resume, step, or status (case insensitive)."
-                else
-                    "Invalid action: '$action'. Valid values: play, stop, pause, resume, step, or status (case insensitive)."
+                errorMessage = "Invalid action: '$action'. Valid values: play, stop, pause, resume, step, or status (case insensitive)."
             )
 
         try {
