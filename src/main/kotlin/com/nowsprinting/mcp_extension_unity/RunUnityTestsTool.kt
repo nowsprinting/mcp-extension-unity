@@ -3,7 +3,9 @@ package com.nowsprinting.mcp_extension_unity
 import com.nowsprinting.mcp_extension_unity.model.*
 import com.intellij.mcpserver.project
 import com.intellij.openapi.diagnostic.Logger
+import com.jetbrains.rd.util.reactive.valueOrDefault
 import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
+import com.jetbrains.rider.plugins.unity.model.frontendBackend.frontendBackendModel
 import com.jetbrains.rider.projectView.solution
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
@@ -33,7 +35,11 @@ class RunUnityTestsTool {
             }
         }
 
-        internal fun playModeRejectionMessage(isPlaying: Boolean): String? = null
+        internal fun playModeRejectionMessage(isPlaying: Boolean): String? =
+            if (isPlaying)
+                "Unity Editor is in PlayMode. Stop play mode by calling `unity_play_control` with `action='stop'` before running tests."
+            else
+                null
 
         internal fun filterLeafResults(results: List<McpTestResultItem>): TestRunResult {
             val parentIds = results.mapNotNullTo(mutableSetOf()) {
@@ -103,6 +109,15 @@ class RunUnityTestsTool {
                     else
                         "Invalid testMode: '$testMode'. Valid values: EditMode, PlayMode (case insensitive)."
                 )
+
+            // WHY valueOrDefault(false) without awaitEditorConnection:
+            // If the Editor is disconnected, playControls.play has no value and defaults to false,
+            // letting the request flow through to the C# handler which already performs its own
+            // 30-second connection wait. Adding awaitEditorConnection here would double that wait
+            // for the common disconnected case. When the Editor IS connected and playing, the
+            // property reflects the live state and the fail-fast fires immediately.
+            val isPlaying = solution.frontendBackendModel.playControls.play.valueOrDefault(false)
+            playModeRejectionMessage(isPlaying)?.let { return TestErrorResult(errorMessage = it) }
 
             val request = McpRunTestsRequest(
                 testMode = parsedMode,
