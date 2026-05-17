@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fail-fast in `run_unity_tests` when Unity Editor is in PlayMode, instead of blocking until the MCP client times out
 - Fix race condition in `get_unity_compilation_result` when called during Unity compilation or domain reload
 
 ## [1.0.3] - 2026-04-12
