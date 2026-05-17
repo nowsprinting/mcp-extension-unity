@@ -6,11 +6,24 @@ import com.nowsprinting.mcp_extension_unity.model.McpTestResultStatus
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RunUnityTestsToolTest {
+
+    @Test
+    fun `playModeRejectionMessage - isPlaying true returns error message`() {
+        val message = RunUnityTestsTool.playModeRejectionMessage(isPlaying = true)
+        assertNotNull("Expected a non-null rejection message when Editor is playing", message)
+        assertTrue("Message should mention unity_play_control", message!!.contains("unity_play_control"))
+    }
+
+    @Test
+    fun `playModeRejectionMessage - isPlaying false returns null`() {
+        assertNull(RunUnityTestsTool.playModeRejectionMessage(isPlaying = false))
+    }
 
     @Test
     fun `parseTestMode - editmode returns EditMode`() {

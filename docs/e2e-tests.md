@@ -201,6 +201,28 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
 1. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="Invalid"`
 2. Verify: `success=false`, `errorMessage` indicates that the `testMode` value is invalid
 
+### 1-12. Fail-fast when Editor is in PlayMode
+
+1. Run `unity_play_control` with `action="play"` to enter PlayMode
+2. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
+3. Verify: `success=false` is returned within ~1 second, and `errorMessage` contains a message instructing to call `unity_play_control` with `action='stop'`
+
+### 1-13. Runs normally after stopping PlayMode
+
+(Continuing from 1-12, starting from a stopped state)
+
+1. Run `unity_play_control` with `action="stop"`
+2. Add the following test method to `McpExtensionUnityTest.cs`
+   ```csharp
+   [Test]
+   public void RunUnityTests_Success()
+   {
+   }
+   ```
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
+4. Verify: `success=true`, `passCount=1`
+5. Remove the added method
+
 ---
 
 ## 2. `get_unity_compilation_result`
