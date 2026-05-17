@@ -142,8 +142,9 @@ jobs:
       - name: Create Release Draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES: ${{ needs.build.outputs.changelog }}
         run: |
           gh release create "v${{ needs.build.outputs.version }}" \
             --title "v${{ needs.build.outputs.version }}" \
-            --notes "${{ needs.build.outputs.changelog }}" \
+            --notes "$RELEASE_NOTES" \
             --draft
