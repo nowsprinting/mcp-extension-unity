@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fail-fast in `run_unity_tests` when Unity Editor is in PlayMode, instead of blocking until the MCP client times out
 - Mark required parameters as required in the MCP tool schema
 - Add troubleshooting tips to tool descriptions and error messages
+- Limit supported Rider version to 2026.1.x (`until-build = 261.*`); Rider 2026.2 introduces breaking plugin API changes
 
 ### Fixed
 
