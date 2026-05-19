@@ -6,8 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.4] - 2026-05-17
-
 ### Changed
 
 - Fail-fast in `run_unity_tests` when Unity Editor is in PlayMode, instead of blocking until the MCP client times out
