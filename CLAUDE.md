@@ -123,6 +123,13 @@ JAVA_HOME=~/Library/Java/JavaVirtualMachines/jbr-25.0.2/Contents/Home ./gradlew 
 > **Note**: `--no-configuration-cache` is required due to incompatibilities with the `rdgen` and
 > `generateDotNetSdkProperties` tasks under Gradle 9.3.1 configuration cache.
 
+> **If `dotnet` is not found during `restoreDotNet`**: The Gradle daemon may have started without
+> `/opt/homebrew/bin` in its PATH. Stop the daemon and re-run without a persistent daemon:
+> ```bash
+> JAVA_HOME=~/Library/Java/JavaVirtualMachines/jbr-25.0.2/Contents/Home ./gradlew --stop
+> PATH="/opt/homebrew/bin:$PATH" JAVA_HOME=~/Library/Java/JavaVirtualMachines/jbr-25.0.2/Contents/Home ./gradlew --no-daemon --no-configuration-cache buildPlugin
+> ```
+
 Output ZIP is generated under `build/distributions/`.
 
 **Install**: Rider → Settings → Plugins → Install Plugin from Disk → select ZIP → restart Rider.
@@ -138,13 +145,15 @@ JAVA_HOME=~/Library/Java/JavaVirtualMachines/jbr-25.0.2/Contents/Home ./gradlew 
 Use `McpToolset` + `@McpTool` + `@McpDescription` (confirmed working in Rider 2025.3.3):
 
 ```kotlin
+@Suppress("RedundantSuspendModifier")
 class MyToolset : McpToolset {
     @McpTool(name = "tool_name")
     @McpDescription(description = "What this tool does")
     suspend fun tool_name(
         @McpDescription(description = "Parameter description")
         param: String = "default"
-    ): MyResult { ... }
+    ): MyResult {
+    }
 }
 ```
 
