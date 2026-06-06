@@ -33,14 +33,14 @@ The Kotlin Frontend **cannot** directly access `BackendUnityModel`; a custom Rd 
 
 ## Tech Stack
 
-| Item          | Value                                       |
-|---------------|---------------------------------------------|
-| Language      | Kotlin 2.3.0                                |
-| Serialization | kotlinx-serialization 1.6.3 (`compileOnly`) |
-| Build plugin  | IntelliJ Platform Gradle Plugin 2.11.0      |
-| Target IDE    | Rider 2025.3.3 (build `RD-253.31033.136`)   |
+| Item          | Value                                                        |
+|---------------|--------------------------------------------------------------|
+| Language      | Kotlin 2.3.0                                                 |
+| Serialization | kotlinx-serialization 1.6.3 (`compileOnly`)                  |
+| Build plugin  | IntelliJ Platform Gradle Plugin 2.11.0                       |
+| Target IDE    | Rider 2025.3.3 (build `RD-253.31033.136`)                    |
 | JDK           | JBR 25.0.2 (`~/Library/Java/JavaVirtualMachines/jbr-25.0.2`) |
-| Gradle        | 9.3.1                                       |
+| Gradle        | 9.3.1                                                        |
 
 ## Key Files
 
@@ -55,56 +55,16 @@ mcp-extension-unity/
 │       ├── UnityTestMcpModel.kt                       # Rd DSL: McpRunTestsRequest/Response
 │       └── UnityCompilationMcpModel.kt                # Rd DSL: compilation result model
 ├── src/main/
-│   ├── kotlin/com/nowsprinting/mcp_extension_unity/
-│   │   ├── UnityEditorToolset.kt                     # Delegating facade — the only McpToolset
-│   │   ├── CompilationResultTool.kt                  # get_unity_compilation_result implementation
-│   │   ├── RunUnityTestsTool.kt                      # run_unity_tests implementation
-│   │   ├── RunMethodInUnityTool.kt                   # run_method_in_unity implementation
-│   │   ├── PlayControlTool.kt                        # unity_play_control implementation
-│   │   ├── UnityConsoleLogCollector.kt               # Console log collector (start/stop lifecycle)
-│   │   ├── EditorConnectionUtils.kt                  # Initial connection wait (30s timeout)
-│   │   ├── UnityTestMcpModelProvider.kt              # Rd model provider for UnityTestMcpModel
-│   │   └── UnityCompilationMcpModelProvider.kt       # Rd model provider for UnityCompilationMcpModel
+│   ├── kotlin/com/nowsprinting/mcp_extension_unity/   # Kotlin frontend: McpToolset implementations and Rd model providers
 │   ├── generated/                                     # auto-generated Kotlin model (gitignored)
 │   └── resources/META-INF/
 │       └── plugin.xml                                 # plugin descriptor
 ├── src/test/
-│   └── kotlin/com/nowsprinting/mcp_extension_unity/
-│   │   ├── CompilationResultToolTest.kt               # Kotlin unit tests (6 cases)
-│   │   ├── RunUnityTestsToolTest.kt                   # Kotlin unit tests (26 cases)
-│   │   ├── RunMethodInUnityToolTest.kt                # Kotlin unit tests (12 cases)
-│   │   ├── PlayControlToolTest.kt                     # Kotlin unit tests (14 cases)
-│   │   ├── EditorConnectionUtilsTest.kt               # Kotlin unit tests (6 cases)
-│   │   └── UnityConsoleLogCollectorTest.kt            # Kotlin unit tests (5 cases)
+│   └── kotlin/com/nowsprinting/mcp_extension_unity/   # Kotlin unit tests for each tool and utility
 ├── src/dotnet/
 │   ├── McpExtensionUnity.sln
-│   ├── McpExtensionUnity/
-│   │   ├── McpExtensionUnity.csproj
-│   │   ├── UnityTestMcpHandler.cs                     # C# handler → BackendUnityModel (test execution)
-│   │   ├── UnityCompilationMcpHandler.cs              # C# handler → BackendUnityModel (compilation check)
-│   │   ├── UnityTestMcpModelProvider.cs               # C# Rd model provider for test model
-│   │   ├── UnityCompilationMcpModelProvider.cs        # C# Rd model provider for compilation model
-│   │   ├── RdConnectionHelper.cs                      # Shared connection wait utilities
-│   │   ├── ZoneMarker.cs
-│   │   └── Model/                                     # auto-generated C# model (gitignored)
-└── docs/plans/
-    ├── 2026-02-22-poc-rider-mcp-unity-test.md                  # PoC investigation report
-    ├── 2026-02-22-step5-frontend-backend-model.md              # Step 5: FrontendBackendModel access
-    ├── 2026-02-23-step6-custom-rd-model-unity-test-execution.md # Step 6: custom Rd model design
-    ├── 2026-02-23-step7-end-to-end-verification.md             # Step 7: E2E verification checklist (9 test cases)
-    ├── 2026-02-24-step8-cancellation-disconnection-handling.md  # Step 8: cancellation/disconnection
-    ├── 2026-02-26-add-logs-to-get-unity-compilation-result.md  # Add logs to compilation result
-    ├── 2026-02-26-fix-rd-scheduler-threading.md                # Fix Rd scheduler threading
-    ├── 2026-02-26-remove-logs-from-error-result.md             # Remove logs from error result
-    ├── 2026-02-28-remove-compilation-check-from-run-tests.md   # Remove compilation check from run_tests
-    ├── 2026-02-28-split-rd-protocol-model.md                   # Split Rd protocol model
-    ├── 2026-02-28-step10-domain-reload-reconnection.md         # Step 10: domain-reload reconnection
-    ├── 2026-02-28-step11-initial-connection-wait.md            # Step 11: initial connection wait
-    ├── 2026-02-28-use-git-hash-as-build-version.md             # Use git hash as build version
-    ├── 2026-03-09-improve-tool-descriptions.md                 # Improve tool descriptions
-    ├── 2026-04-11-merge-toolsets-into-unity-editor-toolset.md  # Merge toolsets into UnityEditorToolset
-    ├── 2026-05-16-fix-compilation-result-race-condition.md     # Fix race condition in get_unity_compilation_result
-    └── 2026-05-16-fix-compilation-result-race-condition-e2e-tests.md  # E2E tests for race condition fix
+│   └── McpExtensionUnity/                             # C# backend: Rd handlers, model providers, and connection utilities
+└── docs/plans/                                        # Implementation plan documents (written in Japanese)
 ```
 
 ## Build
@@ -215,30 +175,10 @@ Register in `plugin.xml`:
    - **Transient model race**: During domain reload, the Rd client may briefly expose a new `BackendUnityModel` instance that is immediately rejected ("lifetime is already canceled"). A retry loop updates `previousModel` on each transient rejection and waits for the next candidate, eventually reaching the stable connection.
    - If `GetCompilationResult` is still cancelled after reconnection, the error message instructs the agent to wait and retry.
 
-## Development Roadmap
-
-| Step | Description                                                               | Status |
-|------|---------------------------------------------------------------------------|--------|
-| 1    | Set up Gradle project with IntelliJ Platform Plugin                       | Done   |
-| 2    | Register MCP extension point in plugin.xml                                | Done   |
-| 3    | Implement `RunUnityTestsToolset` with `@McpTool`                          | Done   |
-| 4    | Verify echo-back response from Claude Code                                | Done   |
-| 5    | Access `FrontendBackendModel` to get Unity Editor connection state        | Done   |
-| 6    | Define custom Rd model + implement C# handler calling `BackendUnityModel` | Done   |
-| 7    | Verify end-to-end test execution with a real Unity project                | Done   |
-| 8    | Add cancellation/disconnection handling and `MCP_TOOL_TIMEOUT` env var    | Done   |
-| 9    | Add console log collection to `run_method_in_unity`                       | Done   |
-| 10   | Add domain-reload reconnection handling to `UnityTestMcpHandler`          | Done   |
-| 11   | Add initial connection wait (30s) to all 4 MCP tools                      | Done   |
-
 ## Reference Documents
 
 - `docs/plans/2026-02-22-poc-rider-mcp-unity-test.md` — Full PoC investigation: Rider architecture,
   Rd model details, MCP extension mechanism, encountered issues, and verification results.
-- `docs/plans/2026-02-23-step7-end-to-end-verification.md` — Step 7: End-to-end verification checklist
-  with phases for build, install, Unity project setup, MCP configuration, and test case execution.
-- `docs/plans/2026-02-28-step11-initial-connection-wait.md` — Step 11: initial connection wait design
-  and implementation details for `EditorConnectionUtils` and `RdConnectionHelper`.
 
 ## External References
 
@@ -249,16 +189,29 @@ Register in `plugin.xml`:
 - [JetBrains MCP Server Plugin](https://github.com/JetBrains/mcp-server-plugin) — extension point spec
 - [MCP Server | JetBrains Rider Documentation](https://www.jetbrains.com/help/rider/mcp-server.html)
 
-## Guidelines
-
-- **Implementation planning** (writing or modifying code planning in plan mode):
-  - Read the `/implementation-planning-guide` skill to include test design and development workflow in your planning
-  - Please also update `CHANGELOG.md`
-  - After a plan is approved, copy the plan file to `docs/plans/` with a `yyyy-MM-dd` date prefix. For example: `2026-01-18-plan-name.md`
-- **Writing or modifying code**:
-  - Read the `/code-writing-guide` skill
-
-## Language
+## Language Guidelines
 
 - All files, commit messages, GitHub Issues, and Pull Requests must be written in **English**.
 - Exception: `docs/` — write in **Japanese**.
+
+## Skill Guidelines
+
+<important if="Feature implementation planning (writing or modifying a feature implementation plan in plan mode)">
+- Read the `/implementation-planning-guide` skill to orchestrate the test-first planning workflow
+- Add the following final step at the end of the `## Development Workflow` section in the plan file (adjust the step number to follow the last existing step):
+
+  ```markdown
+  ### Step N: Finalize
+
+  1. Copy this plan file to `docs/plans/yyyy-MM-dd-<plan-name>.md`
+  2. Append `## Implementation Notes` to the end of the copied plan file and write the following:
+    - Design decisions: choices you made where the spec was ambiguous
+    - Deviations: places where you intentionally departed from the spec, and why
+    - Tradeoffs: alternatives you considered and why you picked what you did
+    - Test changes: Test code modified during the implementation phase
+    - Open questions: anything you'd want me to confirm or revise
+  3. Append an entry to `CHANGELOG.md` under `## [Unreleased]`
+    - Do not document changes whose paths start with `.claude/`, `.github/`, and `/src/test/` (test code changes are excluded from the changelog)
+    - If the plan only modifies files under `.claude/`, `.github/`, and `/src/test/`, skip this step entirely
+  ```
+</important>
