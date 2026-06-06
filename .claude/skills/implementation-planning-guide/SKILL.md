@@ -71,28 +71,28 @@ Include the following implementation steps in the plan file:
 
 ### Step 1: Skeleton (Compilable)
 
-Create only the types and public method signatures for the product code that can be compiled. It's okay even if it does not work.
+1. Create only the types and public method signatures for the product code that can be compiled. It's okay even if it does not work
 
 ### Step 2: Test First
 
-1. Implement test code based on the test cases in the plan file.
-2. Run the added tests, and confirm that they **fail**.
-3. Commit to git.
+1. Implement test code based on the test cases in the plan file
+2. Run the added tests, and confirm that they **fail**
+3. Commit test code to git (skeleton is not committed yet — do not include it) — if test code is modified in Step 3 or later, the integrity of Test First is compromised; commit here without fail so the diff remains verifiable
 
 ### Step 3: Implementation
 
-1. Implement the product code.
+1. Implement the product code
 2. If the test cases require test doubles, create them as separate files. Do NOT define test doubles in the test class file.
-3. Resolve diagnostics at the `error` severity level, using the `mcp__jetbrains__get_file_problems` tools.
-4. Run the tests, and confirm that they all **pass**.
-5. Commit to git.
+3. Run the tests, and confirm that they all **pass**
+4. Commit product code to git (includes skeleton from Step 1, and any unavoidable test code changes)
 
 ### Step 4: Refactoring
 
-1. Refactor with DRY, KISS, and SOLID principles in mind, re-run tests to pass.
-2. Resolve diagnostics at the `suggestion` or higher severity level, re-run tests to pass.
-3. Reformat the modified files, using `mcp__jetbrains__reformat_file` tool.
-4. Commit to git.
+1. Resolve diagnostics at warning or higher for each modified file (`mcp__jetbrains__open_file_in_editor` → `mcp__ide__getDiagnostics` → fix, one file at a time; use `mcp__ide__getDiagnostics` because the Unity editor compiler does not reflect `.editorconfig` severity settings)
+2. Run the tests, and confirm that they all **pass**
+3. Run the Claude Code built-in `/simplify` skill (`Skill({skill: "simplify"})` — not a plugin skill) to apply quality improvements to the modified code
+4. Run the tests, and confirm that they all **pass**
+5. Commit all remaining changes to git
 
 ### Step 5: E2E Tests
 
