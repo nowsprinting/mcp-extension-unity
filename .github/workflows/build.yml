@@ -6,6 +6,16 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened ]  # Same as default
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: { }
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     name: Build
