@@ -4,6 +4,16 @@ on:
   release:
     types: [ prereleased, released ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: { }
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   release:
     name: Publish Plugin
