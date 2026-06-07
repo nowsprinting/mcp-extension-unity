@@ -73,6 +73,38 @@ namespace McpExtensionUnity
             return TimeSpan.FromMilliseconds(100_000_000);
         }
 
+        // Waits for BackendUnityModel to be non-null AND IsConnectionEstablished()==true (stable).
+        // Loops to reject transient models that appear briefly during domain reload before the stable
+        // post-reload connection arrives. Uses 100ms polling for IsConnectionEstablished().
+        // WHY NOT WaitForUnityModel alone: during domain reload, Unity briefly advertises a transient
+        // BackendUnityModel (old port) that dies immediately; IsConnectionEstablished() returns false
+        // for it. Using the transient model for LaunchTests causes RunUnitTestLaunch.Start to throw.
+        internal static async Task<BackendUnityModel> WaitForStableUnityModel(
+            BackendUnityHost host, Action<Action> rdQueue, Lifetime lt, TimeSpan timeout)
+        {
+            var deadline = DateTime.UtcNow.Add(timeout);
+            while (true)
+            {
+                var remaining = deadline - DateTime.UtcNow;
+                if (remaining <= TimeSpan.Zero) return null;
+
+                if (await WaitForUnityModel(host, rdQueue, lt, remaining).ConfigureAwait(false) == null)
+                    return null;
+
+                // Poll until IsConnectionEstablished() is true or the model goes null (new reload cycle).
+                while (DateTime.UtcNow < deadline)
+                {
+                    // Read both Rd-owned values atomically in one Rd-thread turn.
+                    var (established, model) = await ScheduleOnRd(rdQueue,
+                        () => (host.IsConnectionEstablished(), host.BackendUnityModel.Value)
+                    ).ConfigureAwait(false);
+                    if (established && model != null) return model;
+                    if (model == null) break;  // transient model died; restart wait for reconnect
+                    await Task.Delay(100).ConfigureAwait(false);
+                }
+            }
+        }
+
         // Waits for BackendUnityModel to become a non-null instance different from previousModel.
         // Use this after Refresh throws (domain reload detected) to wait for the post-reload reconnect.
         internal static async Task<BackendUnityModel> WaitForModelReconnect(

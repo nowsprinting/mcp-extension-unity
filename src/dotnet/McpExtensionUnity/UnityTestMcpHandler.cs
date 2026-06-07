@@ -118,7 +118,14 @@ namespace McpExtensionUnity
                             {
                                 try
                                 {
-                                    var reconnected = await RdConnectionHelper.WaitForUnityModel(
+                                    // WHY WaitForStableUnityModel instead of WaitForUnityModel:
+                                    // During domain reload, Unity briefly advertises a transient
+                                    // BackendUnityModel (old port) before the stable post-reload model
+                                    // arrives. WaitForUnityModel would resolve with that transient model,
+                                    // causing LaunchTests to call RunUnitTestLaunch.Start on a dying
+                                    // model, which throws. WaitForStableUnityModel polls
+                                    // IsConnectionEstablished() to skip transient models.
+                                    var reconnected = await RdConnectionHelper.WaitForStableUnityModel(
                                         backendUnityHost, rdQueue, lt, reconnectTimeout)
                                         .ConfigureAwait(false);
                                     if (reconnected == null)
@@ -134,6 +141,14 @@ namespace McpExtensionUnity
                                     {
                                         LaunchTests(reconnected, lt, testFilters, testMode, testResults, tcs);
                                     }).ConfigureAwait(false);
+                                }
+                                catch (Exception ex)
+                                {
+                                    // Propagate exceptions from LaunchTests or ScheduleOnRd so the TCS
+                                    // is resolved and the handler fails fast instead of hanging until
+                                    // MCP SDK timeout (180s).
+                                    ourLogger.Error(ex, "  Reconnect handler failed unexpectedly");
+                                    tcs.TrySetException(ex);
                                 }
                                 finally
                                 {
