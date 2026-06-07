@@ -88,6 +88,10 @@ class RunMethodInUnityTool {
             } else {
                 RunMethodInUnityErrorResult(formatErrorMessage(response.message, response.stackTrace))
             }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            // CancellationException is a control-flow signal (coroutine cancelled by MCP SDK timeout),
+            // not a true error. Re-throwing allows the coroutine framework to propagate it correctly.
+            throw e
         } catch (e: Exception) {
             collector?.stop()
             LOG.error("run_method_in_unity failed", e)
