@@ -13,8 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix `run_unity_tests` hanging for 180 seconds and dropping the MCP transport when a domain reload occurs during test execution (e.g. PlayMode tests). The reconnect handler now waits for the stable post-reload connection instead of accepting the brief transient model that appears on the old port during reload, and propagates unexpected exceptions immediately instead of silently swallowing them.
-- Fix `run_unity_tests` stalling when Rider is in the background during domain reload. Reduced `IsConnectionEstablished()` poll frequency from 100 ms to 3 s to avoid flooding the Rd ":1" Shell Dispatcher thread with queued work items while it is already processing system-level operations.
+- Fix `run_unity_tests` hanging until the MCP SDK transport timeout and dropping the transport when the domain-reload reconnect handler encountered the transient `BackendUnityModel` (old port) that Unity briefly advertises before the stable post-reload connection arrives.
+- Fix `run_unity_tests` creating a phantom second test session when Unity reconnects after a domain reload during PlayMode test execution.
+- Fix `run_unity_tests` could stop if Rider was running in the background while the domain was being reloaded. Reduced `IsConnectionEstablished()` poll frequency from 100 ms to 3 s.
+- Fix `run_method_in_unity` and `unity_play_control` silently failing when Unity Editor is not connected at call time.
+- Fix `get_unity_compilation_result` returning `success=true` before Unity finishes loading the newly compiled assemblies.
+- Fix all four MCP tools treating `CancellationException` as an ordinary error when the MCP SDK cancels the tool call (e.g., on client-side timeout).
 
 ## [1.0.5] - 2026-05-19
 

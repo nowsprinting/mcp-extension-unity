@@ -8,10 +8,11 @@ To run these tests, open a Unity project in Unity Editor and Rider, then instruc
 
 - **Do not load any skills.** These tests verify the raw behavior of the MCP tools. Execute using plain MCP tool calls only, without loading agent skills (custom workflows, auto-retry logic, etc.).
 - **If an unexpected error occurs, stop immediately** (without retrying) and report the error to the human.
-- **If a tool call has not responded within 90 seconds, stop immediately** and report to the human. Normal operations (domain reload + test execution) complete well within 60 seconds; a 90-second silence indicates a hang.
+- **If any tool call times out, stop immediately** (without retrying) and report the timeout to the human.
 - For the following tool calls, if the expected result is not obtained, **wait 5 seconds and retry** up to 5 times:
   - `get_unity_compilation_result`: If Unity is still compiling, the response may contain `"Unity is currently compiling or reloading assemblies"` — wait 5 seconds and retry. Note: after a successful compilation, the tool now waits internally for the post-compile domain reload to settle before returning, so a subsequent tool call should normally succeed on the first attempt.
   - `unity_play_control` (`action="status"` only): Unity Editor state may take time to reflect immediately after play/stop.
+- **Report any retried tool calls and any tool call that took more than 10 seconds** in the "Report" phase.
 
 ## 0. SetUp
 
@@ -73,9 +74,10 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
    {
    }
    ```
-2. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
-3. Verify: `success=true`, `passCount=1`, `failCount=0`
-4. Remove the added method
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
+4. Verify: `success=true`, `passCount=1`, `failCount=0`
+5. Remove the added method
 
 ### 1-2. Failing test
 
@@ -87,9 +89,10 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
        Assert.Fail("intentional failure");
    }
    ```
-2. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
-3. Verify: `success=false`, `passCount=0`, `failCount=1`, `failedTests` contains test details (`testId`, `output`)
-4. Remove the added method
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
+4. Verify: `success=false`, `passCount=0`, `failCount=1`, `failedTests` contains test details (`testId`, `output`)
+5. Remove the added method
 
 ### 1-3. Inconclusive only
 
@@ -101,9 +104,10 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
        Assert.Inconclusive("inconclusive");
    }
    ```
-2. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
-3. Verify: `success=false`, `inconclusiveCount=1`, `inconclusiveTests` contains test details
-4. Remove the added method
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
+4. Verify: `success=false`, `inconclusiveCount=1`, `inconclusiveTests` contains test details
+5. Remove the added method
 
 ### 1-4. Skipped only
 
@@ -115,9 +119,10 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
    {
    }
    ```
-2. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
-3. Verify: `success=false`, `skipCount=1`
-4. Remove the added method
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
+4. Verify: `success=false`, `skipCount=1`
+5. Remove the added method
 
 ### 1-5. Passing + skipped
 
@@ -134,9 +139,10 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
    {
    }
    ```
-2. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
-3. Verify: `success=true`, `passCount=1`, `skipCount=1`
-4. Remove the added methods
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
+4. Verify: `success=true`, `passCount=1`, `skipCount=1`
+5. Remove the added methods
 
 ### 1-6. Filter by testNames
 
@@ -152,9 +158,10 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
    {
    }
    ```
-2. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `testNames=["McpExtensionUnity.Tests.McpExtensionUnityTest.RunUnityTests_A"]`
-3. Verify: `passCount=1` (`RunUnityTests_B` is not executed)
-4. Remove the added methods
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `testNames=["McpExtensionUnity.Tests.McpExtensionUnityTest.RunUnityTests_A"]`
+4. Verify: `passCount=1` (`RunUnityTests_B` is not executed)
+5. Remove the added methods
 
 ### 1-7. Filter by categoryNames
 
@@ -171,9 +178,10 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
    {
    }
    ```
-2. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `categoryNames=["Foo"]`
-3. Verify: `passCount=1` (`RunUnityTests_NoCategory` is not executed)
-4. Remove the added methods
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `categoryNames=["Foo"]`
+4. Verify: `passCount=1` (`RunUnityTests_NoCategory` is not executed)
+5. Remove the added methods
 
 ### 1-8. Filter by groupNames (regex)
 
@@ -189,9 +197,10 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
    {
    }
    ```
-2. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `groupNames=["^McpExtensionUnity\\.Tests\\.McpExtensionUnityTest\\.RunUnityTests_"]`
-3. Verify: `passCount=1` (`AnotherTest_NotTarget` is not executed)
-4. Remove the added methods
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `groupNames=["^McpExtensionUnity\\.Tests\\.McpExtensionUnityTest\\.RunUnityTests_"]`
+4. Verify: `passCount=1` (`AnotherTest_NotTarget` is not executed)
+5. Remove the added methods
 
 ### 1-9. Missing assemblyNames
 
@@ -226,9 +235,10 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
    {
    }
    ```
-3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
-4. Verify: `success=true`, `passCount=1`
-5. Remove the added method
+3. Run `get_unity_compilation_result`
+4. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
+5. Verify: `success=true`, `passCount=1`
+6. Remove the added method
 
 ### 1-14. Called immediately after .cs edit without prior compilation check (regression test)
 
@@ -278,6 +288,23 @@ Regression test for the transient `BackendUnityModel` reconnect race condition d
    - The second call either returns `success=true` or `"Unity is currently compiling or reloading assemblies. Wait a few seconds and retry get_unity_compilation_result."`
    - No call hangs for more than 2 minutes
 
+### 2-4. run_unity_tests finds new test immediately after compilation result (regression test)
+
+Regression test for `get_unity_compilation_result` returning `success=true` before Unity finishes loading the newly compiled assemblies into the AppDomain.
+**Pre-fix symptom**: `run_unity_tests` called immediately after `success=true` would not find the newly added test method, because the assembly reload was still in progress when the tool returned.
+
+1. Add the following test method to `McpExtensionUnityTest.cs`
+   ```csharp
+   [Test]
+   public void GetCompilationResult_ThenRunTests()
+   {
+   }
+   ```
+2. Run `get_unity_compilation_result` (no parameters)
+3. **Immediately** (without any delay) run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
+4. Verify: `success=true`, `passCount≥1`, and `GetCompilationResult_ThenRunTests` is included in the executed tests — not missing due to a still-reloading assembly
+5. Remove the added method
+
 ---
 
 ## 3. `unity_play_control`
@@ -316,9 +343,10 @@ Regression test for the transient `BackendUnityModel` reconnect race condition d
    {
    }
    ```
-2. Run `run_method_in_unity` with `assemblyName="McpExtensionUnity.Editor"`, `typeName="McpExtensionUnity.Editor.McpExtensionUnityEditorScript"`, `methodName="DoNothing"`
-3. Verify: `success=true`
-4. Remove the added method
+2. Run `get_unity_compilation_result`
+3. Run `run_method_in_unity` with `assemblyName="McpExtensionUnity.Editor"`, `typeName="McpExtensionUnity.Editor.McpExtensionUnityEditorScript"`, `methodName="DoNothing"`
+4. Verify: `success=true`
+5. Remove the added method
 
 ### 4-2. Console log collection
 
@@ -329,9 +357,10 @@ Regression test for the transient `BackendUnityModel` reconnect race condition d
        UnityEngine.Debug.Log("Hello from McpExtensionUnityEditorScript");
    }
    ```
-2. Run `run_method_in_unity` with `assemblyName="McpExtensionUnity.Editor"`, `typeName="McpExtensionUnity.Editor.McpExtensionUnityEditorScript"`, `methodName="LogMessage"`
-3. Verify: `success=true`, `logs` contains `message="Hello from McpExtensionUnityEditorScript"`
-4. Remove the added method
+2. Run `get_unity_compilation_result`
+3. Run `run_method_in_unity` with `assemblyName="McpExtensionUnity.Editor"`, `typeName="McpExtensionUnity.Editor.McpExtensionUnityEditorScript"`, `methodName="LogMessage"`
+4. Verify: `success=true`, `logs` contains `message="Hello from McpExtensionUnityEditorScript"`
+5. Remove the added method
 
 ### 4-3. Method that throws an exception
 
@@ -342,9 +371,10 @@ Regression test for the transient `BackendUnityModel` reconnect race condition d
        throw new System.Exception("intentional exception");
    }
    ```
-2. Run `run_method_in_unity` with `assemblyName="McpExtensionUnity.Editor"`, `typeName="McpExtensionUnity.Editor.McpExtensionUnityEditorScript"`, `methodName="ThrowException"`
-3. Verify: `success=true` (the method invocation itself succeeds), `logs` contains the exception message (if `success=false` instead, report that)
-4. Remove the added method
+2. Run `get_unity_compilation_result`
+3. Run `run_method_in_unity` with `assemblyName="McpExtensionUnity.Editor"`, `typeName="McpExtensionUnity.Editor.McpExtensionUnityEditorScript"`, `methodName="ThrowException"`
+4. Verify: `success=true` (the method invocation itself succeeds), `logs` contains the exception message (if `success=false` instead, report that)
+5. Remove the added method
 
 ### 4-4. Missing parameter
 
@@ -364,3 +394,32 @@ Regression test for the transient `BackendUnityModel` reconnect race condition d
 2. Delete the `Assets/McpExtensionUnity.meta` file
 3. Wait for Unity to finish compilation
 
+---
+
+## 6. Report
+
+### Test Execution Conditions
+
+| Item                     | Value |
+|--------------------------|-------|
+| Enter Play Mode Settings |       |
+| `MCP_TOOL_TIMEOUT`       |       |
+
+> **"Enter Play Mode Settings" values** (read `m_EnterPlayModeOptions` from `ProjectSettings/EditorSettings.asset`):
+> - `0` or `2`: "Domain reloading enabled"
+> - `1` or `3`: "⚠️ Domain reloading disabled — **regression tests 1-14 and 2-4 assume domain reload occurs; results may not be meaningful**"
+
+> **`MCP_TOOL_TIMEOUT` value**: run `echo $MCP_TOOL_TIMEOUT` in the terminal where Claude Code is launched.
+
+### Results
+
+| # | Test Case | Pass/Fail | Notes |
+|---|-----------|-----------|-------|
+|   |           |           |       |
+
+> **Test Case column**: keep it short.
+> **Notes column**: record retries (tool name + count), slow calls over 10 s (tool name + duration), and any other observations.
+
+### Open Questions
+
+Record anything notable observed throughout the session, including SetUp and TearDown.
