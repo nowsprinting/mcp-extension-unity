@@ -83,6 +83,12 @@ namespace McpExtensionUnity
                 // statuses, only the last one is retained (last-write-wins).
                 var testResults = new ConcurrentDictionary<string, TestResult>();
                 var tcs = new TaskCompletionSource<RunResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+                // Generated once and reused on reconnect so Unity treats the reconnect as a
+                // continuation of the same session rather than a new run.
+                // WHY NOT Guid.NewGuid() per LaunchTests call: a new ID on reconnect creates a
+                // phantom second session while the original is still in flight, wedging the
+                // Unity TestRunner and causing the handler to hang until MCP SDK timeout.
+                var sessionId = Guid.NewGuid();
 
                 // Guards against concurrent reconnection attempts from rapid null transitions.
                 // 0 = idle, 1 = reconnecting.
@@ -139,7 +145,7 @@ namespace McpExtensionUnity
                                     ourLogger.Info("  Unity Editor reconnected after domain reload, re-launching tests");
                                     await RdConnectionHelper.ScheduleOnRd(rdQueue, () =>
                                     {
-                                        LaunchTests(reconnected, lt, testFilters, testMode, testResults, tcs);
+                                        LaunchTests(reconnected, lt, sessionId, testFilters, testMode, testResults, tcs);
                                     }).ConfigureAwait(false);
                                 }
                                 catch (Exception ex)
@@ -164,7 +170,7 @@ namespace McpExtensionUnity
 
                     // Initial test launch on the current model.
                     // Subscribe BEFORE setting the launch to avoid missing early events.
-                    LaunchTests(initialModel, lt, testFilters, testMode, testResults, tcs);
+                    LaunchTests(initialModel, lt, sessionId, testFilters, testMode, testResults, tcs);
                 }).ConfigureAwait(false);
 
                 // Wait for completion with configurable timeout.
@@ -235,12 +241,13 @@ namespace McpExtensionUnity
         // Called once initially and again after each domain-reload reconnection.
         private static void LaunchTests(
             BackendUnityModel model, Lifetime lt,
+            Guid sessionId,
             List<TestFilter> testFilters, TestMode testMode,
             ConcurrentDictionary<string, TestResult> testResults,
             TaskCompletionSource<RunResult> tcs)
         {
             var launch = new UnitTestLaunch(
-                sessionId: Guid.NewGuid(),
+                sessionId: sessionId,
                 testFilters: testFilters,
                 testMode: testMode,
                 clientControllerInfo: null);
