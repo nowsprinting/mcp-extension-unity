@@ -4,9 +4,14 @@ E2E test cases for the four tools provided by this plugin.
 
 To run these tests, open a Unity project in Unity Editor and Rider, then instruct any coding agent to execute the steps below.
 
-**Do not load any skills.** These tests verify the raw behavior of the MCP tools. Execute using plain MCP tool calls only, without loading agent skills (custom workflows, auto-retry logic, etc.).
+## Rules
 
-If an unexpected error occurs, stop immediately (without retrying) and report the error to the human.
+- **Do not load any skills.** These tests verify the raw behavior of the MCP tools. Execute using plain MCP tool calls only, without loading agent skills (custom workflows, auto-retry logic, etc.).
+- **If an unexpected error occurs, stop immediately** (without retrying) and report the error to the human.
+- **If a tool call has not responded within 90 seconds, stop immediately** and report to the human. Normal operations (domain reload + test execution) complete well within 60 seconds; a 90-second silence indicates a hang.
+- For the following tool calls, if the expected result is not obtained, **wait 5 seconds and retry** up to 5 times:
+  - `get_unity_compilation_result`: If Unity is still compiling, the response may contain `"Unity is currently compiling or reloading assemblies"` — wait 5 seconds and retry. Note: after a successful compilation, the tool now waits internally for the post-compile domain reload to settle before returning, so a subsequent tool call should normally succeed on the first attempt.
+  - `unity_play_control` (`action="status"` only): Unity Editor state may take time to reflect immediately after play/stop.
 
 ## 0. SetUp
 
@@ -359,11 +364,3 @@ Regression test for the transient `BackendUnityModel` reconnect race condition d
 2. Delete the `Assets/McpExtensionUnity.meta` file
 3. Wait for Unity to finish compilation
 
----
-
-## Notes: Retry Rules
-
-For the following tool calls, if the expected result is not obtained, **wait 5 seconds and retry** up to 5 times.
-
-- `get_unity_compilation_result`: If Unity is still compiling when the tool is called, the response may contain `"Unity is currently compiling or reloading assemblies"` — wait 5 seconds and retry. Note: after a successful compilation, the tool now waits internally for the post-compile domain reload to settle before returning, so a subsequent tool call should normally succeed on the first attempt.
-- `unity_play_control` (`action="status"` only): Unity Editor state may take time to reflect immediately after play/stop
