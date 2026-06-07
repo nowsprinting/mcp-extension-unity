@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin require-restart="true">
     <id>com.nowsprinting.mcp-extension-unity</id>
     <name>MCP Server Extension for Unity</name>
     <vendor url="https://github.com/nowsprinting">Koji Hasegawa</vendor>

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Change `MCP_TOOL_TIMEOUT` default to 100,000,000 ms (same as Claude Code's default)
+- Require IDE restart after plugin installation
 
 ## [1.0.5] - 2026-05-19
 
