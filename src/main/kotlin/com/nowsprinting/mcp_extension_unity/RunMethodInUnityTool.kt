@@ -53,12 +53,19 @@ class RunMethodInUnityTool {
         try {
             val project = currentCoroutineContext().project
             val solution = project.solution
-            if (!EditorConnectionUtils.awaitEditorConnection(solution.frontendBackendModel.unityEditorConnected)) {
+            val protocol = solution.protocol
+                ?: return RunMethodInUnityErrorResult("No protocol available. The solution may not be fully loaded.")
+
+            // WHY withContext wraps awaitEditorConnection:
+            // unityEditorConnected.advise() must be called on the Rd scheduler thread.
+            // Calling it from a background coroutine dispatcher throws IllegalStateException.
+            val connected = withContext(protocol.scheduler.asCoroutineDispatcher) {
+                EditorConnectionUtils.awaitEditorConnection(solution.frontendBackendModel.unityEditorConnected)
+            }
+            if (!connected) {
                 return RunMethodInUnityErrorResult(
                     "Unity Editor did not connect within 30 seconds. Check idea.log and Editor.log to understand the situation. If Editor not running, use the `execute_run_configuration` tool to launch the `Start Unity` configuration, then retry.")
             }
-            val protocol = solution.protocol
-                ?: return RunMethodInUnityErrorResult("No protocol available. The solution may not be fully loaded.")
 
             val localCollector = UnityConsoleLogCollector(
                 solution.frontendBackendModel.consoleLogging.onConsoleLogEvent
