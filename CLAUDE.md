@@ -159,11 +159,11 @@ Register in `plugin.xml`:
 
 7. **Cancellation, disconnection, and domain-reload handling** — `UnityTestMcpHandler.cs` monitors three failure paths:
    - `lt.OnTermination`: Rd lifetime ends (protocol disconnect, Kotlin coroutine cancel) → `TrySetCanceled()`
-   - `BackendUnityModel.Advise(null)`: Unity Editor disconnects mid-run → waits up to `MCP_TOOL_TIMEOUT` seconds for reconnection (domain-reload tolerance). If reconnected, re-launches tests on the new model. If not, `TrySetException("did not reconnect within N seconds")`
-   - Timeout timer: configurable via `MCP_TOOL_TIMEOUT` env var (seconds, default 300) → `TrySetException("timed out after N seconds")`
+   - `BackendUnityModel.Advise(null)`: Unity Editor disconnects mid-run → waits up to `MCP_TOOL_TIMEOUT` milliseconds for reconnection (domain-reload tolerance). If reconnected, re-launches tests on the new model. If not, `TrySetException("did not reconnect within N seconds")`
+   - Timeout timer: configurable via `MCP_TOOL_TIMEOUT` env var (milliseconds per Claude Code spec, default 300000) → `TrySetException("timed out after N seconds")`
    - All failure paths call `TryAbortLaunch` (best-effort; aborts whatever launch is currently on the model).
    - **Known limitation**: Unity Test Runner manual Cancel may not fire `RunResult`, causing a wait until timeout.
-     Set `MCP_TOOL_TIMEOUT` to a smaller value to reduce feedback delay in this case.
+     Set `MCP_TOOL_TIMEOUT` to a smaller value (in milliseconds) to reduce feedback delay in this case.
 
    `MCP_TOOL_TIMEOUT` applies to each waiting phase independently:
    - `run_unity_tests`: test execution wait + domain-reload reconnection wait (both = `MCP_TOOL_TIMEOUT`)
