@@ -7,11 +7,17 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Tasks;
 using JetBrains.Rider.Model.Unity.BackendUnity;
 using JetBrains.ReSharper.Plugins.Unity.Rider.Integration.Protocol;
+using JetBrains.Util;
+using JetBrains.Util.Logging;
 
 namespace McpExtensionUnity
 {
     internal static class RdConnectionHelper
     {
+        // WHY NOT Logger.GetLogger<RdConnectionHelper>(): static classes cannot be used as type
+        // arguments in C# (language restriction); use the string overload instead.
+        private static readonly ILogger ourLogger = Logger.GetLogger(nameof(RdConnectionHelper));
+
         // Waits for BackendUnityModel to become non-null. Returns immediately if already connected.
         // Advise call is scheduled on the Rd scheduler thread via rdQueue.
         internal static async Task<BackendUnityModel> WaitForUnityModel(
@@ -94,12 +100,18 @@ namespace McpExtensionUnity
                 // Poll until IsConnectionEstablished() is true or the model goes null (new reload cycle).
                 while (DateTime.UtcNow < deadline)
                 {
+                    ourLogger.Info("WaitForStableUnityModel: poll: querying");
                     // Read both Rd-owned values atomically in one Rd-thread turn.
                     var (established, model) = await ScheduleOnRd(rdQueue,
                         () => (host.IsConnectionEstablished(), host.BackendUnityModel.Value)
                     ).ConfigureAwait(false);
+                    ourLogger.Info($"WaitForStableUnityModel: poll: established={established}, model={model != null}");
                     if (established && model != null) return model;
-                    if (model == null) break;  // transient model died; restart wait for reconnect
+                    if (model == null)
+                    {
+                        ourLogger.Info("WaitForStableUnityModel: poll: model null, restarting outer wait");
+                        break;
+                    }
                     await Task.Delay(100).ConfigureAwait(false);
                 }
             }
