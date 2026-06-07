@@ -63,14 +63,14 @@ namespace McpExtensionUnity
             return tcs.Task;
         }
 
-        // Reads MCP_TOOL_TIMEOUT env var (milliseconds, per Claude Code spec). Defaults to 300000ms (5 min) when absent or invalid.
+        // Reads MCP_TOOL_TIMEOUT env var (milliseconds, per Claude Code spec). Defaults to 100000000ms (~28 hours) when absent or invalid.
         // Used by both test and compilation handlers so the same variable controls all phases.
         internal static TimeSpan GetMcpToolTimeout()
         {
             var env = Environment.GetEnvironmentVariable("MCP_TOOL_TIMEOUT");
             if (env != null && int.TryParse(env, out var ms) && ms > 0)
                 return TimeSpan.FromMilliseconds(ms);
-            return TimeSpan.FromMilliseconds(300_000);
+            return TimeSpan.FromMilliseconds(100_000_000);
         }
 
         // Waits for BackendUnityModel to become a non-null instance different from previousModel.
