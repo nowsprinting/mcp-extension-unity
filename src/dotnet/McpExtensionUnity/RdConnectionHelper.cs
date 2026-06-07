@@ -81,10 +81,15 @@ namespace McpExtensionUnity
 
         // Waits for BackendUnityModel to be non-null AND IsConnectionEstablished()==true (stable).
         // Loops to reject transient models that appear briefly during domain reload before the stable
-        // post-reload connection arrives. Uses 100ms polling for IsConnectionEstablished().
+        // post-reload connection arrives. Uses 3s polling for IsConnectionEstablished().
         // WHY NOT WaitForUnityModel alone: during domain reload, Unity briefly advertises a transient
         // BackendUnityModel (old port) that dies immediately; IsConnectionEstablished() returns false
         // for it. Using the transient model for LaunchTests causes RunUnitTestLaunch.Start to throw.
+        // WHY 3s poll interval (not shorter): IsConnectionEstablished() requires ScheduleOnRd, which
+        // queues a work item on the Rd ":1" Shell Dispatcher thread. When Rider is in the background,
+        // macOS deprioritises the ":1" thread AND domain reload floods it with system operations
+        // (DaemonStateChanged, CppCacheUpdateJob, ExternalChangeProcessor, etc.). A short interval
+        // adds more queue items, extending the stall; 3s gives the thread time to drain between polls.
         internal static async Task<BackendUnityModel> WaitForStableUnityModel(
             BackendUnityHost host, Action<Action> rdQueue, Lifetime lt, TimeSpan timeout)
         {
@@ -112,7 +117,7 @@ namespace McpExtensionUnity
                         ourLogger.Info("WaitForStableUnityModel: poll: model null, restarting outer wait");
                         break;
                     }
-                    await Task.Delay(100).ConfigureAwait(false);
+                    await Task.Delay(3000).ConfigureAwait(false);
                 }
             }
         }
