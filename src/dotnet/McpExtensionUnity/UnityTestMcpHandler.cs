@@ -70,7 +70,7 @@ namespace McpExtensionUnity
                 ourLogger.Info($"  TestFilters count={testFilters.Count}");
                 var testMode = request.TestMode == McpTestMode.PlayMode ? TestMode.Play : TestMode.Edit;
 
-                // Read timeout from MCP_TOOL_TIMEOUT env var (seconds). Default: 300 (5 minutes).
+                // Read timeout from MCP_TOOL_TIMEOUT env var (milliseconds per Claude Code spec). Default: 100000000ms (~28 hours).
                 var timeoutSeconds = (int)RdConnectionHelper.GetMcpToolTimeout().TotalSeconds;
                 ourLogger.Info($"  Timeout={timeoutSeconds}s");
 
