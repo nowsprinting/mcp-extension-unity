@@ -147,41 +147,7 @@ namespace McpExtensionUnity
                     continue;
                 }
 
-                // Compilation failed — no assembly reload pending; return immediately.
-                if (!result.Success) return result;
-
-                // Compilation succeeded. Issue a confirmation Refresh to verify assembly stability.
-                // WHY: GetCompilationResult returns true once C# compilation completes, but Unity's
-                // assembly reload (loading new DLLs into the AppDomain) may still be in progress.
-                // A confirmation Refresh that completes cleanly confirms the reload is done and
-                // the test runner's assembly index is current. If it throws, another reload is
-                // in progress — update previousModel and wait for the next stable connection.
-                ourLogger.Info("RefreshAndCheckCompilation: compilation succeeded, issuing confirmation Refresh");
-                var remaining2 = deadline - DateTime.Now;
-                if (remaining2 <= TimeSpan.Zero) return result;
-
-                var confirmThrew = false;
-                try
-                {
-                    var rdConfirmTask = await RdConnectionHelper.ScheduleOnRd(_rdQueue,
-                        () => candidate.Refresh.Start(lt, RefreshType.Normal)).ConfigureAwait(false);
-                    var confirmTask = RdConnectionHelper.AwaitRdTask(lt, rdConfirmTask);
-                    if (await Task.WhenAny(confirmTask, Task.Delay(remaining2)).ConfigureAwait(false) != confirmTask)
-                    {
-                        ourLogger.Warn("RefreshAndCheckCompilation: confirmation Refresh timed out, returning success");
-                        return result;
-                    }
-                    await confirmTask.ConfigureAwait(false);
-                    ourLogger.Info("RefreshAndCheckCompilation: confirmation Refresh completed, assemblies stable");
-                }
-                catch (Exception e)
-                {
-                    ourLogger.Warn($"RefreshAndCheckCompilation: confirmation Refresh threw (reload still in progress): {e.Message}");
-                    confirmThrew = true;
-                }
-
-                if (!confirmThrew) return result;
-                previousModel = candidate;
+                return result;
             }
         }
 

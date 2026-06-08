@@ -10,7 +10,7 @@ To run these tests, open a Unity project in Unity Editor and Rider, then instruc
 - **If an unexpected error occurs, stop immediately** (without retrying) and report the error to the human.
 - **If any tool call times out, stop immediately** (without retrying) and report the timeout to the human.
 - For the following tool calls, if the expected result is not obtained, **wait 5 seconds and retry** up to 5 times:
-  - `get_unity_compilation_result`: If Unity is still compiling, the response may contain `"Unity is currently compiling or reloading assemblies"` — wait 5 seconds and retry. Note: after a successful compilation, the tool now waits internally for the post-compile domain reload to settle before returning, so a subsequent tool call should normally succeed on the first attempt.
+  - `get_unity_compilation_result`: If Unity is still compiling, the response may contain `"Unity is currently compiling or reloading assemblies"` — wait 5 seconds and retry.
   - `unity_play_control` (`action="status"` only): Unity Editor state may take time to reflect immediately after play/stop.
 - **Report any retried tool calls and any tool call that took more than 10 seconds** in the "Report" phase.
 
@@ -288,10 +288,9 @@ Regression test for the transient `BackendUnityModel` reconnect race condition d
    - The second call either returns `success=true` or `"Unity is currently compiling or reloading assemblies. Wait a few seconds and retry get_unity_compilation_result."`
    - No call hangs for more than 2 minutes
 
-### 2-4. run_unity_tests finds new test immediately after compilation result (regression test)
+### 2-4. run_unity_tests immediately after get_unity_compilation_result (regression test)
 
-Regression test for `get_unity_compilation_result` returning `success=true` before Unity finishes loading the newly compiled assemblies into the AppDomain.
-**Pre-fix symptom**: `run_unity_tests` called immediately after `success=true` would not find the newly added test method, because the assembly reload was still in progress when the tool returned.
+Regression test verifying that `run_unity_tests` correctly finds and executes a newly compiled test when called immediately after `get_unity_compilation_result`.
 
 1. Add the following test method to `McpExtensionUnityTest.cs`
    ```csharp
@@ -302,7 +301,7 @@ Regression test for `get_unity_compilation_result` returning `success=true` befo
    ```
 2. Run `get_unity_compilation_result` (no parameters)
 3. **Immediately** (without any delay) run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`
-4. Verify: `success=true`, `passCount≥1`, and `GetCompilationResult_ThenRunTests` is included in the executed tests — not missing due to a still-reloading assembly
+4. Verify: `success=true`, `passCount≥1`, and `GetCompilationResult_ThenRunTests` is included in the executed tests
 5. Remove the added method
 
 ---
