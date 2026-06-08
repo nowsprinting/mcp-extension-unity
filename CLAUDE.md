@@ -176,7 +176,7 @@ Register in `plugin.xml`:
 
 8. **`get_unity_compilation_result` domain-reload race condition** — `UnityCompilationMcpHandler.cs` handles race conditions that occur when the tool is called while Unity is compiling:
    - **Stale model race**: After `Refresh.Start()` throws (domain reload detected), `BackendUnityModel` may still point to the pre-reload instance. `WaitForModelReconnect` (in `RdConnectionHelper.cs`) requires a *different* instance (`!ReferenceEquals`) to ensure the post-reload model is used.
-   - **Transient model race**: During domain reload, the Rd client may briefly expose a new `BackendUnityModel` instance that is immediately rejected ("lifetime is already canceled"). A retry loop updates `previousModel` on each transient rejection and waits for the next candidate, eventually reaching the stable connection.
+   - **Transient model race**: During domain reload, the Rd client may briefly expose a new `BackendUnityModel` instance that is immediately rejected. `GetCompilationResult.Start` on this instance throws immediately — either `OperationCanceledException` or a non-OCE Rd exception (e.g. `InvalidOperationException`) depending on how far the lifetime teardown has progressed. `TryCallGetCompilationResult` isolates the `Start` call in its own try/catch and returns null (retry signal) for any exception from it. A retry loop updates `previousModel` on each transient rejection and waits for the next candidate, eventually reaching the stable connection.
    - If `GetCompilationResult` is still cancelled after reconnection, the error message instructs the agent to wait and retry.
 
 ## Reference Documents

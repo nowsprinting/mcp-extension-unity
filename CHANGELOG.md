@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `run_unity_tests` faulting the Rd handler (and potentially dropping the MCP transport) when the initial `BackendUnityModel` from `WaitForUnityModel` is transient.
 - Fix `run_method_in_unity` and `unity_play_control` silently failing when Unity Editor is not connected at call time.
 - Fix `get_unity_compilation_result` returning `success=true` before Unity finishes loading the newly compiled assemblies.
+- Fix `get_unity_compilation_result` requiring repeated calls when `GetCompilationResult.Start` throws a non-`OperationCanceledException` Rd exception on a transient `BackendUnityModel`.
 - Fix all four MCP tools treating `CancellationException` as an ordinary error when the MCP SDK cancels the tool call (e.g., on client-side timeout).
 
 ## [1.0.5] - 2026-05-19
