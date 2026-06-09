@@ -7,6 +7,7 @@ To run these tests, open a Unity project in Unity Editor and Rider, then instruc
 ## Rules
 
 - **Do not load any skills.** These tests verify the raw behavior of the MCP tools. Execute using plain MCP tool calls only, without loading agent skills (custom workflows, auto-retry logic, etc.).
+- **Never call two Unity Editor tools in parallel or in duplicate.** `run_unity_tests`, `get_unity_compilation_result`, `unity_play_control`, and `run_method_in_unity` must be called strictly one at a time — always wait for each call to return before making the next one, no matter how long it takes. Do not issue a second call to the same tool while the first is still in progress.
 - **If an unexpected error occurs, stop immediately** (without retrying) and report the error to the human.
 - **If any tool call times out, stop immediately** (without retrying) and report the timeout to the human.
 - For the following tool calls, if the expected result is not obtained, **wait 5 seconds and retry** up to 5 times:
@@ -204,13 +205,17 @@ All test cases are run in PlayMode (`testMode="PlayMode"`).
 
 ### 1-9. Missing assemblyNames
 
-1. Run `run_unity_tests` with `testMode="PlayMode"` only (no `assemblyNames`)
-2. Verify: `success=false`, `errorMessage` indicates that `assemblyNames` is required (Unity Editor is not reached)
+> **Important**: `assemblyNames` is required in the schema, but this test deliberately omits it. Pass `testMode` normally but leave `assemblyNames` **completely absent from the call**. Do **not** substitute with `[]`, `[""]`, or any other value; the argument must be absent from the call entirely.
+
+1. Call `run_unity_tests` with `testMode="PlayMode"` — pass **no `assemblyNames` argument at all** (not even an empty array)
+2. Verify: The MCP framework returns an error (not a tool JSON response) — the error message contains `"No argument is passed for required parameter 'assemblyNames'"`
 
 ### 1-10. Missing testMode
 
-1. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]` only (no `testMode`)
-2. Verify: `success=false`, `errorMessage` indicates that `testMode` is required
+> **Important**: `testMode` is required in the schema, but this test deliberately omits it. Pass `assemblyNames` normally but leave `testMode` **completely absent from the call**. Do **not** substitute with `""`, `null`, or any other value; the argument must be absent from the call entirely.
+
+1. Call `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]` — pass **no `testMode` argument at all** (not even an empty string)
+2. Verify: The MCP framework returns an error (not a tool JSON response) — the error message contains `"No argument is passed for required parameter 'testMode'"`
 
 ### 1-11. Invalid testMode
 
