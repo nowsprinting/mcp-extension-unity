@@ -57,6 +57,12 @@ Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `test
 | `success`      | boolean | Always `false` |
 | `errorMessage` | string  | Error details  |
 
+> [!TIP]\
+> You can also run Play Mode tests that involve the domain reloading.
+
+> [!TIP]\
+> To save space in the context window, outputs of successful and skipped tests are not included in the response.
+
 ### Run editor script
 
 The `run_method_in_unity` tool invokes a static method in Unity Editor via reflection.
@@ -88,10 +94,10 @@ The method must be **static and parameterless**.
 | `success`      | boolean | Always `false` |
 | `errorMessage` | string  | Error details  |
 
-> [!IMPORTANT]  
+> [!IMPORTANT]\
 > The method's return value is **NOT** returned. `success` only indicates whether the method was found and invoked (reflection succeeded). Even if the method throws internally, `success` may be `true` — the exception is captured in the `logs` field.
 
-> [!IMPORTANT]  
+> [!IMPORTANT]\
 > Async methods can be invoked, but the tool does not await their completion. Logs generated after the method returns to the caller will not be included in the response.
 
 ### Check compilation
@@ -116,10 +122,10 @@ Console logs during compilation will be captured and returned in the `logs` fiel
 | `errorMessage` | string  | Error details                                                                                                                                           |
 | `logs`         | array   | Console log entries captured before the error (may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
 
-> [!WARNING]  
+> [!WARNING]\
 > If the Unity Editor was compiled before this tool triggered a refresh, the response will not include a log. Compilation errors will remain in the console window, but will not be available with this tool. Instead, use the `getDiagnostics` or `get_file_problems` tools, or read `editor.log`.
 
-> [!TIP]  
+> [!TIP]\
 > Recommended to run this tool to ensure compilation succeeds before `run_unity_tests` or `run_method_in_unity` tool if modified code.
 
 ### Play mode control
@@ -203,7 +209,7 @@ If it is not yet enabled:
 2. Click **Enable MCP Server**.
 3. Click **Auto-Configure** for the agent you want to use.
 
-> [!NOTE]
+> [!NOTE]\
 > See the [MCP Server](https://www.jetbrains.com/help/rider/mcp-server.html) documentation for more details on configuration and usage.
 
 ### Environment Variables
@@ -211,6 +217,14 @@ If it is not yet enabled:
 | Variable           | Default     | Description                                                                                                                                                                                                                                                                                                                                            |
 |--------------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `MCP_TOOL_TIMEOUT` | `100000000` | Timeout in milliseconds for `run_unity_tests` and `get_unity_compilation_result`. Increase this value when running a large test suite, a slow `PlayMode` test, or a long-running compilation. Decrease it to get faster feedback when Unity Test Runner cancellation does not fire a completion signal (manual Cancel in Test Runner is a known case). |
+
+## Agent Skills
+
+The [unity-coding-skills](https://github.com/nowsprinting/unity-coding-skills) plugin provides skills for Unity development with coding agents.
+Install the plugin, or use the following skills as a reference:
+
+- `edit-scene` — Guides the agent to edit scenes and prefabs using `run_method_in_unity`
+- `run-tests` — Guides the agent to run Unity tests efficiently using `run_unity_tests`
 
 ## FAQ
 
@@ -226,5 +240,5 @@ No. The only API for retrieving Unity console logs is streaming-based, and MCP t
 
 Contributions are welcome. However, the scope is limited to features that use Rider's `BackendUnityModel`. This plugin does not aim to be an all-in-one Unity toolbox.
 
-> [!NOTE]  
+> [!IMPORTANT]\
 > This project will be closed once JetBrains releases an official MCP extension for Unity.
