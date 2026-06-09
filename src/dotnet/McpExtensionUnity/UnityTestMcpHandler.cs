@@ -58,7 +58,12 @@ namespace McpExtensionUnity
                                $"Categories=[{string.Join(",", request.Filter.CategoryNames)}]");
 
                 // Wait up to 30 seconds for Unity Editor to connect.
-                // This covers the domain-reload window where the Rd connection is temporarily unavailable.
+                // This covers the domain-reload window after .cs file creation/modification.
+                // WHY NOT WaitForStableUnityModel: IsConnectionEstablished() can remain False for
+                // many minutes after cumulative domain reloads (e.g., after PlayMode test runs),
+                // causing a 30-second timeout even when the model is connected and functional.
+                // If the returned model is transient, the initial LaunchTests will throw and
+                // StartReconnect falls back to the reconnect-retry loop automatically.
                 var initialModel = await RdConnectionHelper.WaitForUnityModel(
                     backendUnityHost, rdQueue, lt, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
                 ourLogger.Info($"  BackendUnityModel={initialModel?.GetType().Name ?? "null"}");
@@ -83,8 +88,15 @@ namespace McpExtensionUnity
                 // statuses, only the last one is retained (last-write-wins).
                 var testResults = new ConcurrentDictionary<string, TestResult>();
                 var tcs = new TaskCompletionSource<RunResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+                // Generated once and reused on reconnect so Unity treats the reconnect as a
+                // continuation of the same session rather than a new run.
+                // WHY NOT Guid.NewGuid() per LaunchTests call: a new ID on reconnect creates a
+                // phantom second session while the original is still in flight, wedging the
+                // Unity TestRunner and causing the handler to hang until MCP SDK timeout.
+                var sessionId = Guid.NewGuid();
 
-                // Guards against concurrent reconnection attempts from rapid null transitions.
+                // Guards against concurrent reconnection attempts (rapid null transitions, or
+                // simultaneous Advise(null) and initial-launch failure).
                 // 0 = idle, 1 = reconnecting.
                 var reconnecting = 0;
 
@@ -97,9 +109,94 @@ namespace McpExtensionUnity
                     // Runs on the Rd scheduler thread; TrySetCanceled is thread-safe.
                     lt.OnTermination(() => tcs.TrySetCanceled());
 
+                    // WHY WaitForModelReconnect+retry instead of WaitForStableUnityModel:
+                    // WaitForStableUnityModel polls IsConnectionEstablished(), which can remain False
+                    // for many minutes after cumulative PlayMode domain reloads because macOS
+                    // deprioritises the Rd Shell Dispatcher thread (:1), delaying the
+                    // GetUnityEditorState polling that drives that flag.
+                    // The model itself is functional long before the flag catches up.
+                    // WaitForModelReconnect (reference-based) returns as soon as a different instance
+                    // appears. If that instance is transient (LaunchTests throws because the model's
+                    // Rd lifetime is already cancelled), we update previousModel and wait for the next
+                    // distinct candidate. All exceptions from LaunchTests originate from Rd operations
+                    // on the dying model, so catching Exception broadly is safe here.
+                    async Task RunReconnectLoop(BackendUnityModel startPreviousModel)
+                    {
+                        var deadline = DateTime.UtcNow.Add(reconnectTimeout);
+                        var previousModel = startPreviousModel;
+                        while (true)
+                        {
+                            var remaining = deadline - DateTime.UtcNow;
+                            if (remaining <= TimeSpan.Zero)
+                            {
+                                tcs.TrySetException(new Exception(
+                                    $"Unity Editor did not reconnect within {timeoutSeconds} seconds after domain reload. " +
+                                    "This may be caused by a crash or the editor being closed. " +
+                                    "However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation."));
+                                return;
+                            }
+                            var candidate = await RdConnectionHelper.WaitForModelReconnect(
+                                backendUnityHost, rdQueue, lt, previousModel, remaining)
+                                .ConfigureAwait(false);
+                            if (candidate == null)
+                            {
+                                tcs.TrySetException(new Exception(
+                                    $"Unity Editor did not reconnect within {timeoutSeconds} seconds after domain reload. " +
+                                    "This may be caused by a crash or the editor being closed. " +
+                                    "However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation."));
+                                return;
+                            }
+                            ourLogger.Info("  Unity Editor reconnected, attempting to re-launch tests");
+                            try
+                            {
+                                await RdConnectionHelper.ScheduleOnRd(rdQueue, () =>
+                                {
+                                    LaunchTests(candidate, lt, sessionId, testFilters, testMode, testResults, tcs);
+                                }).ConfigureAwait(false);
+                                return;
+                            }
+                            catch (Exception ex)
+                            {
+                                ourLogger.Warn($"  LaunchTests threw {ex.GetType().FullName} on transient model, retrying: {ex.Message}");
+                                previousModel = candidate;
+                            }
+                        }
+                    }
+
+                    // Acquires the reconnecting guard and spawns RunReconnectLoop off-thread.
+                    // Advise callbacks run synchronously on the Rd thread; off-thread spawn is required.
+                    // Also called from the initial-launch catch to recover from a transient initialModel.
+                    void StartReconnect(BackendUnityModel startPreviousModel)
+                    {
+                        if (Interlocked.CompareExchange(ref reconnecting, 1, 0) != 0)
+                        {
+                            ourLogger.Info("  Reconnect requested but already in progress, ignoring");
+                            return;
+                        }
+                        ourLogger.Info("  Starting reconnect loop...");
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await RunReconnectLoop(startPreviousModel).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Safety net for unexpected failures outside the retry loop
+                                // (e.g. WaitForModelReconnect itself throwing unexpectedly).
+                                ourLogger.Error(ex, "  Reconnect handler failed unexpectedly");
+                                tcs.TrySetException(ex);
+                            }
+                            finally
+                            {
+                                Interlocked.Exchange(ref reconnecting, 0);
+                            }
+                        });
+                    }
+
                     // Monitor for Unity Editor disconnection during test execution.
                     // BackendUnityModel.Advise fires immediately with the current value, then again on change.
-                    // On null (domain reload or crash): wait up to 2 minutes for reconnection.
+                    // On null (domain reload or crash): wait up to reconnectTimeout for reconnection.
                     // On reconnection: re-launch tests on the new model instance.
                     // Domain reload is expected when running PlayMode tests or when project settings
                     // require it, and causes a temporary null → non-null transition.
@@ -107,39 +204,8 @@ namespace McpExtensionUnity
                     {
                         if (unityModel == null)
                         {
-                            if (Interlocked.CompareExchange(ref reconnecting, 1, 0) != 0)
-                            {
-                                ourLogger.Info("  BackendUnityModel became null (reconnection already in progress, ignoring)");
-                                return;
-                            }
-                            ourLogger.Info("  BackendUnityModel became null (domain reload or disconnection), waiting for reconnection...");
-                            // Advise callbacks run synchronously on the Rd thread; spawn reconnection off-thread.
-                            Task.Run(async () =>
-                            {
-                                try
-                                {
-                                    var reconnected = await RdConnectionHelper.WaitForUnityModel(
-                                        backendUnityHost, rdQueue, lt, reconnectTimeout)
-                                        .ConfigureAwait(false);
-                                    if (reconnected == null)
-                                    {
-                                        tcs.TrySetException(new Exception(
-                                            $"Unity Editor did not reconnect within {timeoutSeconds} seconds after domain reload. " +
-                                            "This may be caused by a crash or the editor being closed. " +
-                                            "However, before retrying or restarting Unity Editor, check idea.log and Editor.log to understand the situation."));
-                                        return;
-                                    }
-                                    ourLogger.Info("  Unity Editor reconnected after domain reload, re-launching tests");
-                                    await RdConnectionHelper.ScheduleOnRd(rdQueue, () =>
-                                    {
-                                        LaunchTests(reconnected, lt, testFilters, testMode, testResults, tcs);
-                                    }).ConfigureAwait(false);
-                                }
-                                finally
-                                {
-                                    Interlocked.Exchange(ref reconnecting, 0);
-                                }
-                            });
+                            ourLogger.Info("  BackendUnityModel became null (domain reload or disconnection)");
+                            StartReconnect(null);
                         }
                         else
                         {
@@ -148,8 +214,18 @@ namespace McpExtensionUnity
                     });
 
                     // Initial test launch on the current model.
-                    // Subscribe BEFORE setting the launch to avoid missing early events.
-                    LaunchTests(initialModel, lt, testFilters, testMode, testResults, tcs);
+                    // Subscribe Advise BEFORE LaunchTests to avoid missing early events.
+                    // If initialModel is transient (throws), fall back to the reconnect-retry loop.
+                    // The reconnecting guard prevents a racing Advise(null) from double-spawning.
+                    try
+                    {
+                        LaunchTests(initialModel, lt, sessionId, testFilters, testMode, testResults, tcs);
+                    }
+                    catch (Exception ex)
+                    {
+                        ourLogger.Warn($"  Initial LaunchTests threw {ex.GetType().FullName} on transient model, starting reconnect: {ex.Message}");
+                        StartReconnect(initialModel);
+                    }
                 }).ConfigureAwait(false);
 
                 // Wait for completion with configurable timeout.
@@ -220,12 +296,13 @@ namespace McpExtensionUnity
         // Called once initially and again after each domain-reload reconnection.
         private static void LaunchTests(
             BackendUnityModel model, Lifetime lt,
+            Guid sessionId,
             List<TestFilter> testFilters, TestMode testMode,
             ConcurrentDictionary<string, TestResult> testResults,
             TaskCompletionSource<RunResult> tcs)
         {
             var launch = new UnitTestLaunch(
-                sessionId: Guid.NewGuid(),
+                sessionId: sessionId,
                 testFilters: testFilters,
                 testMode: testMode,
                 clientControllerInfo: null);

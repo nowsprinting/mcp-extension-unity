@@ -118,11 +118,13 @@ namespace McpExtensionUnity
 
             // WHY retry loop instead of a single WaitForModelReconnect call:
             // During domain reload, BackendUnityModel may briefly expose a transient instance
-            // (a premature reconnect attempt that gets immediately rejected — "lifetime is already canceled").
-            // WaitForModelReconnect correctly fires on this transient instance (it is a different reference),
-            // but GetCompilationResult on it throws OperationCanceledException right away.
-            // Updating previousModel to the rejected instance and retrying waits for the next candidate,
-            // eventually reaching the stable post-reload connection without surfacing a spurious error.
+            // (a premature reconnect attempt whose Rd lifetime is already cancelled).
+            // WaitForModelReconnect fires on this transient instance (different reference), but
+            // GetCompilationResult.Start on it throws immediately — either OperationCanceledException
+            // or a non-OCE Rd exception depending on how far the lifetime teardown has progressed.
+            // TryCallGetCompilationResult returns null for both (see its Start catch block).
+            // Updating previousModel and retrying waits for the next candidate, eventually reaching
+            // the stable post-reload connection without surfacing a spurious error.
             var deadline = DateTime.Now.Add(timeout);
             var previousModel = unityModel;
             while (true)
@@ -140,11 +142,14 @@ namespace McpExtensionUnity
 
                 ourLogger.Info("RefreshAndCheckCompilation: Unity model available, calling GetCompilationResult");
                 var result = await TryCallGetCompilationResult(candidate, lt, timeout);
-                if (result != null)
-                    return result;
+                if (result == null)
+                {
+                    ourLogger.Warn("RefreshAndCheckCompilation: GetCompilationResult cancelled on transient model, retrying");
+                    previousModel = candidate;
+                    continue;
+                }
 
-                ourLogger.Warn("RefreshAndCheckCompilation: GetCompilationResult cancelled on transient model, retrying");
-                previousModel = candidate;
+                return result;
             }
         }
 
@@ -181,12 +186,30 @@ namespace McpExtensionUnity
             return new McpCompilationResponse(success: true, errorMessage: "");
         }
 
-        // Returns null if GetCompilationResult was cancelled (transient model), otherwise returns the response.
+        // Returns null if GetCompilationResult.Start threw (transient model — retry needed),
+        // otherwise returns the compilation response.
         private async Task<McpCompilationResponse> TryCallGetCompilationResult(BackendUnityModel model, Lifetime lt, TimeSpan timeout)
         {
+            // Separate Start from result-awaiting so transient-model exceptions from Start
+            // are always treated as retry signals, regardless of exception type.
+            // WHY: on a dying model, Start may throw OperationCanceledException OR a
+            // non-OCE Rd exception (e.g. InvalidOperationException "Lifetime is not alive").
+            // Both indicate the same transient-model condition and warrant a retry.
+            IRdTask<bool> rdCompileTask;
             try
             {
-                var rdCompileTask = await RdConnectionHelper.ScheduleOnRd(_rdQueue, () => model.GetCompilationResult.Start(lt, JetBrains.Core.Unit.Instance)).ConfigureAwait(false);
+                rdCompileTask = await RdConnectionHelper.ScheduleOnRd(
+                    _rdQueue, () => model.GetCompilationResult.Start(lt, JetBrains.Core.Unit.Instance)
+                ).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                ourLogger.Warn($"RefreshAndCheckCompilation: GetCompilationResult.Start threw {ex.GetType().Name} on transient model, retrying: {ex.Message}");
+                return null;
+            }
+
+            try
+            {
                 var compileTask = RdConnectionHelper.AwaitRdTask(lt, rdCompileTask);
                 var timeoutTask = Task.Delay(timeout);
                 if (await Task.WhenAny(compileTask, timeoutTask).ConfigureAwait(false) != compileTask)
@@ -202,7 +225,7 @@ namespace McpExtensionUnity
             }
             catch (OperationCanceledException)
             {
-                // Signal to the caller that this model was transient (retry needed)
+                // Rd task was cancelled — transient model, signal retry
                 return null;
             }
             catch (Exception e)

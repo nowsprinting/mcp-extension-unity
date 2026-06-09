@@ -7,11 +7,17 @@ using JetBrains.Lifetimes;
 using JetBrains.Rd.Tasks;
 using JetBrains.Rider.Model.Unity.BackendUnity;
 using JetBrains.ReSharper.Plugins.Unity.Rider.Integration.Protocol;
+using JetBrains.Util;
+using JetBrains.Util.Logging;
 
 namespace McpExtensionUnity
 {
     internal static class RdConnectionHelper
     {
+        // WHY NOT Logger.GetLogger<RdConnectionHelper>(): static classes cannot be used as type
+        // arguments in C# (language restriction); use the string overload instead.
+        private static readonly ILogger ourLogger = Logger.GetLogger(nameof(RdConnectionHelper));
+
         // Waits for BackendUnityModel to become non-null. Returns immediately if already connected.
         // Advise call is scheduled on the Rd scheduler thread via rdQueue.
         internal static async Task<BackendUnityModel> WaitForUnityModel(

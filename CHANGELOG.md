@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change `MCP_TOOL_TIMEOUT` default to 100,000,000 ms (same as Claude Code's default)
 - Require IDE restart after plugin installation
 
+### Fixed
+
+- Fix `run_unity_tests` hanging until the MCP SDK transport timeout and dropping the transport when the domain-reload reconnect handler encountered the transient `BackendUnityModel` (old port) that Unity briefly advertises before the stable post-reload connection arrives.
+- Fix `run_unity_tests` creating a phantom second test session when Unity reconnects after a domain reload during PlayMode test execution.
+- Fix `run_unity_tests` hanging until the MCP transport timeout when called after `get_unity_compilation_result` following cumulative PlayMode domain reloads.
+- Fix `run_unity_tests` faulting the Rd handler (and potentially dropping the MCP transport) when the initial `BackendUnityModel` from `WaitForUnityModel` is transient.
+- Fix `run_method_in_unity` and `unity_play_control` silently failing when Unity Editor is not connected at call time.
+- Fix `get_unity_compilation_result` returning `success=true` before Unity finishes loading the newly compiled assemblies.
+- Fix `get_unity_compilation_result` requiring repeated calls when `GetCompilationResult.Start` throws a non-`OperationCanceledException` Rd exception on a transient `BackendUnityModel`.
+- Fix all four MCP tools treating `CancellationException` as an ordinary error when the MCP SDK cancels the tool call (e.g., on client-side timeout).
+
 ## [1.0.5] - 2026-05-19
 
 ### Changed

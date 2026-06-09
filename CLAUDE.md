@@ -156,10 +156,14 @@ Register in `plugin.xml`:
 6. **Initial connection wait** — All 4 MCP tools wait up to **30 seconds** for the Unity Editor to connect
    before failing with "not connected". This covers the domain-reload window after `.cs` file creation/modification.
    Implemented in `EditorConnectionUtils.kt` (Kotlin side) and `RdConnectionHelper.cs` (C# side).
+   - All tools use `WaitForUnityModel` (returns as soon as model != null). `WaitForStableUnityModel`
+     (polls `IsConnectionEstablished()`) is intentionally avoided because `IsConnectionEstablished()` can
+     remain False for many minutes after cumulative domain reloads (e.g., after PlayMode test runs).
 
 7. **Cancellation, disconnection, and domain-reload handling** — `UnityTestMcpHandler.cs` monitors three failure paths:
    - `lt.OnTermination`: Rd lifetime ends (protocol disconnect, Kotlin coroutine cancel) → `TrySetCanceled()`
-   - `BackendUnityModel.Advise(null)`: Unity Editor disconnects mid-run → waits up to `MCP_TOOL_TIMEOUT` milliseconds for reconnection (domain-reload tolerance). If reconnected, re-launches tests on the new model. If not, `TrySetException("did not reconnect within N seconds")`
+   - `BackendUnityModel.Advise(null)` **or initial-launch exception**: Unity Editor disconnects mid-run (or `WaitForUnityModel` returns a transient model on the first call) → `StartReconnect(previousModel)` spawns `RunReconnectLoop` off-thread. Uses `WaitForModelReconnect` (reference-based, not `IsConnectionEstablished()`) + retry loop to re-launch tests. If the reconnected model is transient (any exception from `LaunchTests`), `previousModel` is updated and the loop waits for the next distinct instance. If timeout expires, `TrySetException("did not reconnect within N seconds")`. A `reconnecting` guard prevents concurrent loops from either source.
+     - WHY `WaitForModelReconnect` instead of `WaitForStableUnityModel`: `IsConnectionEstablished()` can remain False for many minutes after cumulative PlayMode domain reloads due to macOS deprioritising the Rd Shell Dispatcher thread (:1), which delays `GetUnityEditorState` polling. The model is functional long before the flag catches up.
    - Timeout timer: configurable via `MCP_TOOL_TIMEOUT` env var (milliseconds per Claude Code spec, default 100000000) → `TrySetException("timed out after N seconds")`
    - All failure paths call `TryAbortLaunch` (best-effort; aborts whatever launch is currently on the model).
    - **Known limitation**: Unity Test Runner manual Cancel may not fire `RunResult`, causing a wait until timeout.
@@ -170,9 +174,9 @@ Register in `plugin.xml`:
    - `get_unity_compilation_result`: Refresh wait + post-Refresh reconnection wait + compilation result wait (each = `MCP_TOOL_TIMEOUT`); shared helper `RdConnectionHelper.GetMcpToolTimeout()` reads the env var
    - `run_method_in_unity` / `unity_play_control`: **not governed by `MCP_TOOL_TIMEOUT`** — these use resharper-unity's existing Rd RPCs directly; a Kotlin-side timeout would orphan the in-flight RPC and risk double-invocation on retry
 
-8. **`get_unity_compilation_result` domain-reload race condition** — `UnityCompilationMcpHandler.cs` handles two race conditions that occur when the tool is called while Unity is compiling:
+8. **`get_unity_compilation_result` domain-reload race condition** — `UnityCompilationMcpHandler.cs` handles race conditions that occur when the tool is called while Unity is compiling:
    - **Stale model race**: After `Refresh.Start()` throws (domain reload detected), `BackendUnityModel` may still point to the pre-reload instance. `WaitForModelReconnect` (in `RdConnectionHelper.cs`) requires a *different* instance (`!ReferenceEquals`) to ensure the post-reload model is used.
-   - **Transient model race**: During domain reload, the Rd client may briefly expose a new `BackendUnityModel` instance that is immediately rejected ("lifetime is already canceled"). A retry loop updates `previousModel` on each transient rejection and waits for the next candidate, eventually reaching the stable connection.
+   - **Transient model race**: During domain reload, the Rd client may briefly expose a new `BackendUnityModel` instance that is immediately rejected. `GetCompilationResult.Start` on this instance throws immediately — either `OperationCanceledException` or a non-OCE Rd exception (e.g. `InvalidOperationException`) depending on how far the lifetime teardown has progressed. `TryCallGetCompilationResult` isolates the `Start` call in its own try/catch and returns null (retry signal) for any exception from it. A retry loop updates `previousModel` on each transient rejection and waits for the next candidate, eventually reaching the stable connection.
    - If `GetCompilationResult` is still cancelled after reconnection, the error message instructs the agent to wait and retry.
 
 ## Reference Documents
