@@ -28,6 +28,9 @@ Adds tools for operating Unity Editor from any Coding Agents.
 The `run_unity_tests` tool runs tests on Unity Editor through Rider's test infrastructure.
 Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `testNames` to narrow down the tests to the scope of changes.
 
+> [!TIP]\
+> You can also run Play Mode tests with domain reloading.
+
 **Parameters**
 
 | Name            | Required     | Description                                                                                                                                                                                      |
@@ -50,6 +53,9 @@ Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `test
 | `failedTests`       | array   | Details of failed tests (`testId`, `output`, `duration`)       |
 | `inconclusiveTests` | array   | Details of inconclusive tests (`testId`, `output`, `duration`) |
 
+> [!NOTE]\
+> To save space in the context window, outputs of successful and skipped tests are not included in the response.
+
 **Error Response**
 
 | Field          | Type    | Description    |
@@ -57,18 +63,13 @@ Recommend filtering by `assemblyNames`, `categoryNames`, `groupNames`, and `test
 | `success`      | boolean | Always `false` |
 | `errorMessage` | string  | Error details  |
 
-> [!TIP]\
-> You can also run Play Mode tests that involve the domain reloading.
-
-> [!TIP]\
-> To save space in the context window, outputs of successful and skipped tests are not included in the response.
-
 ### Run editor script
 
-The `run_method_in_unity` tool invokes a static method in Unity Editor via reflection.
-You can use this tool to edit scenes and prefabs.
-
+The `run_method_in_unity` tool invokes a static method on Unity Editor via reflection.
 Console logs during the method will be captured and returned in the `logs` field of the response.
+
+> [!TIP]\
+> You can use this tool to edit scene and prefab files.
 
 **Parameters**
 
@@ -87,18 +88,18 @@ The method must be **static and parameterless**.
 | `success` | boolean | Always `true` (indicates reflection succeeded; does not mean the method executed without errors — internal exceptions are captured in `logs`)           |
 | `logs`    | array   | Console log entries captured during execution (may be empty). Each entry has `type` (`"Message"`, `"Warning"`, `"Error"`), `message`, and `stackTrace`. |
 
+> [!IMPORTANT]\
+> The method's return value is **NOT** returned. `success` only indicates whether the method was found and invoked (reflection succeeded). Even if the method throws internally, `success` may be `true` — the exception is captured in the `logs` field.
+
+> [!IMPORTANT]\
+> Async methods can be invoked, but the tool does not await their completion. Logs generated after return to the caller will not be included in the response.
+
 **Error Response**
 
 | Field          | Type    | Description    |
 |----------------|---------|----------------|
 | `success`      | boolean | Always `false` |
 | `errorMessage` | string  | Error details  |
-
-> [!IMPORTANT]\
-> The method's return value is **NOT** returned. `success` only indicates whether the method was found and invoked (reflection succeeded). Even if the method throws internally, `success` may be `true` — the exception is captured in the `logs` field.
-
-> [!IMPORTANT]\
-> Async methods can be invoked, but the tool does not await their completion. Logs generated after the method returns to the caller will not be included in the response.
 
 ### Check compilation
 
