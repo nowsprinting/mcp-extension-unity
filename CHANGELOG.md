@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-06-11
+
 ### Changed
 
 - Change `MCP_TOOL_TIMEOUT` default to 100,000,000 ms (same as Claude Code's default)
@@ -63,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_unity_compilation_result` tool
 - `unity_play_control` tool
 
-[Unreleased]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.6...HEAD
+[1.0.6]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.3...v1.0.5
 [1.0.4]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.2...v1.0.3
