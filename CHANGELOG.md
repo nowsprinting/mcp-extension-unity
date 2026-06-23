@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix `run_unity_tests` silently failing to match test names containing dakuten/handakuten characters (e.g., `で`, `が`, `パ`) when the `testNames` input is in Unicode NFD form. `testNames` entries are now NFC-normalized before being passed to Unity's `FullNameFilter`.
+
 ## [1.0.6] - 2026-06-11
 
 ### Changed

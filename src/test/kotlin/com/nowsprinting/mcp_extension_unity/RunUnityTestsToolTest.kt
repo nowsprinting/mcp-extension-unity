@@ -111,6 +111,66 @@ class RunUnityTestsToolTest {
         assertEquals(listOf("MyTests.EditMode", "MyTests.PlayMode"), result)
     }
 
+    // normalizeTestNames tests
+
+    @Test
+    fun `normalizeTestNames - null returns empty list`() {
+        assertTrue(RunUnityTestsTool.normalizeTestNames(null).isEmpty())
+    }
+
+    @Test
+    fun `normalizeTestNames - empty list returns empty list`() {
+        assertTrue(RunUnityTestsTool.normalizeTestNames(emptyList()).isEmpty())
+    }
+
+    @Test
+    fun `normalizeTestNames - ASCII input is unchanged`() {
+        val ascii = "MyNamespace.MyClass.MyMethod"
+        assertEquals(listOf(ascii), RunUnityTestsTool.normalizeTestNames(listOf(ascii)))
+    }
+
+    @Test
+    fun `normalizeTestNames - NFC dakuten input is unchanged`() {
+        // U+3067 = NFC "で" (precomposed)
+        val nfc = "で"
+        assertEquals(listOf(nfc), RunUnityTestsTool.normalizeTestNames(listOf(nfc)))
+    }
+
+    @Test
+    fun `normalizeTestNames - NFD dakuten is normalized to NFC`() {
+        // NFD "で" = U+3066 (て) + U+3099 (combining dakuten)
+        // NFC "で" = U+3067
+        val nfd = "で"
+        val nfc = "で"
+        assertEquals(listOf(nfc), RunUnityTestsTool.normalizeTestNames(listOf(nfd)))
+    }
+
+    @Test
+    fun `normalizeTestNames - NFD handakuten is normalized to NFC`() {
+        // NFD "パ" = U+30CF (ハ) + U+309A (combining handakuten)
+        // NFC "パ" = U+30D1
+        val nfd = "パ"
+        val nfc = "パ"
+        assertEquals(listOf(nfc), RunUnityTestsTool.normalizeTestNames(listOf(nfd)))
+    }
+
+    @Test
+    fun `normalizeTestNames - full FQN with NFD dakuten chars is normalized`() {
+        // NFD forms using codepoints from M-1 verification:
+        // "で" = U+3066 + U+3099, "が" = U+304B + U+3099, "パ" = U+30CF + U+309A
+        val nfd = "Ns.Class.Method_で_が_パ"
+        val nfc = "Ns.Class.Method_で_が_パ"
+        assertEquals(listOf(nfc), RunUnityTestsTool.normalizeTestNames(listOf(nfd)))
+    }
+
+    @Test
+    fun `normalizeTestNames - mixed list normalizes NFD entries and preserves NFC and ASCII`() {
+        // NFD "で" = U+3066 + U+3099, NFC "で" = U+3067
+        val input = listOf("AsciiTest", "で", "で")
+        val expected = listOf("AsciiTest", "で", "で")
+        assertEquals(expected, RunUnityTestsTool.normalizeTestNames(input))
+    }
+
     @Test
     fun `TestErrorResult serializes to error pattern`() {
         val result: RunUnityTestsResult = TestErrorResult(errorMessage = "Some infrastructure error")
