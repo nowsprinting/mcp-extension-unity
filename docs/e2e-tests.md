@@ -262,6 +262,69 @@ Regression test for the transient `BackendUnityModel` reconnect race condition d
 3. Verify: `success=true`, `passCount≥1`, **no** transport drop and no timeout
 4. Remove the added method
 
+### 1-15. Filter by testNames — multibyte test name (NFC form, regression test)
+
+Regression test: `testNames` with dakuten/handakuten characters (e.g., `が`, `で`, `パ`) silently failed to match before v1.0.7 when the caller's input was in NFD form. The plugin now NFC-normalizes each `testNames` entry before passing it to Unity's `FullNameFilter`.
+
+1. Add the following test method to `McpExtensionUnityTest.cs`
+   ```csharp
+   [Test]
+   public void RunUnityTests_テストが()
+   {
+   }
+   ```
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `testNames=["McpExtensionUnity.Tests.McpExtensionUnityTest.RunUnityTests_テストが"]`
+4. Verify: `passCount=1`
+5. Remove the added method
+
+### 1-16. Filter by testNames — multibyte test name (NFD form)
+
+Verifies that NFC normalization in the plugin allows NFD-form input to match Unity's NFC-stored `FullName`. Uses Python to generate the NFD form to avoid relying on the agent's own text normalization.
+
+1. (Reuse the method from 1-15 if still present, or re-add it)
+2. Run `get_unity_compilation_result`
+3. Run the following Python command and record the NFD-form FQN it outputs:
+   ```bash
+   python3 << 'EOF'
+   import unicodedata
+   fqn = 'McpExtensionUnity.Tests.McpExtensionUnityTest.RunUnityTests_テストが'
+   print(unicodedata.normalize('NFD', fqn))
+   EOF
+   ```
+4. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `testNames=[<NFD-form string from step 3>]`
+5. Verify: `passCount=1` (plugin normalized NFD → NFC before matching)
+6. Remove the added method
+
+### 1-17. Filter by groupNames — multibyte test name
+
+1. Add the following test method to `McpExtensionUnityTest.cs`
+   ```csharp
+   [Test]
+   public void RunUnityTests_グループが()
+   {
+   }
+   ```
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `groupNames=["RunUnityTests_グループが"]`
+4. Verify: `passCount=1`
+5. Remove the added method
+
+### 1-18. Filter by categoryNames — multibyte category name
+
+1. Add the following test method to `McpExtensionUnityTest.cs`
+   ```csharp
+   [Test]
+   [Category("テストが")]
+   public void RunUnityTests_MultibyteCategory()
+   {
+   }
+   ```
+2. Run `get_unity_compilation_result`
+3. Run `run_unity_tests` with `assemblyNames=["McpExtensionUnity.Tests"]`, `testMode="PlayMode"`, `categoryNames=["テストが"]`
+4. Verify: `passCount=1`
+5. Remove the added method
+
 ---
 
 ## 2. `get_unity_compilation_result`

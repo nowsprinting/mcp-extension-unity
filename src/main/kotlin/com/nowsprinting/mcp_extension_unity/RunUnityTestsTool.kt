@@ -26,6 +26,10 @@ class RunUnityTestsTool {
             return assemblyNames?.filter { it.isNotBlank() } ?: emptyList()
         }
 
+        internal fun normalizeTestNames(testNames: List<String>?): List<String> {
+            return testNames?.map { java.text.Normalizer.normalize(it, java.text.Normalizer.Form.NFC) } ?: emptyList()
+        }
+
         internal fun parseTestMode(testMode: String?): McpTestMode? {
             if (testMode == null) return null
             return when (testMode.trim().lowercase()) {
@@ -120,7 +124,7 @@ class RunUnityTestsTool {
                 testMode = parsedMode,
                 filter = McpTestFilter(
                     assemblyNames = effectiveAssemblyNames,
-                    testNames = testNames ?: emptyList(),
+                    testNames = normalizeTestNames(testNames),
                     groupNames = groupNames ?: emptyList(),
                     categoryNames = categoryNames ?: emptyList()
                 )
