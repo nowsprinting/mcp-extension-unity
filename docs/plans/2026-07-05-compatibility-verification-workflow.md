@@ -150,7 +150,7 @@ jobs:
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
 
   verify:
-    name: Verify (${{ matrix.ide.type }} RD-${{ matrix.ide.build }})
+    name: Verify RD-${{ matrix.ide.build }} (${{ matrix.ide.type }})
     needs: resolve
     runs-on: ubuntu-latest
     strategy:
