@@ -14,9 +14,60 @@ defaults:
     shell: bash
 
 jobs:
-  verify:
-    name: Verify (Marketplace recommended IDEs)
+  resolve:
+    name: Resolve target Rider builds
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.resolve.outputs.matrix }}
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Resolve latest release + EAP Rider builds in range
+        id: resolve
+        run: |
+          SINCE_BUILD="$(grep '^pluginSinceBuild=' gradle.properties | cut -d= -f2)" || true
+          UNTIL_BUILD_RAW="$(grep '^pluginUntilBuild=' gradle.properties | cut -d= -f2)" || true
+          UNTIL_BUILD_MAJOR="${UNTIL_BUILD_RAW%.\*}"
+          echo "Range: sinceBuild=$SINCE_BUILD untilBuild=${UNTIL_BUILD_RAW:-<none>}"
+
+          # Query the same official releases feed JetBrains Marketplace verification uses,
+          # instead of the IntelliJ Platform Gradle Plugin's recommended()/ide() dependency
+          # resolution, which is broken for Rider EAP-channel artifacts:
+          # https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/1852
+          RELEASES_JSON="$(curl -sSL "https://data.services.jetbrains.com/products?code=RD&fields=code,releases")"
+
+          MATRIX="$(echo "$RELEASES_JSON" | jq -c --arg since "$SINCE_BUILD" --arg until "$UNTIL_BUILD_MAJOR" '
+            def inRange:
+              (.build | split(".")[0] | tonumber) as $major
+              | $major >= ($since | tonumber)
+                and ($until == "" or $major <= ($until | tonumber));
+            [.[0].releases[] | select(inRange)] as $inRange
+            | ($inRange | map(select(.type == "release")) | .[0]) as $release
+            | ($inRange | map(select(.type == "eap")) | .[0]) as $eap
+            | [$release, $eap]
+            | map(select(. != null))
+            | map({type: .type, build: .build, url: .downloads.linux.link})
+          ')"
+
+          COUNT="$(echo "$MATRIX" | jq 'length')"
+          echo "Resolved targets ($COUNT):"
+          echo "$MATRIX" | jq .
+          if [ "$COUNT" -eq 0 ]; then
+            echo "::error::No Rider releases found matching sinceBuild=$SINCE_BUILD untilBuild=${UNTIL_BUILD_RAW:-<none>}"
+            exit 1
+          fi
+
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  verify:
+    name: Verify (${{ matrix.ide.type }} RD-${{ matrix.ide.build }})
+    needs: resolve
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ide: ${{ fromJson(needs.resolve.outputs.matrix) }}
     steps:
       - name: Fetch Sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -24,6 +75,16 @@ jobs:
       - name: Fetch tags
         run: |
           git fetch --tags --deepen=100
+
+      - name: Download and extract Rider ${{ matrix.ide.type }} RD-${{ matrix.ide.build }}
+        id: download
+        run: |
+          IDE_DIR="$RUNNER_TEMP/rider-ide"
+          mkdir -p "$IDE_DIR"
+          curl -sSL -o "$RUNNER_TEMP/rider.tar.gz" "${{ matrix.ide.url }}"
+          tar -xzf "$RUNNER_TEMP/rider.tar.gz" -C "$IDE_DIR" --strip-components=1
+          rm "$RUNNER_TEMP/rider.tar.gz"
+          echo "path=$IDE_DIR" >> "$GITHUB_OUTPUT"
 
       - name: Set up Java
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
@@ -40,11 +101,11 @@ jobs:
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
 
       - name: Run Plugin Verification
-        run: JAVA_HOME=$JAVA_HOME_21_X64 ./gradlew --no-configuration-cache verifyPlugin -PverifyRecommended
+        run: JAVA_HOME=$JAVA_HOME_21_X64 ./gradlew --no-configuration-cache verifyPlugin -PverifyIdePaths=${{ steps.download.outputs.path }}
 
       - name: Upload Verification Results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: verification-results
+          name: verification-results-${{ matrix.ide.type }}-${{ matrix.ide.build }}
           path: build/reports/pluginVerifier/
