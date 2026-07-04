@@ -78,7 +78,6 @@ intellijPlatform {
     pluginConfiguration {
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
-            untilBuild = providers.gradleProperty("pluginUntilBuild")
         }
 
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
