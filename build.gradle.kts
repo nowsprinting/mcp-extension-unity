@@ -108,12 +108,18 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            // compatibility-verification.yml passes -PverifyRecommended to check against the IDE builds
-            // JetBrains Marketplace verifies against (latest RELEASE + latest EAP within
-            // pluginSinceBuild..pluginUntilBuild). Without the property (build.yml's verify job and local
-            // dev), fall back to the already-downloaded Rider build — existing behavior is unchanged.
-            if (providers.gradleProperty("verifyRecommended").isPresent) {
-                recommended()
+            // compatibility-verification.yml passes -PverifyIdePaths (comma-separated local IDE home
+            // directories, manually downloaded+extracted) to check against the IDE builds JetBrains
+            // Marketplace verifies against (latest RELEASE + latest EAP within pluginSinceBuild..
+            // pluginUntilBuild). This bypasses the Gradle plugin's Rider dependency resolution, which
+            // is broken for EAP-channel artifacts: https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/1852
+            // Without the property (build.yml's verify job and local dev), fall back to the
+            // already-downloaded Rider build — existing behavior is unchanged.
+            val verifyIdePaths = providers.gradleProperty("verifyIdePaths")
+            if (verifyIdePaths.isPresent) {
+                verifyIdePaths.get().split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { path ->
+                    local(File(path))
+                }
             } else {
                 local(intellijPlatform.platformPath.toFile())
             }
