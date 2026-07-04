@@ -108,8 +108,15 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            // Verify against the same Rider build used for compilation (already downloaded locally)
-            local(intellijPlatform.platformPath.toFile())
+            // compatibility-verification.yml passes -PverifyRecommended to check against the IDE builds
+            // JetBrains Marketplace verifies against (latest RELEASE + latest EAP within
+            // pluginSinceBuild..pluginUntilBuild). Without the property (build.yml's verify job and local
+            // dev), fall back to the already-downloaded Rider build — existing behavior is unchanged.
+            if (providers.gradleProperty("verifyRecommended").isPresent) {
+                recommended()
+            } else {
+                local(intellijPlatform.platformPath.toFile())
+            }
         }
     }
 
