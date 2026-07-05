@@ -128,8 +128,20 @@ intellijPlatform {
 
     publishing {
         token = providers.environmentVariable("PUBLISH_TOKEN")
-        channels = providers.gradleProperty("pluginVersion").map {
-            listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
+        channels = providers.gradleProperty("pluginVersion").map { pluginVersion ->
+            val channel = pluginVersion.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }
+            val platformVersion = providers.gradleProperty("platformVersion").get()
+            // Guard against publishing a build compiled against an EAP/snapshot SDK to the
+            // default (stable) channel — easy to do by forgetting the tag's channel suffix
+            // (e.g. "-eap.1") when cutting a release while platformVersion is still pre-release.
+            if (channel == "default" && Regex("(?i)(EAP|SNAPSHOT|-RC\\d*$)").containsMatchIn(platformVersion)) {
+                throw GradleException(
+                    "platformVersion ('$platformVersion') looks like an EAP/pre-release build, but " +
+                        "pluginVersion ('$pluginVersion') has no channel suffix, which would publish to the " +
+                        "default (stable) channel. Tag the release with a channel suffix, e.g. 'v2.0.0-eap.1'."
+                )
+            }
+            listOf(channel)
         }
     }
 }
