@@ -40,8 +40,17 @@ sourceSets {
 
 dependencies {
     intellijPlatform {
-        // Rider 2026.2 (build 262.x)
-        create("RD", "2026.2")
+        // Rider 2026.2 EAP (build 262.x). useInstaller = false is required for any Rider target —
+        // useInstaller = true (the default) is not supported for Rider and fails resolution:
+        // https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/1852
+        // platformVersion must be the exact Maven-published coordinate (an EAP build's "-SNAPSHOT"
+        // string, or a stable release's plain version); bump it when moving to a newer EAP or GA.
+        create(
+            providers.gradleProperty("platformType").get(),
+            providers.gradleProperty("platformVersion").get(),
+        ) {
+            useInstaller = false
+        }
         testFramework(TestFrameworkType.Platform)
         // MCP Server is bundled in Rider 2025.3+
         bundledPlugin("com.intellij.mcpServer")
