@@ -19,10 +19,10 @@ Adds tools for operating Unity Editor from any Coding Agents.
 
 ## Requirements
 
-- JetBrains Rider 2026.2+
+- JetBrains Rider 2025.3+
 
 > [!NOTE]\
-> Rider 2026.2 introduced a breaking change to the Rd protocol API that this plugin must compile against.
+> Rider 2026.2 introduced a breaking change to the Rd protocol API that this plugin must compile against.\
 > Using Rider 2026.1.x or earlier? Install [v1.0.7](https://github.com/nowsprinting/mcp-extension-unity/releases/tag/v1.0.7) instead.
 
 ## Provided Tools
