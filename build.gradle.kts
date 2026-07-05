@@ -6,7 +6,7 @@ import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 plugins {
     id("java")
     kotlin("jvm") version "2.3.0"
-    id("org.jetbrains.intellij.platform") version "2.11.0"
+    id("org.jetbrains.intellij.platform") version "2.17.0"
     kotlin("plugin.serialization") version "2.3.0"
     id("org.jetbrains.changelog") version "2.2.1"
 }
@@ -30,23 +30,6 @@ repositories {
     }
 }
 
-// Expose rider-model.jar (= rd.jar in Rider 2025.3+) for the protocol subproject
-val riderModel: Configuration by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
-artifacts {
-    add(riderModel.name, provider {
-        // In Rider 2025.3+, rider-model.jar was merged into rd.jar
-        intellijPlatform.platformPath.resolve("lib/rd.jar").toFile().also {
-            check(it.isFile) { "rd.jar is not found at $it" }
-        }
-    }) {
-        builtBy(org.jetbrains.intellij.platform.gradle.Constants.Tasks.INITIALIZE_INTELLIJ_PLATFORM_PLUGIN)
-    }
-}
-
 sourceSets {
     main {
         kotlin {
@@ -57,12 +40,24 @@ sourceSets {
 
 dependencies {
     intellijPlatform {
-        // Rider 2025.3.3 (build 253.31033.136)
-        create("RD", "2025.3.3")
+        // Rider 2026.2 EAP (build 262.x). useInstaller = false is required for any Rider target —
+        // useInstaller = true (the default) is not supported for Rider and fails resolution:
+        // https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/1852
+        // platformVersion must be the exact Maven-published coordinate (an EAP build's "-SNAPSHOT"
+        // string, or a stable release's plain version); bump it when moving to a newer EAP or GA.
+        create(
+            providers.gradleProperty("platformType").get(),
+            providers.gradleProperty("platformVersion").get(),
+        ) {
+            useInstaller = false
+        }
         testFramework(TestFrameworkType.Platform)
         // MCP Server is bundled in Rider 2025.3+
         bundledPlugin("com.intellij.mcpServer")
         bundledPlugin("com.intellij.resharper.unity")
+        // Rider 2026.2 split Project.solution (SolutionHostExtensionsKt) out of the core platform
+        // modules and into this module; the previous "RD" target dependency exposed it implicitly.
+        bundledModule("intellij.rider.rdclient.dotnet")
     }
     // compileOnly to avoid class collision with the bundled plugin's serialization
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
@@ -78,7 +73,6 @@ intellijPlatform {
     pluginConfiguration {
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
-            untilBuild = providers.gradleProperty("pluginUntilBuild")
         }
 
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
@@ -134,8 +128,20 @@ intellijPlatform {
 
     publishing {
         token = providers.environmentVariable("PUBLISH_TOKEN")
-        channels = providers.gradleProperty("pluginVersion").map {
-            listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
+        channels = providers.gradleProperty("pluginVersion").map { pluginVersion ->
+            val channel = pluginVersion.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }
+            val platformVersion = providers.gradleProperty("platformVersion").get()
+            // Guard against publishing a build compiled against an EAP/snapshot SDK to the
+            // default (stable) channel — easy to do by forgetting the tag's channel suffix
+            // (e.g. "-eap.1") when cutting a release while platformVersion is still pre-release.
+            if (channel == "default" && Regex("(?i)(EAP|SNAPSHOT|-RC\\d*$)").containsMatchIn(platformVersion)) {
+                throw GradleException(
+                    "platformVersion ('$platformVersion') looks like an EAP/pre-release build, but " +
+                        "pluginVersion ('$pluginVersion') has no channel suffix, which would publish to the " +
+                        "default (stable) channel. Tag the release with a channel suffix, e.g. 'v2.0.0-eap.1'."
+                )
+            }
+            listOf(channel)
         }
     }
 }

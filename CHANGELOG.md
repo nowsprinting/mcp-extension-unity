@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Migrate to Rider 2026.2 (build 262); Rider 2026.2 removed the Rd protocol APIs this plugin relied on, and the replacement APIs are binary-incompatible with earlier Rider versions, so a single build cannot support both. Continue using v1.0.7 on Rider 2026.1.x and earlier.
+
 ## [1.0.7] - 2026-06-24
 
 ### Fixed

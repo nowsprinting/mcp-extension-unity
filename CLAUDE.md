@@ -37,8 +37,8 @@ The Kotlin Frontend **cannot** directly access `BackendUnityModel`; a custom Rd 
 |---------------|--------------------------------------------------------------|
 | Language      | Kotlin 2.3.0                                                 |
 | Serialization | kotlinx-serialization 1.6.3 (`compileOnly`)                  |
-| Build plugin  | IntelliJ Platform Gradle Plugin 2.11.0                       |
-| Target IDE    | Rider 2025.3.3 (build `RD-253.31033.136`)                    |
+| Build plugin  | IntelliJ Platform Gradle Plugin 2.17.0                       |
+| Target IDE    | Rider 2026.2 (build `RD-262.8665.68`)                        |
 | JDK           | JBR 25.0.2 (`~/Library/Java/JavaVirtualMachines/jbr-25.0.2`) |
 | Gradle        | 9.3.1                                                        |
 
