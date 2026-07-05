@@ -15,7 +15,7 @@ internal object UnityCompilationMcpModelProvider {
             val model = ctor.newInstance() as UnityCompilationMcpModel
             // Match C# generated constructor: Identify + BindTopLevel
             // RdId.Null (Kotlin) == RdId.Root (C#) == RdId(0)
-            model.identify(proto.identity, RdId.Null.mix("UnityCompilationMcpModel"))
+            model.identify(proto.identity, proto.identity.mix(RdId.Null, "UnityCompilationMcpModel"), true)
             model.preBind(proto.lifetime, proto, "UnityCompilationMcpModel")
             model.bind()
             proto.lifetime.onTermination { models.remove(proto) }

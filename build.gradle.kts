@@ -6,7 +6,7 @@ import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 plugins {
     id("java")
     kotlin("jvm") version "2.3.0"
-    id("org.jetbrains.intellij.platform") version "2.11.0"
+    id("org.jetbrains.intellij.platform") version "2.17.0"
     kotlin("plugin.serialization") version "2.3.0"
     id("org.jetbrains.changelog") version "2.2.1"
 }
@@ -30,23 +30,6 @@ repositories {
     }
 }
 
-// Expose rider-model.jar (= rd.jar in Rider 2025.3+) for the protocol subproject
-val riderModel: Configuration by configurations.creating {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-}
-
-artifacts {
-    add(riderModel.name, provider {
-        // In Rider 2025.3+, rider-model.jar was merged into rd.jar
-        intellijPlatform.platformPath.resolve("lib/rd.jar").toFile().also {
-            check(it.isFile) { "rd.jar is not found at $it" }
-        }
-    }) {
-        builtBy(org.jetbrains.intellij.platform.gradle.Constants.Tasks.INITIALIZE_INTELLIJ_PLATFORM_PLUGIN)
-    }
-}
-
 sourceSets {
     main {
         kotlin {
@@ -57,12 +40,15 @@ sourceSets {
 
 dependencies {
     intellijPlatform {
-        // Rider 2025.3.3 (build 253.31033.136)
-        create("RD", "2025.3.3")
+        // Rider 2026.2 (build 262.x)
+        create("RD", "2026.2")
         testFramework(TestFrameworkType.Platform)
         // MCP Server is bundled in Rider 2025.3+
         bundledPlugin("com.intellij.mcpServer")
         bundledPlugin("com.intellij.resharper.unity")
+        // Rider 2026.2 split Project.solution (SolutionHostExtensionsKt) out of the core platform
+        // modules and into this module; the previous "RD" target dependency exposed it implicitly.
+        bundledModule("intellij.rider.rdclient.dotnet")
     }
     // compileOnly to avoid class collision with the bundled plugin's serialization
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")

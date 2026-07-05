@@ -14,15 +14,12 @@ dependencies {
     implementation("com.jetbrains.rd:rd-gen:${property("rdGenVersion")}")
 }
 
-val modelDir = projectDir.resolve("src/main/kotlin")
 val kotlinGeneratedDir = rootDir.resolve("src/main/generated")
 val csharpGeneratedDir = rootDir.resolve("src/dotnet/${property("dotNetPluginId")}/Model")
 
 rdgen {
     verbose = true
     packages = "model.rider"
-    sources(modelDir)
-    hashFolder = layout.buildDirectory.dir("rdgen/hashes").get().asFile.absolutePath
 
     generator {
         language = "kotlin"
@@ -62,6 +59,10 @@ rdgen {
 tasks.withType<RdGenTask>().configureEach {
     classpath(sourceSets["main"].runtimeClasspath)
     dependsOn("compileKotlin")
+    // rd-gen 2026.2.5 dropped its own sources()/hashFolder change-skip, so declare
+    // inputs/outputs here for Gradle's up-to-date check to skip the task instead.
+    inputs.dir(projectDir.resolve("src/main/kotlin"))
+    outputs.dirs(kotlinGeneratedDir, csharpGeneratedDir)
 }
 
 kotlin {
