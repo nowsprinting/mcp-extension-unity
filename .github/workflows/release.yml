@@ -70,6 +70,10 @@ jobs:
           gh release upload ${{ github.event.release.tag_name }} build/distributions/*.zip
 
       - name: Create Pull Request for Changelog
+        # Skip on EAP releases (tag has a channel suffix, e.g. "v2.0.0-eap.1"): the version bump
+        # into CHANGELOG.md should only happen once, at the next Stable release, so [Unreleased]
+        # stays intact and keeps accumulating across EAP iterations.
+        if: ${{ !contains(github.event.release.tag_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
