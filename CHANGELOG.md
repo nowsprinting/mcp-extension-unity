@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-07-22
+
 ### Changed
 
 - Migrate to Rider 2026.2 (build 262); Rider 2026.2 removed the Rd protocol APIs this plugin relied on, and the replacement APIs are binary-incompatible with earlier Rider versions, so a single build cannot support both. Continue using v1.0.7 on Rider 2026.1.x and earlier.
@@ -75,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_unity_compilation_result` tool
 - `unity_play_control` tool
 
-[Unreleased]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.7...HEAD
+[Unreleased]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.8...HEAD
+[1.0.8]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/nowsprinting/mcp-extension-unity/compare/v1.0.3...v1.0.5
