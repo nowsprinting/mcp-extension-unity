@@ -40,7 +40,7 @@ sourceSets {
 
 dependencies {
     intellijPlatform {
-        // Rider 2026.2 EAP (build 262.x). useInstaller = false is required for any Rider target —
+        // Rider 2026.2 (build 262.x). useInstaller = false is required for any Rider target —
         // useInstaller = true (the default) is not supported for Rider and fails resolution:
         // https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/1852
         // platformVersion must be the exact Maven-published coordinate (an EAP build's "-SNAPSHOT"
