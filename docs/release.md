@@ -1,5 +1,20 @@
 # Release sequence
 
+## Compatibility Verification
+
+1. Run the [Compatibility Verification](https://github.com/nowsprinting/mcp-extension-unity/actions/workflows/compatibility-verification.yml)
+   workflow (`workflow_dispatch`) and confirm every `verify` job succeeds
+
+> [!NOTE]\
+> The regular [Build](https://github.com/nowsprinting/mcp-extension-unity/actions/workflows/build.yml)
+> workflow's `verify` job only checks the plugin against the current platform version pinned in
+> `gradle.properties` (`verifyPlugin` without `-PverifyIdePaths` falls back to the single already-downloaded
+> Rider build; see `build.gradle.kts`).\
+> JetBrains Marketplace verification on submission additionally checks against the latest release **and**
+> latest EAP build within `pluginSinceBuild..pluginUntilBuild` — which can include a newer ("next") Rider
+> version not yet covered by the regular Build workflow. `compatibility-verification.yml` reproduces that
+> broader check ahead of time.
+
 ## Stable channel release
 
 1. CHANGELOG.md has been committed and pushed in advance
