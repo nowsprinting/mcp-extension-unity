@@ -46,7 +46,7 @@
       "WebFetch(domain:medium.com)",
       "mcp__deepwiki",
       "mcp__ide__getDiagnostics",
-      "mcp__jetbrains"
+      "mcp__idea"
     ],
     "deny": [
       "Bash(sudo *)",
@@ -93,15 +93,12 @@
       "Bash(* ~/.npmrc)",
       "Read(./.env)",
       "Edit(./.env)",
-      "Write(./.env)",
       "Read(./.env.*)",
       "Edit(./.env.*)",
-      "Write(./.env.*)",
       "Read(./**/.env)",
       "Read(./**/.env.*)",
       "Read(/secrets/**)",
       "Edit(/secrets/**)",
-      "Write(/secrets/**)",
       "Read(~/.netrc)",
       "Read(~/.npmrc)",
       "Read(~/.ssh/**)",
@@ -109,15 +106,12 @@
       "Read(~/.git-credentials)",
       "Read(~/.config/gh/**)",
       "Edit(~/.zshrc)",
-      "Write(~/.zshrc)",
       "Edit(~/.bashrc)",
-      "Write(~/.bashrc)",
       "Read(id_rsa)",
       "Read(id_ed25519)",
       "Read(**/*token*)",
       "Read(**/*key*)"
     ],
-    "defaultMode": "plan",
     "additionalDirectories": []
   },
   "enabledPlugins": {
